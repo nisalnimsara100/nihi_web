@@ -1,0 +1,17 @@
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import { LoginForm } from "../auth-forms";
+import { RedirectIfSignedIn } from "../redirect-if-signed-in";
+
+export const metadata: Metadata = { title: "Log in" };
+
+export default function LoginPage() {
+  return (
+    <>
+      <Suspense>
+        <RedirectIfSignedIn />
+      </Suspense>
+      <LoginForm />
+    </>
+  );
+}

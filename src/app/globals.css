@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+/* Semantic tokens. Components use these names, never raw palette steps,
+   so light and dark mode swap in one place. */
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-archivo), var(--font-inter), ui-sans-serif, sans-serif;
+
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-lime: var(--lime);
+  --color-lime-strong: var(--lime-strong);
+  --color-lime-pale: var(--lime-pale);
+  --color-on-lime: var(--on-lime);
+  --color-forest: var(--forest);
+  --color-forest-soft: var(--forest-soft);
+  --color-on-forest: var(--on-forest);
+  --color-headline: var(--headline);
+  --color-income: var(--income);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+}
+
+:root {
+  color-scheme: light;
+  --canvas: #f2f4e6;
+  --surface: #ffffff;
+  --muted: #f1f2ec;
+  --line: #e2e6d4;
+  --ink: #132a05;
+  --ink-soft: #586352;
+  --ink-faint: #8b9482;
+  --lime: #bfe80f;
+  --lime-strong: #addb00;
+  --lime-pale: #e8efc9;
+  --on-lime: #132a05;
+  --forest: #163a06;
+  --forest-soft: #23500f;
+  --on-forest: #ffffff;
+  --headline: #163a06;
+  --income: #4b7a00;
+  --danger: #c0352b;
+  --danger-soft: #fbe9e7;
+
+  --chart-income: #8cbc00;
+  --chart-expense: #2f6b12;
+  --chart-bar: #2f6b12;
+  --chart-grid: #e6e9dc;
+  --chart-axis: #6f7a66;
+  --chart-cursor: rgb(19 42 5 / 0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --canvas: #0a1204;
+    --surface: #111d08;
+    --muted: #19290e;
+    --line: #253a17;
+    --ink: #eef5df;
+    --ink-soft: #aab79c;
+    --ink-faint: #7f8c72;
+    --lime: #bfe80f;
+    --lime-strong: #d0f23a;
+    --lime-pale: #22350f;
+    --on-lime: #132a05;
+    --forest: #1f420b;
+    --forest-soft: #295612;
+    --on-forest: #ffffff;
+    --headline: #bfe80f;
+  --income: #b6e30c;
+    --danger: #f2877d;
+    --danger-soft: #3a1714;
+
+    --chart-income: #7aa300;
+    --chart-expense: #3a7419;
+    --chart-bar: #a8d40a;
+    --chart-grid: #22341a;
+    --chart-axis: #9aa88d;
+    --chart-cursor: rgb(255 255 255 / 0.05);
+  }
+}
+
+body {
+  @apply bg-canvas text-ink;
+}
+
+/* Remove the number spinners on amount inputs. */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
