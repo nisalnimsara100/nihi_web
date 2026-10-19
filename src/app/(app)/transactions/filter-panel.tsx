@@ -21,7 +21,7 @@ export function FilterPanel({ activeCount, children }: { activeCount: number; ch
         <SlidersHorizontal className="size-4" aria-hidden />
         Filters
         {activeCount > 0 ? (
-          <span className="rounded-full bg-lime px-1.5 text-xs font-bold text-on-lime">{activeCount}</span>
+          <span className="rounded-full bg-primary px-1.5 text-xs font-semibold text-on-primary">{activeCount}</span>
         ) : null}
       </Button>
       <div className={cn("mt-3 lg:mt-0 lg:block", open ? "block" : "hidden")}>{children}</div>

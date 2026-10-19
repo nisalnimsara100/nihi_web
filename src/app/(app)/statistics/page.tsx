@@ -78,16 +78,16 @@ async function Statistics({ searchParams }: { searchParams: SearchParams }) {
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="inline-flex rounded-full bg-surface p-1 ring-1 ring-line/60" role="group" aria-label="Period">
+        <div className="inline-flex rounded-2xl bg-surface p-1 ring-1 ring-line/70" role="group" aria-label="Period">
           {(["month", "year"] as const).map((p) => (
             <Link
               key={p}
               href={href({ period: p, date: p === "year" ? key.slice(0, 4) : `${key.slice(0, 4)}-${thisMonth.slice(5)}` })}
               aria-current={period === p ? "true" : undefined}
               className={cn(
-                "rounded-full px-5 py-2 text-sm font-semibold",
+                "rounded-xl px-5 py-2 text-sm font-semibold",
                 period === p
-                  ? "bg-forest text-on-forest"
+                  ? "bg-primary text-on-primary"
                   : "text-ink-soft hover:text-ink",
               )}
             >
@@ -103,9 +103,9 @@ async function Statistics({ searchParams }: { searchParams: SearchParams }) {
                 href={href({ currency: c })}
                 aria-current={c === currency ? "true" : undefined}
                 className={cn(
-                  "rounded-full px-4 py-2 text-sm font-semibold",
+                  "rounded-xl px-4 py-2 text-sm font-semibold",
                   c === currency
-                    ? "bg-lime text-on-lime"
+                    ? "bg-primary text-on-primary"
                     : "bg-surface text-ink-soft ring-1 ring-line/60 hover:text-ink",
                 )}
               >

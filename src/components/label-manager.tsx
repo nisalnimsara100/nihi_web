@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { Pencil, Plus } from "lucide-react";
 import type { ActionState } from "@/actions/state";
-import { ColorPicker, DeleteButton, FormError, SubmitButton } from "@/components/form-bits";
+import { ColorPicker, DeleteButton, FormError, IconPicker, SubmitButton } from "@/components/form-bits";
 import { useActionForm } from "@/components/use-action-form";
 import { Button, Card, ColorDot, Field, inputClass } from "@/components/ui";
+import { CategoryIcon } from "@/lib/category-icons";
 import { COLORS } from "@/lib/constants";
 
-type Item = { id: string; name: string; color: string; count: number };
+/** `icon` is set for categories; tags have none and show a color dot. */
+type Item = { id: string; name: string; color: string; count: number; icon?: string };
 type SaveAction = (prev: ActionState, formData: FormData) => Promise<ActionState>;
 
 function LabelForm({
@@ -17,12 +19,14 @@ function LabelForm({
   hidden,
   submitLabel,
   onDone,
+  withIcon,
 }: {
   save: SaveAction;
   item?: Item;
   hidden?: Record<string, string>;
   submitLabel: string;
   onDone?: () => void;
+  withIcon?: boolean;
 }) {
   const { state, pending, formRef, onSubmit } = useActionForm(save, { resetOnSuccess: !item, onSuccess: onDone });
   const errors = state.fieldErrors ?? {};
@@ -38,6 +42,7 @@ function LabelForm({
       <Field label="Name" htmlFor={nameId} error={errors.name}>
         <input id={nameId} name="name" defaultValue={item?.name} aria-invalid={!!errors.name} className={inputClass} />
       </Field>
+      {withIcon ? <IconPicker defaultValue={item?.icon} /> : null}
       <ColorPicker defaultValue={item?.color ?? COLORS[0]} />
       <div className="flex gap-2">
         <SubmitButton pending={pending}>{submitLabel}</SubmitButton>
@@ -58,6 +63,7 @@ export function LabelManager({
   remove,
   hidden,
   noun,
+  withIcon = false,
 }: {
   title: string;
   items: Item[];
@@ -65,6 +71,7 @@ export function LabelManager({
   remove: (id: string) => Promise<ActionState>;
   hidden?: Record<string, string>;
   noun: string;
+  withIcon?: boolean;
 }) {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
@@ -86,8 +93,8 @@ export function LabelManager({
       </div>
 
       {adding ? (
-        <div className="mx-4 mt-4 rounded-3xl bg-muted p-4 sm:mx-5">
-          <LabelForm save={save} hidden={hidden} submitLabel={`Add ${noun}`} />
+        <div className="mx-4 mt-4 rounded-3xl p-4 ring-1 ring-line sm:mx-5">
+          <LabelForm save={save} hidden={hidden} submitLabel={`Add ${noun}`} withIcon={withIcon} />
         </div>
       ) : null}
 
@@ -97,16 +104,30 @@ export function LabelManager({
         <ul className="mt-3 space-y-1 px-2 pb-3">
           {items.map((item) =>
             editing === item.id ? (
-              <li key={item.id} className="rounded-2xl bg-muted p-4">
-                <LabelForm save={save} item={item} submitLabel="Save" onDone={() => setEditing(null)} />
+              <li key={item.id} className="rounded-2xl p-4 ring-1 ring-line">
+                <LabelForm
+                  save={save}
+                  item={item}
+                  hidden={hidden}
+                  submitLabel="Save"
+                  onDone={() => setEditing(null)}
+                  withIcon={withIcon}
+                />
               </li>
             ) : (
               <li key={item.id} className="flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-muted">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-forest" aria-hidden>
-                  <ColorDot color={item.color} className="size-3" />
+                <span className="relative flex size-11 shrink-0 items-center justify-center rounded-2xl bg-surface text-ink shadow-[0_1px_3px_rgb(20_21_28/0.08)] ring-1 ring-line/60" aria-hidden>
+                  {item.icon ? (
+                    <>
+                      <CategoryIcon name={item.icon} className="size-5" />
+                      <span className="absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full ring-2 ring-surface" style={{ background: item.color }} />
+                    </>
+                  ) : (
+                    <ColorDot color={item.color} className="size-3" />
+                  )}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-bold">{item.name}</span>
+                  <span className="block truncate text-sm font-semibold">{item.name}</span>
                   <span className="block text-xs text-ink-soft">
                     {item.count} transaction{item.count === 1 ? "" : "s"}
                   </span>

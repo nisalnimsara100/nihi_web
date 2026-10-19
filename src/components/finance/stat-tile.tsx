@@ -20,7 +20,7 @@ export function StatTile({
         <p className="text-sm font-medium text-ink-soft">{label}</p>
         {icon}
       </div>
-      <p className="mt-2 text-lg font-bold tracking-tight tabular-nums sm:text-2xl">{value}</p>
+      <p className="mt-2 text-lg font-semibold tracking-tight tabular-nums sm:text-2xl">{value}</p>
       {sub ? <div className="mt-1 text-xs text-ink-soft">{sub}</div> : null}
     </div>
   );

@@ -9,12 +9,12 @@ import { ButtonLink } from "@/components/ui";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-dvh">
-      <aside className="fixed inset-y-3 left-3 z-30 hidden w-64 flex-col rounded-[32px] bg-forest text-on-forest lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-line bg-surface lg:flex">
         <div className="px-6 pt-6 pb-5">
-          <Logo href="/dashboard" tone="lime" />
+          <Logo href="/dashboard" />
         </div>
         <div className="px-4">
-          <ButtonLink href="/transactions/new" variant="lime" className="w-full">
+          <ButtonLink href="/transactions/new" className="w-full">
             <Plus className="size-4" aria-hidden />
             New transaction
           </ButtonLink>
@@ -24,14 +24,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <SidebarNav />
           </Suspense>
         </div>
-        <div className="m-3 rounded-[24px] bg-white/5 p-2">
+        <div className="border-t border-line p-3">
           <Suspense fallback={<div className="h-12" />}>
             <SidebarUser />
           </Suspense>
         </div>
       </aside>
 
-      <main className="lg:pl-[17.5rem]">
+      <main className="lg:pl-64">
         <div className="mx-auto max-w-6xl px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-32 sm:px-6 lg:px-8 lg:pt-10 lg:pb-12">
           {children}
         </div>

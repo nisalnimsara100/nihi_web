@@ -19,11 +19,11 @@ export default function AccountsPage() {
   );
 }
 
-// Card faces cycle through the three brand surfaces, like a stack of payment cards.
+// Card faces cycle through blue, lavender and ink, like a stack of payment cards.
 const FACES = [
-  { card: "bg-lime text-on-lime", soft: "text-on-lime/70", mark: "text-on-lime/10" },
-  { card: "bg-lime-pale text-ink", soft: "text-ink-soft", mark: "text-ink/5" },
-  { card: "bg-forest text-on-forest", soft: "text-on-forest/70", mark: "text-white/[0.07]" },
+  { card: "bg-hero text-white", soft: "text-white/75", mark: "text-white/10" },
+  { card: "bg-primary-soft text-on-primary-soft", soft: "text-on-primary-soft/75", mark: "text-on-primary-soft/10" },
+  { card: "bg-[#1d1f2e] text-white", soft: "text-white/65", mark: "text-white/[0.06]" },
 ];
 
 function AccountCard({ account, index, stacked }: { account: AccountWithBalance; index: number; stacked: boolean }) {
@@ -40,7 +40,7 @@ function AccountCard({ account, index, stacked }: { account: AccountWithBalance;
     >
       <div
         className={cn(
-          "relative flex aspect-[1.7/1] flex-col justify-between overflow-hidden rounded-3xl p-5 shadow-[0_-6px_20px_rgb(19_42_5/0.12)] sm:shadow-md",
+          "relative flex aspect-[1.7/1] flex-col justify-between overflow-hidden rounded-3xl p-5 shadow-[0_-6px_24px_rgb(20_21_28/0.14)] sm:shadow-lg sm:shadow-primary/10",
           face.card,
           account.archived && "opacity-60",
         )}
@@ -48,7 +48,7 @@ function AccountCard({ account, index, stacked }: { account: AccountWithBalance;
         <span
           aria-hidden
           className={cn(
-            "pointer-events-none absolute -right-4 -bottom-8 font-display text-[7rem] leading-none font-black tracking-tighter uppercase italic select-none font-stretch-condensed",
+            "pointer-events-none absolute -right-4 -bottom-8 text-[7rem] leading-none font-black tracking-tighter uppercase italic select-none",
             face.mark,
           )}
         >
@@ -57,7 +57,7 @@ function AccountCard({ account, index, stacked }: { account: AccountWithBalance;
         <div className="relative">
           <div className="flex items-start justify-between gap-3">
             <p className={cn("truncate text-sm font-semibold", face.soft)}>{account.name}</p>
-            <span className="flex shrink-0 items-center gap-1.5 text-xs font-bold">
+            <span className="flex shrink-0 items-center gap-1.5 text-xs font-semibold">
               <ColorDot color={account.color} />
               {account.currency}
             </span>
@@ -92,7 +92,7 @@ async function Accounts() {
           totals.size > 0 ? `Total ${[...totals].map(([c, v]) => formatMoney(v, c)).join(" · ")}` : "Where your money lives."
         }
         actions={
-          <IconLink href="/accounts/new" label="New account" tone="forest">
+          <IconLink href="/accounts/new" label="New account" tone="primary">
             <Plus className="size-5" aria-hidden />
           </IconLink>
         }
@@ -119,7 +119,7 @@ async function Accounts() {
 
       {archived.length > 0 ? (
         <section className="mt-10">
-          <h2 className="mb-3 text-lg font-bold">Archived</h2>
+          <h2 className="mb-3 text-base font-semibold">Archived</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {archived.map((a, i) => (
               <AccountCard key={a.id} account={a} index={i} stacked={false} />

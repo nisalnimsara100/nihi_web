@@ -7,11 +7,12 @@ import { DeleteButton, FormError, SubmitButton } from "@/components/form-bits";
 import { useActionForm } from "@/components/use-action-form";
 import { buttonClass, Card, Field, inputClass } from "@/components/ui";
 import type { TransactionType } from "@/generated/prisma/enums";
+import { CategoryIcon } from "@/lib/category-icons";
 import { cn } from "@/lib/cn";
 
 type Option = { id: string; name: string; color: string };
 type AccountOption = Option & { currency: string };
-type CategoryOption = Option & { type: "INCOME" | "EXPENSE" };
+type CategoryOption = Option & { type: "INCOME" | "EXPENSE"; icon: string };
 
 export type TransactionFormValues = {
   id?: string;
@@ -77,7 +78,7 @@ export function TransactionForm({
           <input key={id} type="hidden" name="tags" value={id} />
         ))}
 
-        <div role="radiogroup" aria-label="Transaction type" className="grid grid-cols-3 gap-1 rounded-full bg-muted p-1">
+        <div role="radiogroup" aria-label="Transaction type" className="grid grid-cols-3 gap-1 rounded-2xl bg-muted p-1">
           {TYPE_TABS.map((tab) => (
             <button
               key={tab.value}
@@ -86,9 +87,9 @@ export function TransactionForm({
               aria-checked={type === tab.value}
               onClick={() => changeType(tab.value)}
               className={cn(
-                "h-11 rounded-full text-sm font-bold transition-colors",
+                "h-11 rounded-xl text-sm font-semibold transition-colors",
                 type === tab.value
-                  ? "bg-forest text-on-forest shadow-sm"
+                  ? "bg-primary text-on-primary shadow-sm"
                   : "text-ink-soft hover:text-ink",
               )}
             >
@@ -118,7 +119,7 @@ export function TransactionForm({
           </div>
         </Field>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className={cn("grid gap-4", isTransfer && "sm:grid-cols-2")}>
           <Field label={isTransfer ? "From account" : "Account"} htmlFor="accountId" error={errors.accountId}>
             <select
               id="accountId"
@@ -155,25 +156,48 @@ export function TransactionForm({
                   ))}
               </select>
             </Field>
-          ) : (
-            <Field label="Category" htmlFor="categoryId" error={errors.categoryId}>
-              <select
-                id="categoryId"
-                name="categoryId"
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className={inputClass}
-              >
-                <option value="">Uncategorized</option>
-                {visibleCategories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          )}
+          ) : null}
         </div>
+
+        {!isTransfer ? (
+          <fieldset>
+            <legend className="mb-2 block text-sm font-semibold text-ink">Category</legend>
+            <input type="hidden" name="categoryId" value={categoryId} />
+            <div role="radiogroup" aria-label="Category" className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+              {[...visibleCategories, { id: "", name: "None", icon: "other", color: "#8a8984" }].map((c) => {
+                const selected = categoryId === c.id;
+                return (
+                  <button
+                    key={c.id || "none"}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => setCategoryId(c.id)}
+                    className={cn(
+                      "flex min-w-0 flex-col items-center gap-1.5 rounded-2xl px-1 py-2.5 transition-colors",
+                      selected ? "bg-primary-soft text-on-primary-soft ring-2 ring-primary" : "bg-muted text-ink hover:bg-line",
+                    )}
+                  >
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "relative flex size-10 items-center justify-center rounded-xl",
+                        selected ? "bg-primary text-on-primary" : "bg-surface text-ink-soft",
+                      )}
+                    >
+                      <CategoryIcon name={c.icon} className="size-5" />
+                      {c.id ? (
+                        <span className="absolute -right-0.5 -bottom-0.5 size-3 rounded-full ring-2 ring-muted" style={{ background: c.color }} />
+                      ) : null}
+                    </span>
+                    <span className="w-full truncate text-center text-xs font-semibold">{c.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {errors.categoryId?.length ? <p className="mt-1.5 text-sm text-danger">{errors.categoryId[0]}</p> : null}
+          </fieldset>
+        ) : null}
 
         {crossCurrency ? (
           <Field
@@ -213,7 +237,7 @@ export function TransactionForm({
                     className={cn(
                       "inline-flex h-9 items-center gap-1.5 rounded-full border px-3.5 text-sm font-semibold transition-colors",
                       on
-                        ? "border-lime bg-lime text-on-lime"
+                        ? "border-primary/40 bg-primary-soft text-on-primary-soft"
                         : "border-transparent bg-muted text-ink hover:bg-line",
                     )}
                   >

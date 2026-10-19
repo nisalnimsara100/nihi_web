@@ -12,7 +12,7 @@ export async function getTransactionFormOptions(userId: string, keepAccountIds: 
     db.category.findMany({
       where: { userId },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, color: true, type: true },
+      select: { id: true, name: true, color: true, type: true, icon: true },
     }),
     db.tag.findMany({ where: { userId }, orderBy: { name: "asc" }, select: { id: true, name: true, color: true } }),
   ]);

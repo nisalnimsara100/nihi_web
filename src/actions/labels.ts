@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUserId } from "@/lib/auth";
+import { CATEGORY_ICON_NAMES, DEFAULT_CATEGORY_ICON, isCategoryIcon } from "@/lib/category-icons";
 import { db } from "@/lib/db";
 import { CategoryType } from "@/generated/prisma/enums";
 import { fromZodError, type ActionState } from "./state";
@@ -14,6 +15,10 @@ const categorySchema = z.object({
   name: z.string().trim().min(1, "Enter a name").max(40),
   type: z.enum(CategoryType),
   color,
+  icon: z
+    .string()
+    .default(DEFAULT_CATEGORY_ICON)
+    .refine(isCategoryIcon, { message: `Pick one of: ${CATEGORY_ICON_NAMES.join(", ")}` }),
 });
 
 export async function saveCategory(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -36,7 +41,7 @@ export async function saveCategory(_prev: ActionState, formData: FormData): Prom
     // Type is fixed after creation so existing transactions stay consistent.
     const { count } = await db.category.updateMany({
       where: { id, userId },
-      data: { name: data.name, color: data.color },
+      data: { name: data.name, color: data.color, icon: data.icon },
     });
     if (count === 0) return { error: "Category not found." };
   } else {

@@ -4,7 +4,6 @@
    so light and dark mode swap in one place. */
 @theme inline {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-archivo), var(--font-inter), ui-sans-serif, sans-serif;
 
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
@@ -13,77 +12,57 @@
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
   --color-ink-faint: var(--ink-faint);
-  --color-lime: var(--lime);
-  --color-lime-strong: var(--lime-strong);
-  --color-lime-pale: var(--lime-pale);
-  --color-on-lime: var(--on-lime);
-  --color-forest: var(--forest);
-  --color-forest-soft: var(--forest-soft);
-  --color-on-forest: var(--on-forest);
-  --color-headline: var(--headline);
+  --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-on-primary: var(--on-primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-soft-strong: var(--primary-soft-strong);
+  --color-on-primary-soft: var(--on-primary-soft);
   --color-income: var(--income);
+  --color-expense: var(--expense);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-success-soft: var(--success-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
 }
 
 :root {
+  /* Light only, sampled from the reference design. */
   color-scheme: light;
-  --canvas: #f2f4e6;
+  --canvas: #ffffff;
   --surface: #ffffff;
-  --muted: #f1f2ec;
-  --line: #e2e6d4;
-  --ink: #132a05;
-  --ink-soft: #586352;
-  --ink-faint: #8b9482;
-  --lime: #bfe80f;
-  --lime-strong: #addb00;
-  --lime-pale: #e8efc9;
-  --on-lime: #132a05;
-  --forest: #163a06;
-  --forest-soft: #23500f;
-  --on-forest: #ffffff;
-  --headline: #163a06;
-  --income: #4b7a00;
-  --danger: #c0352b;
-  --danger-soft: #fbe9e7;
+  --muted: #f5f5f5;
+  --line: #ececec;
+  --ink: #111111;
+  --ink-soft: #6e6e73;
+  --ink-faint: #a1a1a6;
+  --primary: #4744f7;
+  --primary-strong: #3936e0;
+  --on-primary: #ffffff;
+  --primary-soft: #d1d9fd;
+  --primary-soft-strong: #c2ccfc;
+  --on-primary-soft: #3f3db8;
+  --income: #2f9a3a;
+  --expense: #e03a3a;
+  --warning: #f6b23e;
+  --warning-soft: #fff4dc;
+  --success-soft: #e4f5e6;
+  --danger: #d92f35;
+  --danger-soft: #fdeaea;
+  --hero-from: #6f79fe;
+  --hero-to: #3938f7;
 
-  --chart-income: #8cbc00;
-  --chart-expense: #2f6b12;
-  --chart-bar: #2f6b12;
-  --chart-grid: #e6e9dc;
-  --chart-axis: #6f7a66;
-  --chart-cursor: rgb(19 42 5 / 0.05);
+  --chart-income: #4744f7;
+  --chart-expense: #eb6834;
+  --chart-bar: #4744f7;
+  --chart-grid: #eeeeee;
+  --chart-axis: #8e8e93;
+  --chart-cursor: rgb(71 68 247 / 0.06);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --canvas: #0a1204;
-    --surface: #111d08;
-    --muted: #19290e;
-    --line: #253a17;
-    --ink: #eef5df;
-    --ink-soft: #aab79c;
-    --ink-faint: #7f8c72;
-    --lime: #bfe80f;
-    --lime-strong: #d0f23a;
-    --lime-pale: #22350f;
-    --on-lime: #132a05;
-    --forest: #1f420b;
-    --forest-soft: #295612;
-    --on-forest: #ffffff;
-    --headline: #bfe80f;
-  --income: #b6e30c;
-    --danger: #f2877d;
-    --danger-soft: #3a1714;
-
-    --chart-income: #7aa300;
-    --chart-expense: #3a7419;
-    --chart-bar: #a8d40a;
-    --chart-grid: #22341a;
-    --chart-axis: #9aa88d;
-    --chart-cursor: rgb(255 255 255 / 0.05);
-  }
+@utility bg-hero {
+  background-image: linear-gradient(110deg, var(--hero-from), var(--hero-to));
 }
 
 body {

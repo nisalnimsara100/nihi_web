@@ -68,6 +68,8 @@ model Category {
   name      String
   type      CategoryType
   color     String
+  /// Key into CATEGORY_ICONS in src/lib/category-icons.tsx.
+  icon      String       @default("other")
   createdAt DateTime     @default(now())
 
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)

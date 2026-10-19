@@ -3,21 +3,24 @@ import { ArrowLeftRight } from "lucide-react";
 import type { TransactionRow } from "@/lib/data";
 import { dateToDay, formatDay, relativeDay } from "@/lib/dates";
 import { Amount } from "@/components/ui";
+import { CategoryIcon } from "@/lib/category-icons";
+
+const iconTile =
+  "relative flex size-12 shrink-0 items-center justify-center rounded-2xl bg-surface text-ink shadow-[0_1px_3px_rgb(20_21_28/0.08)] ring-1 ring-line/60";
 
 function TransactionIcon({ tx }: { tx: TransactionRow }) {
   if (tx.type === "TRANSFER") {
     return (
-      <span aria-hidden className="flex size-11 shrink-0 items-center justify-center rounded-full bg-forest text-lime">
+      <span aria-hidden className={iconTile}>
         <ArrowLeftRight className="size-5" />
       </span>
     );
   }
-  const name = tx.category?.name ?? "?";
   return (
-    <span aria-hidden className="relative flex size-11 shrink-0 items-center justify-center rounded-full bg-forest text-base font-bold text-lime">
-      {name[0]}
+    <span aria-hidden className={iconTile}>
+      <CategoryIcon name={tx.category?.icon} className="size-5" />
       <span
-        className="absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full ring-2 ring-muted"
+        className="absolute -right-0.5 -bottom-0.5 size-3 rounded-full ring-2 ring-surface"
         style={{ background: tx.category?.color ?? "#8a8984" }}
       />
     </span>
@@ -28,24 +31,26 @@ function TransactionItem({ tx, showDate }: { tx: TransactionRow; showDate: boole
   const isTransfer = tx.type === "TRANSFER";
   const title = isTransfer ? "Transfer" : (tx.category?.name ?? "Uncategorized");
   const where = isTransfer ? `${tx.account.name} → ${tx.toAccount?.name ?? "?"}` : tx.account.name;
-  const meta = [showDate ? relativeDay(tx.date) : null, where, tx.note || null].filter(Boolean).join(" · ");
+  // Left line: the date in flat lists, otherwise the note or account. Right line: account or "Transfer".
+  const left = showDate ? relativeDay(tx.date) : tx.note || where;
+  const right = isTransfer ? "Transfer" : showDate || tx.note ? tx.account.name : "";
 
   return (
     <li>
       <Link
         href={`/transactions/${tx.id}`}
-        className="flex items-center gap-3 rounded-2xl bg-muted px-3 py-3 transition-colors hover:bg-line/70 sm:px-4"
+        className="-mx-2 flex items-center gap-3 rounded-2xl px-2 py-2 transition-colors hover:bg-surface/70"
       >
         <TransactionIcon tx={tx} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-bold">{title}</span>
-          <span className="block truncate text-xs text-ink-soft">{meta}</span>
+          <span className="block truncate font-semibold">{title}</span>
+          <span className="block truncate text-sm text-ink-soft">{left}</span>
           {tx.tags.length > 0 ? (
             <span className="mt-1.5 flex flex-wrap gap-1">
               {tx.tags.map((tag) => (
                 <span
                   key={tag.id}
-                  className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-ink-soft"
+                  className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-ink-soft ring-1 ring-line/60"
                 >
                   <span className="size-1.5 rounded-full" style={{ background: tag.color }} aria-hidden />
                   {tag.name}
@@ -54,11 +59,13 @@ function TransactionItem({ tx, showDate }: { tx: TransactionRow; showDate: boole
             </span>
           ) : null}
         </span>
-        <span className="flex shrink-0 flex-col items-end">
+        <span className="flex max-w-[45%] shrink-0 flex-col items-end">
           <Amount minor={tx.amount} currency={tx.account.currency} kind={tx.type} />
           {isTransfer && tx.toAccount && tx.toAccount.currency !== tx.account.currency && tx.toAmount ? (
             <Amount minor={tx.toAmount} currency={tx.toAccount.currency} kind="TRANSFER" className="text-xs font-medium" />
-          ) : null}
+          ) : (
+            <span className="max-w-full truncate text-sm text-ink-soft">{right || "\u00a0"}</span>
+          )}
         </span>
       </Link>
     </li>
@@ -69,7 +76,7 @@ function TransactionItem({ tx, showDate }: { tx: TransactionRow; showDate: boole
 export function TransactionList({ transactions, groupByDay = true }: { transactions: TransactionRow[]; groupByDay?: boolean }) {
   if (!groupByDay) {
     return (
-      <ul className="space-y-2">
+      <ul className="space-y-1">
         {transactions.map((tx) => (
           <TransactionItem key={tx.id} tx={tx} showDate />
         ))}
@@ -87,11 +94,11 @@ export function TransactionList({ transactions, groupByDay = true }: { transacti
     <div className="space-y-5">
       {[...groups].map(([day, items]) => (
         <section key={day}>
-          <h3 className="mb-2 px-1 text-xs font-bold tracking-wide text-ink-soft uppercase">
+          <h3 className="mb-1 text-sm font-semibold text-ink-soft">
             {relativeDay(items[0].date)}
-            <span className="font-medium normal-case"> · {formatDay(items[0].date, "full")}</span>
+            <span className="font-normal"> · {formatDay(items[0].date, "full")}</span>
           </h3>
-          <ul className="space-y-2">
+          <ul className="space-y-1">
             {items.map((tx) => (
               <TransactionItem key={tx.id} tx={tx} showDate={false} />
             ))}

@@ -17,7 +17,7 @@ export function Avatar({ name, className }: { name: string; className?: string }
   return (
     <span
       className={cn(
-        "flex size-10 shrink-0 items-center justify-center rounded-full bg-lime text-sm font-bold text-on-lime",
+        "flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-semibold text-on-primary-soft",
         className,
       )}
     >
@@ -30,18 +30,18 @@ export async function SidebarUser() {
   const user = await getCurrentUser();
   return (
     <div className="flex items-center gap-2">
-      <Link href="/settings" className="flex min-w-0 flex-1 items-center gap-3 rounded-full p-1 hover:bg-white/10">
+      <Link href="/settings" className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl p-1.5 hover:bg-muted">
         <Avatar name={user.name} />
         <span className="min-w-0">
           <span className="block truncate text-sm font-semibold">{user.name}</span>
-          <span className="block truncate text-xs text-on-forest/60">{user.email}</span>
+          <span className="block truncate text-xs text-ink-soft">{user.email}</span>
         </span>
       </Link>
       <form action={logout}>
         <button
           type="submit"
           aria-label="Sign out"
-          className="rounded-full p-2.5 text-on-forest/70 hover:bg-white/10 hover:text-on-forest"
+          className="rounded-xl p-2.5 text-ink-soft hover:bg-muted hover:text-ink"
         >
           <LogOut className="size-5" aria-hidden />
         </button>

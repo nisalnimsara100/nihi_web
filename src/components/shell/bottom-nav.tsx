@@ -8,9 +8,9 @@ import { isActive, MORE_ITEMS } from "./nav-items";
 
 const TABS = [
   { href: "/dashboard", label: "Home", icon: House },
-  { href: "/statistics", label: "Statistics", icon: ChartColumn },
-  { href: "/transactions/new", label: "Add transaction", icon: Plus },
   { href: "/accounts", label: "Wallet", icon: Wallet },
+  { href: "/transactions/new", label: "Add", icon: Plus },
+  { href: "/statistics", label: "Stats", icon: ChartColumn },
   { href: "/more", label: "Profile", icon: CircleUser },
 ];
 
@@ -27,9 +27,9 @@ export function BottomNavLinks({ pathname }: { pathname: string }) {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg lg:hidden"
     >
-      <div className="mx-auto grid h-[68px] max-w-md grid-cols-5 items-center rounded-full bg-forest px-2 shadow-xl shadow-forest/25">
+      <div className="mx-auto grid h-16 max-w-md grid-cols-5">
         {TABS.map(({ href, label, icon: Icon }) => {
           const active = href === activeHref;
           const isAdd = href === "/transactions/new";
@@ -37,19 +37,20 @@ export function BottomNavLinks({ pathname }: { pathname: string }) {
             <Link
               key={href}
               href={href}
-              aria-label={label}
               aria-current={active ? "page" : undefined}
-              className="flex justify-center"
+              className={cn(
+                "flex flex-col items-center justify-center gap-1 text-[11px] font-medium",
+                active ? "text-primary" : "text-ink-faint",
+              )}
             >
-              <span
-                className={cn(
-                  "flex size-12 items-center justify-center rounded-full transition-colors",
-                  active ? "bg-lime text-on-lime" : "text-on-forest/90",
-                  isAdd && !active && "ring-2 ring-on-forest/90 size-9",
-                )}
-              >
-                <Icon className={isAdd && !active ? "size-5" : "size-6"} strokeWidth={2.2} aria-hidden />
-              </span>
+              {isAdd ? (
+                <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-on-primary shadow-md shadow-primary/30">
+                  <Icon className="size-5" strokeWidth={2.4} aria-hidden />
+                </span>
+              ) : (
+                <Icon className="size-6" strokeWidth={active ? 2.3 : 1.8} aria-hidden />
+              )}
+              {isAdd ? <span className="sr-only">{label}</span> : label}
             </Link>
           );
         })}

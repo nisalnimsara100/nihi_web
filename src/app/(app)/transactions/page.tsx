@@ -149,7 +149,7 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
         </div>
       ) : null}
 
-      <Card className="p-3 sm:p-4">
+      <div className="rounded-3xl bg-muted p-4 sm:p-5">
         {transactions.length > 0 ? (
           <TransactionList transactions={transactions} />
         ) : (
@@ -160,7 +160,7 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
             action={<ButtonLink href="/transactions/new">Add transaction</ButtonLink>}
           />
         )}
-      </Card>
+      </div>
     </>
   );
 }

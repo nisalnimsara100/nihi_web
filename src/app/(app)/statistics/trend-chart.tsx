@@ -14,16 +14,16 @@ function TrendTooltip({ active, payload, currency }: TooltipContentProps<number,
   if (!active || !payload?.length) return null;
   const point = payload[0].payload as TrendPoint;
   return (
-    <div className="rounded-2xl bg-forest px-3.5 py-2.5 text-sm text-on-forest shadow-xl">
+    <div className="rounded-2xl bg-primary px-3.5 py-2.5 text-sm text-on-primary shadow-xl">
       <p className="mb-1 font-medium">{point.fullLabel}</p>
       {SERIES.map((s) => (
-        <p key={s.key} className="flex items-center gap-2 text-on-forest/80">
+        <p key={s.key} className="flex items-center gap-2 text-on-primary/80">
           <span className="size-2.5 rounded-sm" style={{ background: s.color }} aria-hidden />
           <span className="flex-1">{s.label}</span>
-          <span className="font-bold text-on-forest tabular-nums">{formatMoney(point[s.key], currency)}</span>
+          <span className="font-semibold text-on-primary tabular-nums">{formatMoney(point[s.key], currency)}</span>
         </p>
       ))}
-      <p className="mt-1.5 border-t border-white/15 pt-1.5 text-on-forest/70 tabular-nums">
+      <p className="mt-1.5 border-t border-white/15 pt-1.5 text-on-primary/70 tabular-nums">
         Net {formatMoney(point.income - point.expense, currency, { signed: true })}
       </p>
     </div>

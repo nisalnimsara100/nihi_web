@@ -10,8 +10,8 @@ import { CURRENCIES } from "@/lib/constants";
 export function LoginForm() {
   const { state, pending, onSubmit } = useActionForm(login);
   return (
-    <Card className="p-6 sm:p-7">
-      <h1 className="font-display text-4xl leading-none font-black tracking-tight text-headline uppercase font-stretch-condensed">Welcome back</h1>
+    <Card className="p-6 sm:p-8">
+      <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
       <p className="mt-2 text-sm text-ink-soft">Log in to your NiHi account.</p>
       <form onSubmit={onSubmit} className="mt-6 space-y-4" noValidate>
         <FormError state={state} />
@@ -21,12 +21,12 @@ export function LoginForm() {
         <Field label="Password" htmlFor="password" error={state.fieldErrors?.password}>
           <input id="password" name="password" type="password" autoComplete="current-password" required className={inputClass} aria-invalid={!!state.fieldErrors?.password} />
         </Field>
-        <SubmitButton pending={pending} className="h-14 w-full text-base tracking-wide uppercase">
+        <SubmitButton pending={pending} className="h-13 w-full text-base">
           Log in
         </SubmitButton>
       </form>
       <div className="mt-3">
-        <ButtonLink href="/signup" variant="lime" size="lg" className="w-full tracking-wide uppercase">
+        <ButtonLink href="/signup" variant="soft" className="h-13 w-full text-base">
           Create account
         </ButtonLink>
       </div>
@@ -37,8 +37,8 @@ export function LoginForm() {
 export function SignupForm() {
   const { state, pending, onSubmit } = useActionForm(signup);
   return (
-    <Card className="p-6 sm:p-7">
-      <h1 className="font-display text-4xl leading-none font-black tracking-tight text-headline uppercase font-stretch-condensed">Create your account</h1>
+    <Card className="p-6 sm:p-8">
+      <h1 className="text-2xl font-semibold tracking-tight">Create your account</h1>
       <p className="mt-2 text-sm text-ink-soft">Start tracking in under a minute.</p>
       <form onSubmit={onSubmit} className="mt-6 space-y-4" noValidate>
         <FormError state={state} />
@@ -60,13 +60,13 @@ export function SignupForm() {
             ))}
           </select>
         </Field>
-        <SubmitButton pending={pending} className="h-14 w-full text-base tracking-wide uppercase">
+        <SubmitButton pending={pending} className="h-13 w-full text-base">
           Create account
         </SubmitButton>
       </form>
       <p className="mt-6 text-center text-sm text-ink-soft">
         Already have an account?{" "}
-        <Link href="/login" className="font-bold text-ink hover:underline">
+        <Link href="/login" className="font-semibold text-primary hover:underline">
           Log in
         </Link>
       </p>

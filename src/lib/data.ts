@@ -81,6 +81,7 @@ export type CategoryBreakdown = {
   id: string | null;
   name: string;
   color: string;
+  icon: string;
   total: number;
   count: number;
 }[];
@@ -101,7 +102,7 @@ export async function getCategoryBreakdown(
   });
   const categories = await db.category.findMany({
     where: { id: { in: rows.flatMap((r) => (r.categoryId ? [r.categoryId] : [])) } },
-    select: { id: true, name: true, color: true },
+    select: { id: true, name: true, color: true, icon: true },
   });
   const byId = new Map(categories.map((c) => [c.id, c]));
 
@@ -112,6 +113,7 @@ export async function getCategoryBreakdown(
         id: row.categoryId,
         name: category?.name ?? "Uncategorized",
         color: category?.color ?? "#8a8984",
+        icon: category?.icon ?? "other",
         total: row._sum.amount ?? 0,
         count: row._count._all,
       };
@@ -155,7 +157,7 @@ export async function getMonthlyTrend(
 export const transactionInclude = {
   account: { select: { id: true, name: true, currency: true, color: true } },
   toAccount: { select: { id: true, name: true, currency: true, color: true } },
-  category: { select: { id: true, name: true, color: true } },
+  category: { select: { id: true, name: true, color: true, icon: true } },
   tags: { select: { id: true, name: true, color: true }, orderBy: { name: "asc" } },
 } satisfies Prisma.TransactionInclude;
 

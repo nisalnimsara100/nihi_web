@@ -23,10 +23,10 @@ export default function MorePage() {
         {MORE_ITEMS.map(({ href, label, icon: Icon }) => (
           <li key={href}>
             <Link href={href} className={tile}>
-              <span className="flex size-10 items-center justify-center rounded-full bg-forest text-lime">
+              <span className="flex size-10 items-center justify-center rounded-2xl bg-primary-soft text-on-primary-soft">
                 <Icon className="size-5" aria-hidden />
               </span>
-              <span className="flex-1 font-bold">{label}</span>
+              <span className="flex-1 font-semibold">{label}</span>
               <ChevronRight className="size-5 text-ink-faint" aria-hidden />
             </Link>
           </li>
@@ -34,10 +34,10 @@ export default function MorePage() {
         <li>
           <form action={logout}>
             <button type="submit" className={`${tile} text-danger`}>
-              <span className="flex size-10 items-center justify-center rounded-full bg-danger-soft">
+              <span className="flex size-10 items-center justify-center rounded-2xl bg-danger-soft">
                 <LogOut className="size-5" aria-hidden />
               </span>
-              <span className="flex-1 font-bold">Sign out</span>
+              <span className="flex-1 font-semibold">Sign out</span>
             </button>
           </form>
         </li>
@@ -49,11 +49,11 @@ export default function MorePage() {
 async function ProfileCard() {
   const user = await getCurrentUser();
   return (
-    <div className="mb-4 flex items-center gap-4 rounded-[28px] bg-lime p-5 text-on-lime">
-      <Avatar name={user.name} className="size-14 bg-forest text-lg text-lime" />
+    <div className="bg-hero mb-4 flex items-center gap-4 rounded-3xl p-5 text-white shadow-lg shadow-primary/20">
+      <Avatar name={user.name} className="size-14 bg-white/20 text-lg text-white ring-2 ring-white/30" />
       <div className="min-w-0">
-        <p className="truncate text-lg font-bold">{user.name}</p>
-        <p className="truncate text-sm text-on-lime/70">{user.email}</p>
+        <p className="truncate text-lg font-semibold">{user.name}</p>
+        <p className="truncate text-sm text-white/75">{user.email}</p>
       </div>
     </div>
   );

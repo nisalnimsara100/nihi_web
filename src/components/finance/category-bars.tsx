@@ -1,6 +1,6 @@
 import type { CategoryBreakdown } from "@/lib/data";
 import { formatMoney } from "@/lib/money";
-import { ColorDot } from "@/components/ui";
+import { CategoryIcon } from "@/lib/category-icons";
 
 /**
  * Ranked part-to-whole list: one bar hue for magnitude, the category's own
@@ -25,6 +25,7 @@ export function CategoryBars({
         id: "__other",
         name: `Other (${rest.length})`,
         color: "#8a8984",
+        icon: "other",
         total: rest.reduce((s, r) => s + r.total, 0),
         count: rest.reduce((s, r) => s + r.count, 0),
       },
@@ -39,9 +40,11 @@ export function CategoryBars({
         return (
           <li key={row.id ?? "none"}>
             <div className="flex items-center gap-2 text-sm">
-              <ColorDot color={row.color} />
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-muted">
+                <CategoryIcon name={row.icon} className="size-4" style={{ color: row.color }} />
+              </span>
               <span className="min-w-0 flex-1 truncate font-medium">{row.name}</span>
-              <span className="font-bold tabular-nums">{formatMoney(row.total, currency)}</span>
+              <span className="font-semibold tabular-nums">{formatMoney(row.total, currency)}</span>
               <span className="w-10 text-right text-xs text-ink-soft tabular-nums">{share}%</span>
             </div>
             <div className="mt-1.5 h-2.5 rounded-full bg-muted" aria-hidden>

@@ -80,7 +80,7 @@ export function AccountForm({ initial }: { initial: AccountFormValues }) {
 
         {initial.id ? (
           <label className="flex items-start gap-3 rounded-2xl bg-muted p-4">
-            <input type="checkbox" name="archived" defaultChecked={initial.archived} className="mt-0.5 size-4 accent-forest" />
+            <input type="checkbox" name="archived" defaultChecked={initial.archived} className="mt-0.5 size-4 accent-primary" />
             <span>
               <span className="block text-sm font-medium">Archived</span>
               <span className="block text-sm text-ink-soft">
