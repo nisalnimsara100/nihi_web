@@ -5,6 +5,7 @@ import { logout } from "@/actions/auth";
 import { Button, Card, CardHeader, PageHeader, Skeleton } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { db, run } from "@/lib/db";
+import { mailConfigured } from "@/lib/mail";
 import { PartnerSharing } from "./partner-sharing";
 import { PasswordForm, ProfileForm } from "./settings-forms";
 
@@ -62,6 +63,8 @@ async function Partners() {
   ]);
   return (
     <PartnerSharing
+      mailReady={mailConfigured()}
+      ownerName={user.name}
       sent={sent.map((s) => ({ id: s.id, email: s.email, token: s.token, accepted: s.acceptedAt !== null }))}
       received={received.map((s) => ({ id: s.id, ownerId: s.ownerId, ownerName: s.owner?.name ?? "Unknown" }))}
     />

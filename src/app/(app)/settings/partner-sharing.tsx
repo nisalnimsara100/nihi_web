@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { invitePartner, leaveShare, removeShare, viewAs } from "@/actions/sharing";
+import { invitePartner, leaveShare, removeShare, resendInvite, viewAs } from "@/actions/sharing";
 import { DeleteButton, SubmitButton } from "@/components/form-bits";
 import { notify } from "@/components/toast";
 import { useActionForm } from "@/components/use-action-form";
@@ -11,7 +11,18 @@ export type SentShare = { id: string; email: string; token: string; accepted: bo
 export type ReceivedShare = { id: string; ownerId: string; ownerName: string };
 
 /** Lets you invite a partner to view your finances read-only, and open accounts shared with you. */
-export function PartnerSharing({ sent, received }: { sent: SentShare[]; received: ReceivedShare[] }) {
+export function PartnerSharing({
+  sent,
+  received,
+  mailReady,
+  ownerName,
+}: {
+  sent: SentShare[];
+  received: ReceivedShare[];
+  /** The server can send email itself (SMTP is configured). */
+  mailReady: boolean;
+  ownerName: string;
+}) {
   const { state, pending, formRef, onSubmit } = useActionForm(invitePartner, { resetOnSuccess: true });
   const errors = state.fieldErrors ?? {};
 
@@ -22,8 +33,7 @@ export function PartnerSharing({ sent, received }: { sent: SentShare[]; received
         <section>
           <h3 className="text-sm font-semibold">Let someone view your finances</h3>
           <p className="mt-1 text-sm text-ink-soft">
-            They can look at everything but change nothing. Send them the invite link, then they sign in with the
-            invited email to accept it.
+            They can look at everything but change nothing. {mailReady ? "We email them the invite link." : "Send them the invite link by Gmail or any other way."} They sign in with the invited email to accept it.
           </p>
           <form ref={formRef} onSubmit={onSubmit} className="mt-3 space-y-3" noValidate>
             <Field label="Partner's email" htmlFor="partner-email" error={errors.email}>
@@ -37,7 +47,7 @@ export function PartnerSharing({ sent, received }: { sent: SentShare[]; received
                 className={inputClass}
               />
             </Field>
-            <SubmitButton pending={pending}>Create invite</SubmitButton>
+            <SubmitButton pending={pending}>{mailReady ? "Send invite" : "Create invite"}</SubmitButton>
           </form>
 
           {sent.length > 0 ? (
@@ -50,7 +60,8 @@ export function PartnerSharing({ sent, received }: { sent: SentShare[]; received
                       {share.accepted ? "Active: can view" : "Pending: waiting for them to accept"}
                     </span>
                   </span>
-                  <CopyInviteLink token={share.token} />
+                  {!share.accepted ? <InviteActions share={share} mailReady={mailReady} ownerName={ownerName} /> : null}
+                  {!share.accepted ? <CopyInviteLink token={share.token} /> : null}
                   <DeleteButton
                     size="sm"
                     label={share.accepted ? "Remove access" : "Cancel"}
@@ -88,6 +99,48 @@ export function PartnerSharing({ sent, received }: { sent: SentShare[]; received
         ) : null}
       </div>
     </Card>
+  );
+}
+
+/** Pending invite: send it by email. Resend works when the server can email; Gmail opens a ready-to-send message. */
+function InviteActions({ share, mailReady, ownerName }: { share: SentShare; mailReady: boolean; ownerName: string }) {
+  const [sending, setSending] = useState(false);
+
+  async function resend() {
+    setSending(true);
+    const result = await resendInvite(share.id);
+    setSending(false);
+    if (result.error) notify.error(result.error);
+    else notify.success(result.message ?? "Invite sent again", result.detail);
+  }
+
+  function openGmail() {
+    const link = `${window.location.origin}/invite/${share.token}`;
+    const subject = `${ownerName} invited you to view their finances on NiHi`;
+    const body = [
+      "Hi,",
+      "",
+      `${ownerName} invited you to view their finances on NiHi. You can look at everything but change nothing.`,
+      "",
+      `Open this link and sign in (or create an account) with this email address (${share.email}) to accept:`,
+      link,
+    ].join("\n");
+    const url = new URL("https://mail.google.com/mail/");
+    url.search = new URLSearchParams({ view: "cm", fs: "1", to: share.email, su: subject, body }).toString();
+    window.open(url.toString(), "_blank", "noopener");
+  }
+
+  return (
+    <>
+      {mailReady ? (
+        <Button type="button" size="sm" variant="secondary" onClick={resend} disabled={sending}>
+          {sending ? "Sending…" : "Resend email"}
+        </Button>
+      ) : null}
+      <Button type="button" size="sm" variant="secondary" onClick={openGmail}>
+        Send via Gmail
+      </Button>
+    </>
   );
 }
 

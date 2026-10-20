@@ -7,12 +7,41 @@ import { z } from "zod";
 import { requireUserId } from "@/lib/auth";
 import { db, run } from "@/lib/db";
 import { flash } from "@/lib/flash";
+import { mailConfigured, sendMail } from "@/lib/mail";
+import { getOrigin } from "@/lib/site";
 import { clearViewCookie, getViewCookie, setViewCookie } from "@/lib/session";
 import { fromZodError, type ActionState } from "./state";
 
 const inviteSchema = z.object({
   email: z.email("Enter a valid email").trim().toLowerCase(),
 });
+
+const escapeHtml = (v: string) => v.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+
+/** Emails the invite link. Returns an error message when it could not be sent, otherwise null. */
+async function emailInvite(ownerName: string, to: string, token: string): Promise<string | null> {
+  if (!mailConfigured()) return "Email sending isn't set up on this site yet.";
+  const link = `${await getOrigin()}/invite/${token}`;
+  const subject = `${ownerName} invited you to view their finances on NiHi`;
+  const text = [
+    `Hi,`,
+    ``,
+    `${ownerName} invited you to view their finances on NiHi. You can look at everything but change nothing.`,
+    ``,
+    `Open this link and sign in (or create an account) with this email address (${to}) to accept:`,
+    link,
+    ``,
+    `If you weren't expecting this, you can ignore the email.`,
+  ].join("\n");
+  const html = `<p>Hi,</p><p><b>${escapeHtml(ownerName)}</b> invited you to view their finances on NiHi. You can look at everything but change nothing.</p><p>Sign in (or create an account) with this email address (${escapeHtml(to)}) to accept:</p><p><a href="${link}">${link}</a></p><p style="color:#6e6e73">If you weren't expecting this, you can ignore the email.</p>`;
+  try {
+    await sendMail({ to, subject, text, html });
+    return null;
+  } catch (error) {
+    console.error("Invite email failed:", error);
+    return "The email couldn't be sent.";
+  }
+}
 
 /** Invites an email to view your data. Inviting the same email again issues a new link. */
 export async function invitePartner(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -23,20 +52,34 @@ export async function invitePartner(_prev: ActionState, formData: FormData): Pro
   }
   const { email } = parsed.data;
 
-  const me = await run(db().from("User").select("email").eq("id", userId).single());
+  const me = await run(db().from("User").select("email, name").eq("id", userId).single());
   if (me.email === email) {
     return { fieldErrors: { email: ["That's your own email"] } };
   }
 
   // A fresh token also revokes any link sent before; the partner, if accepted, keeps access.
-  await run(
-    db()
-      .from("PartnerShare")
-      .upsert({ ownerId: userId, email, token: randomBytes(24).toString("base64url") }, { onConflict: "ownerId,email" }),
-  );
+  const token = randomBytes(24).toString("base64url");
+  await run(db().from("PartnerShare").upsert({ ownerId: userId, email, token }, { onConflict: "ownerId,email" }));
 
+  const failure = await emailInvite(me.name, email, token);
   revalidatePath("/", "layout");
-  return { ok: true, message: "Invite created", detail: `Copy the link and send it to ${email}.` };
+  return failure
+    ? { ok: true, message: "Invite created", detail: `${failure} Use "Send via Gmail" or copy the link and send it to ${email}.` }
+    : { ok: true, message: "Invite sent", detail: `We emailed ${email}. They sign in with that email to accept.` };
+}
+
+/** Emails a pending invite again, with the same link. */
+export async function resendInvite(id: string): Promise<ActionState> {
+  const userId = await requireUserId();
+  const [share, me] = await Promise.all([
+    run(db().from("PartnerShare").select("email, token, acceptedAt").eq("id", id).eq("ownerId", userId).maybeSingle()),
+    run(db().from("User").select("name").eq("id", userId).single()),
+  ]);
+  if (!share || share.acceptedAt) {
+    return { error: "This invite is no longer pending." };
+  }
+  const failure = await emailInvite(me.name, share.email, share.token);
+  return failure ? { error: failure } : { ok: true, message: "Invite sent again", detail: share.email };
 }
 
 /** Owner revokes a partner's access, or cancels a pending invite. */
