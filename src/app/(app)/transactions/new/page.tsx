@@ -24,7 +24,7 @@ export default function NewTransactionPage({ searchParams }: { searchParams: Sea
 async function NewTransaction({ searchParams }: { searchParams: SearchParams }) {
   const { user } = await requireOwnView();
   const sp = await searchParams;
-  const { accounts, categories, tags } = await getTransactionFormOptions(user.id);
+  const { accounts, categories, tags, history } = await getTransactionFormOptions(user.id);
 
   if (accounts.length === 0) {
     return (
@@ -49,6 +49,7 @@ async function NewTransaction({ searchParams }: { searchParams: SearchParams }) 
       accounts={accounts}
       categories={categories}
       tags={tags}
+      history={history}
       initial={{
         type,
         amount: "",

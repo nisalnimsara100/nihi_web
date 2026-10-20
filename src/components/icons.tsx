@@ -68,6 +68,10 @@ import {
   TShirtIcon,
   Tag01Icon,
   Tick02Icon,
+  Camera01Icon,
+  Cancel01Icon,
+  Image01Icon,
+  ScanEyeIcon,
   Ticket01Icon,
   Train01Icon,
   TreePalmIcon,
@@ -116,7 +120,11 @@ export const CaretLeft = icon(ArrowLeft01Icon, "CaretLeft");
 export const CaretRight = icon(ArrowRight01Icon, "CaretRight");
 export const ChartBar = icon(ChartColumnIcon, "ChartBar");
 export const ChartLine = icon(ChartLineData01Icon, "ChartLine");
+export const Camera = icon(Camera01Icon, "Camera");
 export const Check = icon(Tick02Icon, "Check");
+export const ImageSquare = icon(Image01Icon, "ImageSquare");
+export const Scan = icon(ScanEyeIcon, "Scan");
+export const X = icon(Cancel01Icon, "X");
 export const CircleNotch = icon(Loading03Icon, "CircleNotch");
 export const Coffee = icon(Coffee01Icon, "Coffee");
 export const Confetti = icon(PartyIcon, "Confetti");
