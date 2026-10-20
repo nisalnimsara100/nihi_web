@@ -12,7 +12,6 @@ import type { Enums } from "@/lib/database.types";
 import { ACCOUNT_TYPES, accountTypeLabel, CURRENCIES } from "@/lib/constants";
 import { cn } from "@/lib/cn";
 import { creditFaceInfo, creditSummary } from "@/lib/credit-card";
-import { todayDay } from "@/lib/dates";
 import { formatMoney, parseAmount } from "@/lib/money";
 
 type AccountType = Enums<"AccountType">;
@@ -27,15 +26,10 @@ export type AccountFormValues = {
   theme: string;
   note: string;
   archived: boolean;
-  /** Credit card terms, as text for the inputs. Empty when not set. */
+  /** Credit card only, as text for the inputs. Empty when not set. */
   creditLimit: string;
-  statementDay: string;
-  dueDay: string;
+  /** Interest per month, in percent. */
   interestRate: string;
-  annualFee: string;
-  lateFee: string;
-  minPaymentPercent: string;
-  minPaymentFloor: string;
   /** Current balance minus the starting balance, so the preview shows the real balance while editing. */
   balanceOffset?: number;
 };
@@ -53,30 +47,16 @@ export function AccountForm({ initial }: { initial: AccountFormValues }) {
     color: initial.color,
     theme: initial.theme,
     creditLimit: initial.creditLimit,
-    dueDay: initial.dueDay,
+    interestRate: initial.interestRate,
   });
   const update = (patch: Partial<typeof preview>) => setPreview((p) => ({ ...p, ...patch }));
   const previewBalance = (initial.balanceOffset ?? 0) + (parseAmount(preview.initialBalance || "0") ?? 0);
   const isCredit = preview.type === "CREDIT_CARD";
-  const previewCredit = isCredit
-    ? creditFaceInfo(
-        creditSummary(
-          previewBalance,
-          {
-            creditLimit: parseAmount(preview.creditLimit || "") ,
-            statementDay: null,
-            dueDay: Number(preview.dueDay) >= 1 && Number(preview.dueDay) <= 31 ? Number(preview.dueDay) : null,
-            interestRate: null,
-            annualFee: null,
-            lateFee: null,
-            minPaymentPercent: 5,
-            minPaymentFloor: 0,
-          },
-          todayDay(),
-        ),
-        preview.currency,
-      )
-    : undefined;
+  const creditSummaryNow = creditSummary(previewBalance, {
+    creditLimit: parseAmount(preview.creditLimit || ""),
+    interestRate: preview.interestRate.trim() && Number.isFinite(Number(preview.interestRate)) ? Number(preview.interestRate) : null,
+  });
+  const previewCredit = isCredit ? creditFaceInfo(creditSummaryNow, preview.currency) : undefined;
 
   return (
     <Card className="p-4 sm:p-6">
@@ -161,57 +141,39 @@ export function AccountForm({ initial }: { initial: AccountFormValues }) {
         </Field>
 
         {isCredit ? (
-          // A div instead of a fieldset: a legend sits on the border and overlapped the text below it.
-          // The inputs are grey, so the box is white with an outline to keep them visible.
-          <div role="group" aria-labelledby="credit-terms-title" className="space-y-4 rounded-3xl border border-line p-4 sm:p-5">
-            <h3 id="credit-terms-title" className="text-base font-bold text-ink">Credit card terms</h3>
-            <p className="text-sm text-ink-soft">
-              Copy these from your card statement or your bank&apos;s fee schedule. NiHi uses them to show your available credit and
-              payment due date. They are estimates; your statement is always the final word.
-            </p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Credit limit" htmlFor="creditLimit" error={errors.creditLimit}>
-                <input
-                  id="creditLimit"
-                  name="creditLimit"
-                  inputMode="decimal"
-                  defaultValue={initial.creditLimit}
-                  onChange={(e) => update({ creditLimit: e.target.value })}
-                  placeholder="e.g. 200000"
-                  className={cn(inputClass, "tabular-nums")}
-                />
-              </Field>
-              <Field label="Interest rate (% per year)" htmlFor="interestRate" error={errors.interestRate}>
-                <input id="interestRate" name="interestRate" inputMode="decimal" defaultValue={initial.interestRate} placeholder="e.g. 24" className={cn(inputClass, "tabular-nums")} />
-              </Field>
-              <Field label="Statement day" htmlFor="statementDay" error={errors.statementDay} hint="Day of the month your statement is issued.">
-                <input id="statementDay" name="statementDay" inputMode="numeric" maxLength={2} defaultValue={initial.statementDay} placeholder="e.g. 5" className={cn(inputClass, "tabular-nums")} />
-              </Field>
-              <Field label="Payment due day" htmlFor="dueDay" error={errors.dueDay} hint="Day of the month the payment is due.">
-                <input
-                  id="dueDay"
-                  name="dueDay"
-                  inputMode="numeric"
-                  maxLength={2}
-                  defaultValue={initial.dueDay}
-                  onChange={(e) => update({ dueDay: e.target.value })}
-                  placeholder="e.g. 25"
-                  className={cn(inputClass, "tabular-nums")}
-                />
-              </Field>
-              <Field label="Minimum payment (% of balance)" htmlFor="minPaymentPercent" error={errors.minPaymentPercent} hint="Often 4 to 5%.">
-                <input id="minPaymentPercent" name="minPaymentPercent" inputMode="decimal" defaultValue={initial.minPaymentPercent} className={cn(inputClass, "tabular-nums")} />
-              </Field>
-              <Field label="Minimum payment, at least" htmlFor="minPaymentFloor" error={errors.minPaymentFloor} hint="The smallest minimum your bank asks for.">
-                <input id="minPaymentFloor" name="minPaymentFloor" inputMode="decimal" defaultValue={initial.minPaymentFloor} className={cn(inputClass, "tabular-nums")} />
-              </Field>
-              <Field label="Annual fee" htmlFor="annualFee" error={errors.annualFee}>
-                <input id="annualFee" name="annualFee" inputMode="decimal" defaultValue={initial.annualFee} placeholder="optional" className={cn(inputClass, "tabular-nums")} />
-              </Field>
-              <Field label="Late payment fee" htmlFor="lateFee" error={errors.lateFee}>
-                <input id="lateFee" name="lateFee" inputMode="decimal" defaultValue={initial.lateFee} placeholder="optional" className={cn(inputClass, "tabular-nums")} />
-              </Field>
-            </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label="Credit limit"
+              htmlFor="creditLimit"
+              error={errors.creditLimit}
+              hint={creditSummaryNow.available !== null ? `Remaining: ${formatMoney(creditSummaryNow.available, preview.currency)}` : "The most the bank lets you owe."}
+            >
+              <input
+                id="creditLimit"
+                name="creditLimit"
+                inputMode="decimal"
+                defaultValue={initial.creditLimit}
+                onChange={(e) => update({ creditLimit: e.target.value })}
+                placeholder="e.g. 200000"
+                className={cn(inputClass, "tabular-nums")}
+              />
+            </Field>
+            <Field
+              label="Interest rate (% per month)"
+              htmlFor="interestRate"
+              error={errors.interestRate}
+              hint={creditSummaryNow.monthlyInterest ? `About ${formatMoney(creditSummaryNow.monthlyInterest, preview.currency)} a month on what you owe` : "Optional."}
+            >
+              <input
+                id="interestRate"
+                name="interestRate"
+                inputMode="decimal"
+                defaultValue={initial.interestRate}
+                onChange={(e) => update({ interestRate: e.target.value })}
+                placeholder="e.g. 3"
+                className={cn(inputClass, "tabular-nums")}
+              />
+            </Field>
           </div>
         ) : null}
 

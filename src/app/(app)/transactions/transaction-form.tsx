@@ -6,7 +6,6 @@ import { deleteTransaction, saveTransaction } from "@/actions/transactions";
 import { ScanSheet, type ScanCard, type ScanResult } from "@/components/finance/scan-sheet";
 import { CreditCard, Prohibit, Scan } from "@/components/icons";
 import { cardLabel } from "@/lib/card-networks";
-import { formatMoney, parseAmount } from "@/lib/money";
 import type { HistoryRow } from "@/lib/scan/categorize";
 import { DateField, DeleteButton, SubmitButton } from "@/components/form-bits";
 import { useActionForm } from "@/components/use-action-form";
@@ -18,7 +17,7 @@ import { cn } from "@/lib/cn";
 type TransactionType = Enums<"TransactionType">;
 
 type Option = { id: string; name: string; color: string };
-type AccountOption = Option & { currency: string; /** Room left under a credit card's limit, in minor units. */ available: number | null };
+type AccountOption = Option & { currency: string };
 type CategoryOption = Option & { type: "INCOME" | "EXPENSE"; icon: string };
 
 export type TransactionFormValues = {
@@ -67,7 +66,6 @@ export function TransactionForm({
   const [scanOpen, setScanOpen] = useState(false);
   const [date, setDate] = useState(initial.date);
   const [cardId, setCardId] = useState(initial.cardId);
-  const [amountText, setAmountText] = useState(initial.amount);
   // The amount, date and note inputs are uncontrolled; a new key remounts them with scanned values.
   const [scanned, setScanned] = useState({ n: 0, amount: initial.amount, date: initial.date, note: initial.note });
   const errors = state.fieldErrors ?? {};
@@ -75,12 +73,6 @@ export function TransactionForm({
   const isTransfer = type === "TRANSFER";
   const visibleCategories = categories.filter((c) => c.type === type);
   const from = accounts.find((a) => a.id === accountId);
-  // A new expense that would pass a credit card's limit: banks usually charge an over-limit fee.
-  const typedAmount = parseAmount(amountText);
-  const overBy =
-    !initial.id && type === "EXPENSE" && from?.available != null && typedAmount !== null && typedAmount > from.available
-      ? typedAmount - from.available
-      : 0;
   const accountCards = cards.filter((c) => c.accountId === accountId);
   const to = accounts.find((a) => a.id === toAccountId);
   const crossCurrency = isTransfer && from && to && from.currency !== to.currency;
@@ -100,7 +92,6 @@ export function TransactionForm({
       setToAccountId(accounts.find((a) => a.id !== r.accountId)?.id ?? "");
     }
     setDate(r.date);
-    setAmountText(r.amount);
     setCardId(r.cardId);
     setScanned((s) => ({ n: s.n + 1, amount: r.amount, date: r.date, note: r.note }));
     setScanOpen(false);
@@ -160,7 +151,6 @@ export function TransactionForm({
               autoComplete="off"
               placeholder="0.00"
               defaultValue={scanned.amount}
-              onChange={(e) => setAmountText(e.target.value)}
               autoFocus={!initial.id}
               aria-invalid={!!errors.amount}
               className={cn(inputClass, "h-14 pr-16 text-2xl font-semibold tabular-nums sm:text-2xl")}
@@ -170,13 +160,6 @@ export function TransactionForm({
             </span>
           </div>
         </Field>
-
-        {overBy > 0 && from ? (
-          <p role="alert" className="rounded-2xl bg-warning-soft p-3 text-sm font-semibold text-ink">
-            This is {formatMoney(overBy, from.currency)} more than the credit left on {from.name}. Your bank may charge an
-            over-limit fee.
-          </p>
-        ) : null}
 
         <div className={cn("grid gap-4", isTransfer && "sm:grid-cols-2")}>
           <Field label={isTransfer ? "From account" : "Account"} htmlFor="accountId" error={errors.accountId}>

@@ -7,7 +7,6 @@ import { param, type SearchParams } from "@/lib/search-params";
 import { accountTypeLabel } from "@/lib/constants";
 import { getAccounts, getCards, type AccountWithBalance } from "@/lib/data";
 import { creditFaceInfo, creditSummary } from "@/lib/credit-card";
-import { todayDay } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { AccountTile, WalletList, type WalletItem } from "./wallet-list";
 
@@ -38,7 +37,7 @@ function toItem(
       cards,
       credit:
         account.type === "CREDIT_CARD"
-          ? creditFaceInfo(creditSummary(account.balance, account, todayDay()), account.currency)
+          ? creditFaceInfo(creditSummary(account.balance, account), account.currency)
           : undefined,
       dimmed: account.archived,
     },
@@ -51,19 +50,36 @@ async function Accounts({ searchParams }: { searchParams: SearchParams }) {
   const [accounts, allCards] = await Promise.all([getAccounts(user.id, { includeArchived: true }), getCards(user.id)]);
   const cardsOf = (accountId: string) => allCards.filter((c) => c.accountId === accountId);
   const active = accounts.filter((a) => !a.archived);
+  // Savings are money set aside: they get their own section and are not part of the total.
+  const everyday = active.filter((a) => a.type !== "SAVINGS");
+  const savings = active.filter((a) => a.type === "SAVINGS");
   const archived = accounts.filter((a) => a.archived);
-  const canReorder = !readOnly && active.length > 1;
+  const canReorder = !readOnly && everyday.length > 1;
   const reordering = canReorder && param(sp, "reorder") === "1";
 
   const totals = new Map<string, number>();
-  for (const a of active) totals.set(a.currency, (totals.get(a.currency) ?? 0) + a.balance);
+  const cardsOwed = new Map<string, number>();
+  const savingsTotals = new Map<string, number>();
+  for (const a of savings) savingsTotals.set(a.currency, (savingsTotals.get(a.currency) ?? 0) + a.balance);
+  for (const a of everyday) {
+    // Credit cards are debt, so they are not part of the total. They are listed beside it.
+    if (a.type !== "CREDIT_CARD") totals.set(a.currency, (totals.get(a.currency) ?? 0) + a.balance);
+    else if (a.balance < 0) cardsOwed.set(a.currency, (cardsOwed.get(a.currency) ?? 0) - a.balance);
+  }
 
   return (
     <>
       <PageHeader
         title="Wallet"
         description={
-          totals.size > 0 ? `Total ${[...totals].map(([c, v]) => formatMoney(v, c)).join(" · ")}` : "Where your money lives."
+          totals.size > 0 || cardsOwed.size > 0
+            ? [
+                totals.size > 0 ? `Total ${[...totals].map(([c, v]) => formatMoney(v, c)).join(" · ")}` : "",
+                cardsOwed.size > 0 ? `Cards owe ${[...cardsOwed].map(([c, v]) => formatMoney(v, c)).join(" · ")}` : "",
+              ]
+                .filter(Boolean)
+                .join(" · ")
+            : "Where your money lives."
         }
         actions={
           readOnly ? undefined : (
@@ -96,8 +112,24 @@ async function Accounts({ searchParams }: { searchParams: SearchParams }) {
         </Card>
       ) : null}
 
-      {active.length > 0 ? (
-        <WalletList items={active.map((a) => toItem(a, cardsOf(a.id)))} readOnly={readOnly} editing={reordering} />
+      {everyday.length > 0 ? (
+        <WalletList items={everyday.map((a) => toItem(a, cardsOf(a.id)))} readOnly={readOnly} editing={reordering} />
+      ) : null}
+
+      {savings.length > 0 ? (
+        <section className={everyday.length > 0 ? "mt-10" : ""}>
+          <div className="mb-3 flex items-baseline justify-between gap-3">
+            <h2 className="text-base font-semibold">Savings</h2>
+            <span className="text-sm font-semibold tabular-nums text-ink-soft">
+              {[...savingsTotals].map(([c, v]) => formatMoney(v, c)).join(" · ")}
+            </span>
+          </div>
+          <div className="mx-auto grid max-w-md gap-4 sm:mx-0 sm:max-w-none sm:grid-cols-2 lg:grid-cols-3">
+            {savings.map((a, i) => (
+              <AccountTile key={a.id} item={toItem(a, cardsOf(a.id))} index={i} stacked={false} readOnly={readOnly} />
+            ))}
+          </div>
+        </section>
       ) : null}
 
       {archived.length > 0 ? (

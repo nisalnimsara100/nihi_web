@@ -31,12 +31,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       <main className="lg:pl-64">
         <div className="mx-auto max-w-6xl px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-32 sm:px-6 lg:px-8 lg:pt-10 lg:pb-12">
-          <Suspense>
-            <ProfileSwitcher />
-          </Suspense>
           {children}
         </div>
       </main>
+      <Suspense>
+        <ProfileSwitcher />
+      </Suspense>
 
       <Suspense fallback={<BottomNavLinks pathname="" />}>
         <AppBottomNav />
