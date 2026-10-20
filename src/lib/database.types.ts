@@ -17,6 +17,14 @@ export type Database = {
       Account: {
         Row: {
           archived: boolean
+          annualFee: number | null
+          creditLimit: number | null
+          dueDay: number | null
+          interestRate: number | null
+          lateFee: number | null
+          minPaymentFloor: number
+          minPaymentPercent: number
+          statementDay: number | null
           color: string
           createdAt: string
           currency: string
@@ -30,6 +38,14 @@ export type Database = {
         }
         Insert: {
           archived?: boolean
+          annualFee?: number | null
+          creditLimit?: number | null
+          dueDay?: number | null
+          interestRate?: number | null
+          lateFee?: number | null
+          minPaymentFloor?: number
+          minPaymentPercent?: number
+          statementDay?: number | null
           color: string
           createdAt?: string
           currency: string
@@ -43,6 +59,14 @@ export type Database = {
         }
         Update: {
           archived?: boolean
+          annualFee?: number | null
+          creditLimit?: number | null
+          dueDay?: number | null
+          interestRate?: number | null
+          lateFee?: number | null
+          minPaymentFloor?: number
+          minPaymentPercent?: number
+          statementDay?: number | null
           color?: string
           createdAt?: string
           currency?: string

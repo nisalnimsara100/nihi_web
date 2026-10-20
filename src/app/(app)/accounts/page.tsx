@@ -6,6 +6,8 @@ import { ButtonLink, Card, EmptyState, IconLink, MaybeLink, PageHeader, PageSkel
 import { getViewer } from "@/lib/auth";
 import { accountTypeLabel } from "@/lib/constants";
 import { getAccounts, getCards, type AccountWithBalance } from "@/lib/data";
+import { creditFaceInfo, creditSummary } from "@/lib/credit-card";
+import { todayDay } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/cn";
 
@@ -52,6 +54,7 @@ function AccountCard({
         color={account.color}
         label={`${accountTypeLabel(account.type)}${account.archived ? " · Archived" : ""}`}
         cards={cards}
+        credit={account.type === "CREDIT_CARD" ? creditFaceInfo(creditSummary(account.balance, account, todayDay()), account.currency) : undefined}
         dimmed={account.archived}
         className="shadow-[0_-6px_24px_rgb(20_21_28/0.14)] sm:shadow-lg sm:shadow-primary/10"
       />

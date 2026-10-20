@@ -32,6 +32,14 @@ async function NewAccount() {
         theme: DEFAULT_CARD_THEME,
         note: "",
         archived: false,
+        creditLimit: "",
+        statementDay: "",
+        dueDay: "",
+        interestRate: "",
+        annualFee: "",
+        lateFee: "",
+        minPaymentPercent: "5",
+        minPaymentFloor: "500.00",
       }}
     />
   );
