@@ -25,9 +25,11 @@ import { Avatar } from "@/components/shell/user-menu";
 import { ButtonLink, Card, CardHeader, ColorDot, EmptyState, MaybeLink, PageSkeleton, SeeAll } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
 import { accountTypeLabel } from "@/lib/constants";
+import { DueRecurring } from "@/components/finance/due-recurring";
 import { budgetStatus } from "@/lib/budgets";
-import { getAccounts, getBudgetRows, getCategoryBreakdown, getRecentTransactions, getTotalsByCurrency } from "@/lib/data";
-import { currentMonthKey, formatMonth, monthRange } from "@/lib/dates";
+import { dueCount, type Frequency } from "@/lib/recurring";
+import { getAccounts, getBudgetRows, getDueRecurring, getCategoryBreakdown, getRecentTransactions, getTotalsByCurrency } from "@/lib/data";
+import { currentMonthKey, dueLabel, formatMonth, monthRange, todayDay } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/cn";
 
@@ -61,12 +63,13 @@ async function Dashboard() {
   const { start, end } = monthRange(month);
   const currency = user.defaultCurrency;
 
-  const [accounts, totals, breakdown, recent, budgetRows] = await Promise.all([
+  const [accounts, totals, breakdown, recent, budgetRows, dueRules] = await Promise.all([
     getAccounts(user.id),
     getTotalsByCurrency(user.id, start, end),
     getCategoryBreakdown(user.id, "EXPENSE", currency, start, end),
     getRecentTransactions(user.id, 6),
     getBudgetRows(user.id, currency, month),
+    readOnly ? Promise.resolve([]) : getDueRecurring(user.id, todayDay()),
   ]);
 
   // The total balance is money you have. Credit cards are debt to a bank, so they stay out of it
@@ -224,6 +227,22 @@ async function Dashboard() {
         </div>
 
         <div className="min-w-0 space-y-5 lg:col-span-2">
+          {dueRules.length > 0 ? (
+            <Card>
+              <CardHeader title="Due now" action={<SeeAll href="/recurring">All repeats</SeeAll>} />
+              <DueRecurring
+                items={dueRules.map((r) => ({
+                  id: r.id,
+                  title: r.note || r.category?.name || (r.type === "TRANSFER" ? "Transfer" : "Repeating transaction"),
+                  amount: formatMoney(r.amount, r.account.currency),
+                  when: dueLabel(r.nextDate, todayDay()),
+                  accountName: r.account.name,
+                  more: Math.max(0, dueCount(r.nextDate, r.frequency as Frequency, r.anchorDay, r.endDate, todayDay()) - 1),
+                }))}
+              />
+            </Card>
+          ) : null}
+
           {budgetRows.some((r) => r.limit !== null) ? (
             <Card>
               <CardHeader title="Budgets" action={<SeeAll href="/budgets">All budgets</SeeAll>} />

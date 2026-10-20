@@ -223,3 +223,27 @@ export async function getBudgetRows(userId: string, currency: string, month: Mon
   const ratio = (r: BudgetRow) => (r.limit ? r.spent / r.limit : -1);
   return rows.sort((a, b) => Number(b.limit !== null) - Number(a.limit !== null) || ratio(b) - ratio(a) || b.spent - a.spent);
 }
+
+const recurringSelect = `*,
+  account:Account!Recurring_accountId_fkey(id, name, currency),
+  toAccount:Account!Recurring_toAccountId_fkey(id, name, currency),
+  category:Category(id, name, color, icon)`;
+
+/** All repeating transactions, the next one due first. */
+export async function getRecurring(userId: string) {
+  return run(db().from("Recurring").select(recurringSelect).eq("userId", userId).order("active", { ascending: false }).order("nextDate"));
+}
+
+export type RecurringRow = Awaited<ReturnType<typeof getRecurring>>[number];
+
+export async function getRecurringById(userId: string, id: string) {
+  if (!isId(id)) return null;
+  return run(db().from("Recurring").select("*").eq("id", id).eq("userId", userId).maybeSingle());
+}
+
+/** Active rules whose next date is today or earlier. */
+export async function getDueRecurring(userId: string, today: string) {
+  return run(
+    db().from("Recurring").select(recurringSelect).eq("userId", userId).eq("active", true).lte("nextDate", today).order("nextDate"),
+  );
+}

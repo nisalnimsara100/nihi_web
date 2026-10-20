@@ -147,12 +147,15 @@ export function DateField({
   value,
   onChange,
   invalid,
+  required = true,
 }: {
   id: string;
   name: string;
   value: string;
   onChange: (day: string) => void;
   invalid?: boolean;
+  /** Leave false for an optional date, which may be empty. */
+  required?: boolean;
 }) {
   return (
     <div className="relative">
@@ -160,7 +163,7 @@ export function DateField({
         id={id}
         name={name}
         type="date"
-        required
+        required={required}
         value={value}
         aria-invalid={invalid}
         onChange={(e) => onChange(e.target.value)}

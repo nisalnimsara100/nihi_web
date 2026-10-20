@@ -264,6 +264,89 @@ export type Database = {
           },
         ]
       }
+      Recurring: {
+        Row: {
+          accountId: string
+          active: boolean
+          amount: number
+          anchorDay: number
+          categoryId: string | null
+          createdAt: string
+          endDate: string | null
+          frequency: string
+          id: string
+          nextDate: string
+          note: string
+          toAccountId: string | null
+          toAmount: number | null
+          type: Database["public"]["Enums"]["TransactionType"]
+          userId: string
+        }
+        Insert: {
+          accountId: string
+          active?: boolean
+          amount: number
+          anchorDay: number
+          categoryId?: string | null
+          createdAt?: string
+          endDate?: string | null
+          frequency: string
+          id?: string
+          nextDate: string
+          note?: string
+          toAccountId?: string | null
+          toAmount?: number | null
+          type: Database["public"]["Enums"]["TransactionType"]
+          userId: string
+        }
+        Update: {
+          accountId?: string
+          active?: boolean
+          amount?: number
+          anchorDay?: number
+          categoryId?: string | null
+          createdAt?: string
+          endDate?: string | null
+          frequency?: string
+          id?: string
+          nextDate?: string
+          note?: string
+          toAccountId?: string | null
+          toAmount?: number | null
+          type?: Database["public"]["Enums"]["TransactionType"]
+          userId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Recurring_accountId_fkey"
+            columns: ["accountId"]
+            isOneToOne: false
+            referencedRelation: "Account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Recurring_toAccountId_fkey"
+            columns: ["toAccountId"]
+            isOneToOne: false
+            referencedRelation: "Account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Recurring_categoryId_fkey"
+            columns: ["categoryId"]
+            isOneToOne: false
+            referencedRelation: "Category"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Recurring_userId_fkey"
+            columns: ["userId"]
+            isOneToOne: false
+            referencedRelation: "User"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       Tag: {
         Row: {
           color: string

@@ -4,6 +4,7 @@ import {
   ChartBar,
   GearSix,
   House,
+  Repeat,
   Shapes,
   Tag,
   Target,
@@ -18,6 +19,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/statistics", label: "Statistics", icon: ChartBar },
   { href: "/budgets", label: "Budgets", icon: Target },
   { href: "/accounts", label: "Wallet", icon: Wallet },
+  { href: "/recurring", label: "Repeats", icon: Repeat },
   { href: "/categories", label: "Categories", icon: Shapes },
   { href: "/tags", label: "Tags", icon: Tag },
   { href: "/settings", label: "Settings", icon: GearSix },
@@ -25,7 +27,7 @@ export const NAV_ITEMS: NavItem[] = [
 
 /** Pages reachable from the mobile "Profile" tab. */
 export const MORE_ITEMS = NAV_ITEMS.filter((item) =>
-  ["/transactions", "/budgets", "/categories", "/tags", "/settings"].includes(item.href),
+  ["/transactions", "/budgets", "/recurring", "/categories", "/tags", "/settings"].includes(item.href),
 );
 
 export function isActive(pathname: string, href: string) {

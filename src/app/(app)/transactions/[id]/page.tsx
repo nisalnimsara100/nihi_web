@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { PageHeader, Skeleton } from "@/components/ui";
@@ -35,7 +36,12 @@ async function EditTransaction({ params }: { params: Promise<{ id: string }> }) 
     [tx.accountId, tx.toAccountId].filter((v): v is string => !!v),
   );
 
+  const repeatParams = new URLSearchParams({ type: tx.type, amount: toInputAmount(tx.amount), account: tx.accountId, note: tx.note });
+  if (tx.categoryId) repeatParams.set("category", tx.categoryId);
+  if (tx.toAccountId) repeatParams.set("to", tx.toAccountId);
+
   return (
+    <>
     <TransactionForm
       {...options}
       initial={{
@@ -52,5 +58,11 @@ async function EditTransaction({ params }: { params: Promise<{ id: string }> }) 
         tagIds: tx.tags.map((t) => t.id),
       }}
     />
+    <p className="mt-4 text-center text-sm">
+      <Link href={`/recurring/new?${repeatParams}`} className="font-semibold text-primary hover:underline">
+        Make this repeat
+      </Link>
+    </p>
+    </>
   );
 }

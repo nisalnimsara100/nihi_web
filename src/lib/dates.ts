@@ -78,3 +78,14 @@ export function relativeDay(date: Date) {
   if (day === dateToDay(new Date(dayToDate(today).getTime() - 86_400_000))) return "Yesterday";
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(date);
 }
+
+/** Whole days from one "YYYY-MM-DD" day to another (negative when `to` is earlier). */
+export function daysBetween(from: string, to: string) {
+  return Math.round((dayToDate(to).getTime() - dayToDate(from).getTime()) / 86_400_000);
+}
+
+/** "Due today", "Due yesterday", "Due 3 days ago" for a day that is today or earlier. */
+export function dueLabel(day: string, today: string) {
+  const late = daysBetween(day, today);
+  return late <= 0 ? "Due today" : late === 1 ? "Due yesterday" : `Due ${late} days ago`;
+}
