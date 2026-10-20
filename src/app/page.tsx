@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { DashboardMock } from "@/components/landing/dashboard-mock";
+import { HeroBackdrop } from "@/components/landing/hero-backdrop";
+import { InView } from "@/components/landing/in-view";
 import {
   AccountsVisual,
   LabelsVisual,
@@ -138,7 +140,8 @@ const FOOTER_LINKS = [
 
 export default function LandingPage() {
   return (
-    <div className={cn(instrument.variable, "min-h-dvh overflow-x-clip bg-muted")}>
+    <div className={cn(instrument.variable, "relative min-h-dvh overflow-x-clip bg-muted")}>
+      <HeroBackdrop />
       <header className="sticky top-3 z-40 px-4 pt-3 sm:px-6">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between rounded-2xl bg-surface/80 pr-2 pl-4 shadow-sm ring-1 ring-line/70 backdrop-blur-lg">
           <Logo className="[&_svg]:size-8" />
@@ -164,12 +167,8 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <main>
+      <main className="relative">
         <section className="relative px-4 pt-16 pb-12 sm:px-6 sm:pt-24">
-          <div
-            aria-hidden
-            className="absolute inset-x-0 -top-24 -z-0 h-[52rem] bg-[radial-gradient(55%_45%_at_50%_20%,color-mix(in_oklab,var(--primary)_16%,transparent),transparent_70%)]"
-          />
           <div className="relative mx-auto max-w-3xl text-center">
             <span className="inline-flex items-center gap-2 rounded-full bg-surface px-3 py-1 text-xs font-medium text-ink-soft shadow-sm ring-1 ring-line/70">
               <Sparkles className="size-3.5 text-primary" aria-hidden />
@@ -197,6 +196,8 @@ export default function LandingPage() {
             <PhoneMock className="md:hidden" />
             <div className="hidden md:block">
               <DashboardMock />
+              {/* Let the bottom of the dashboard melt into the page, under the phone. */}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-linear-to-b from-muted/0 to-muted" />
               <PhoneMock
                 insights={false}
                 className="absolute -right-6 -bottom-16 w-72.5 origin-bottom-right scale-[0.7] lg:-right-14"
@@ -217,7 +218,8 @@ export default function LandingPage() {
           </ul>
         </section>
 
-        <section id="why" className="scroll-mt-24 px-4 py-16 sm:px-6 sm:py-24">
+        <section id="why" className="relative isolate scroll-mt-24 px-4 py-16 sm:px-6 sm:py-24">
+          <Glow className="top-1/3 left-1/2 h-72 w-[80%] max-w-5xl -translate-x-1/2" />
           <SectionHeading eyebrow="Why NiHi">
             Money tracking that stays <Accent>out of your way</Accent>
           </SectionHeading>
@@ -238,7 +240,8 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="features" className="scroll-mt-24 px-4 py-16 sm:px-6 sm:py-24">
+        <section id="features" className="relative isolate scroll-mt-24 px-4 py-16 sm:px-6 sm:py-24">
+          <Glow className="top-1/4 -right-[30rem] size-[56rem]" />
           <SectionHeading
             eyebrow="Features"
             text="Small, focused tools that cover the whole picture without turning money into a chore."
@@ -317,7 +320,8 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="how" className="scroll-mt-24 px-4 py-16 sm:px-6 sm:py-24">
+        <section id="how" className="relative isolate scroll-mt-24 px-4 py-16 sm:px-6 sm:py-24">
+          <Glow className="-top-1/2 -left-[36rem] size-[64rem]" />
           <SectionHeading eyebrow="How it works">
             Up and running in <Accent>three steps</Accent>
           </SectionHeading>
@@ -334,7 +338,8 @@ export default function LandingPage() {
           </ol>
         </section>
 
-        <section id="faq" className="scroll-mt-24 px-4 py-16 sm:px-6 sm:py-24">
+        <section id="faq" className="relative isolate scroll-mt-24 px-4 py-16 sm:px-6 sm:py-24">
+          <Glow className="top-1/4 left-1/2 h-72 w-[70%] max-w-4xl -translate-x-1/2" />
           <SectionHeading eyebrow="FAQ" text="Everything you might want to know before you start.">
             Frequently asked questions
           </SectionHeading>
@@ -408,6 +413,11 @@ export default function LandingPage() {
   );
 }
 
+/** Big blurred indigo glow behind a section, like light through frosted glass. */
+function Glow({ className }: { className: string }) {
+  return <div aria-hidden className={cn("bg-glow pointer-events-none absolute -z-10 rounded-full blur-[120px]", className)} />;
+}
+
 function Accent({ children }: { children: React.ReactNode }) {
   return <span className="font-serif font-normal tracking-normal text-primary italic">{children}</span>;
 }
@@ -442,10 +452,16 @@ function FeatureCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn("reveal flex flex-col rounded-3xl bg-primary-soft/40 p-6 ring-1 ring-primary-soft", className)}>
+    <InView
+      className={cn(
+        "reveal flex flex-col rounded-3xl bg-primary-soft/40 p-6 ring-1 ring-primary-soft transition duration-300",
+        "motion-safe:hover:-translate-y-1 hover:bg-primary-soft/55 hover:shadow-xl hover:shadow-primary/10",
+        className,
+      )}
+    >
       <h3 className="text-lg font-semibold">{title}</h3>
       <p className="mt-1.5 text-sm text-pretty text-ink-soft">{text}</p>
       <div className="mt-6 flex flex-1 flex-col justify-center">{children}</div>
-    </div>
+    </InView>
   );
 }

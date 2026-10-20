@@ -18,6 +18,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
+import { MockAvatar } from "@/components/landing/mock-avatar";
 import { LogoMark } from "@/components/logo";
 import { cn } from "@/lib/cn";
 
@@ -107,9 +108,7 @@ export function DashboardMock({ className }: { className?: string }) {
         <div className="min-w-0 flex-1 space-y-3 p-3 sm:p-4">
           <div className="bg-hero rounded-2xl p-4 text-white">
             <div className="flex items-center justify-between">
-              <span className="flex size-7 items-center justify-center rounded-full bg-white/20 text-[9px] font-semibold ring-2 ring-white/30">
-                NP
-              </span>
+              <MockAvatar className="size-7" />
               <span className="text-center leading-tight">
                 <span className="block text-[9px] text-white/75">Good Day!</span>
                 <span className="block text-[11px] font-semibold">Nimal Perera</span>

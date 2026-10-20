@@ -11,11 +11,13 @@ import {
   House,
   Plus,
   ReceiptText,
+  Settings,
   ShoppingBasket,
   TrendingUp,
   Wallet,
   Zap,
 } from "lucide-react";
+import { MockAvatar } from "@/components/landing/mock-avatar";
 import { cn } from "@/lib/cn";
 
 const ACTIONS = [
@@ -71,12 +73,14 @@ export function PhoneMock({ className, insights = true }: { className?: string; 
 
               <div className="bg-hero rounded-b-[26px] px-4 pt-12 pb-4 text-white">
                 <div className="flex items-center justify-between">
-                  <span className="size-8 rounded-full bg-white/25 ring-2 ring-white/30" />
+                  <MockAvatar />
                   <span className="text-center leading-tight">
                     <span className="block text-[9px] text-white/75">Good Day!</span>
                     <span className="block text-xs font-semibold">Nimal Perera</span>
                   </span>
-                  <span className="size-8 rounded-full bg-white/15" />
+                  <span className="flex size-8 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/20">
+                    <Settings className="size-4" />
+                  </span>
                 </div>
                 <p className="mt-4 text-[9px] text-white/80">Total Balance</p>
                 <p className="mt-0.5 text-xl font-semibold tabular-nums">Rs. 1,250,800</p>

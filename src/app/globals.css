@@ -66,6 +66,16 @@
   background-image: linear-gradient(110deg, var(--hero-from), var(--hero-to));
 }
 
+/* Fill for the big blurred glows behind landing page sections. */
+@utility bg-glow {
+  background-image: linear-gradient(
+    178deg,
+    color-mix(in oklab, var(--hero-from) 42%, transparent),
+    color-mix(in oklab, var(--primary-soft) 75%, transparent) 55%,
+    color-mix(in oklab, var(--muted) 50%, transparent)
+  );
+}
+
 body {
   @apply bg-canvas text-ink;
 }
@@ -94,4 +104,124 @@ input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+/* Feature card animations. An <InView> parent switches data-inview from "out"
+   to "in" when it scrolls into view; --i staggers siblings. Entrance
+   animations use opacity/scale/clip-path, the looping ones use translate,
+   so both can run on one element. */
+@keyframes fx-rise {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+
+@keyframes fx-slide {
+  from {
+    opacity: 0;
+    translate: -18px 0;
+  }
+}
+
+@keyframes fx-grow {
+  from {
+    scale: 1 0;
+  }
+}
+
+@keyframes fx-pop {
+  0% {
+    opacity: 0;
+    scale: 0.5;
+  }
+  70% {
+    scale: 1.08;
+  }
+}
+
+@keyframes fx-type {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+}
+
+@keyframes fx-float {
+  to {
+    translate: 0 -5px;
+  }
+}
+
+@keyframes fx-coin {
+  0% {
+    opacity: 0;
+    translate: 0 -22px;
+    scale: 0.6;
+  }
+  20%,
+  70% {
+    opacity: 1;
+    scale: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 22px;
+    scale: 0.6;
+  }
+}
+
+@keyframes fx-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-inview="out"] :is(.fx-rise, .fx-slide, .fx-pop) {
+    opacity: 0;
+  }
+  [data-inview="out"] .fx-grow {
+    scale: 1 0;
+  }
+  [data-inview="out"] .fx-type {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  [data-inview="in"] :is(.fx-rise, .fx-slide, .fx-grow, .fx-pop, .fx-type) {
+    animation-duration: 0.6s;
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+    animation-fill-mode: both;
+    animation-delay: calc(var(--i, 0) * 90ms + 150ms);
+  }
+  [data-inview="in"] .fx-rise {
+    animation-name: fx-rise;
+  }
+  [data-inview="in"] .fx-slide {
+    animation-name: fx-slide;
+  }
+  [data-inview="in"] .fx-grow {
+    animation-name: fx-grow;
+    animation-duration: 0.9s;
+    transform-origin: bottom;
+  }
+  [data-inview="in"] .fx-pop {
+    animation-name: fx-pop;
+    animation-duration: 0.5s;
+  }
+  [data-inview="in"] .fx-type {
+    animation-name: fx-type;
+    animation-duration: 0.9s;
+    animation-timing-function: steps(6, end);
+  }
+  [data-inview="in"] .fx-pop.fx-float {
+    animation:
+      fx-pop 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) calc(var(--i, 0) * 90ms + 150ms) both,
+      fx-float 2.4s ease-in-out calc(var(--i, 0) * -0.6s) infinite alternate;
+  }
+  [data-inview="in"] .fx-coin {
+    animation: fx-coin 2s ease-in-out 0.8s infinite both;
+  }
+  .fx-caret {
+    animation: fx-blink 1s steps(1) infinite;
+  }
 }
