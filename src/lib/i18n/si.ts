@@ -5,6 +5,9 @@ import type { Dictionary } from "./translate";
  * Machine-assisted draft: please have a Sinhala speaker review the wording.
  */
 export const si: Dictionary = {
+  "Try again": "නැවත උත්සාහ කරන්න",
+  "The page could not be shown. Your data is safe. Try again, and if it keeps happening, tell us the code below.": "පිටුව පෙන්වීමට නොහැකි විය. ඔබේ දත්ත ආරක්ෂිතයි. නැවත උත්සාහ කරන්න, නැවත නැවතත් සිදුවේ නම්, පහත කේතය අපට පවසන්න.",
+  "Something went wrong": "යම් දෙයක් වැරදී ඇත",
   "(nothing)": "(කිසිවක් නැත)",
   "+{count} more": "තවත් +{count}",
   "1 account": "ගිණුම් 1ක්",

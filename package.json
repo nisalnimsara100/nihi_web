@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "db:seed": "tsx scripts/seed.ts",
     "db:types": "npx supabase gen types typescript --linked --schema public > src/lib/database.types.ts",
-    "postinstall": "node scripts/copy-tesseract.mjs"
+    "postinstall": "node scripts/copy-tesseract.mjs",
+    "test": "tsx --test --experimental-test-module-mocks \"tests/**/*.test.{ts,mts}\""
   },
   "dependencies": {
     "@hugeicons/core-free-icons": "^4.3.5",

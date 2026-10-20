@@ -6,17 +6,23 @@ Built with Next.js (App Router), Tailwind CSS and Supabase (Postgres).
 
 ## Features
 
-- **Accounts**: cash, bank, savings, credit card, investment. Each has its own currency and a live balance. Archive accounts you no longer use.
-- **Transactions**: expenses, income and transfers between accounts, including transfers between currencies. Add categories, tags and notes. Filter by month, type, account, category, tag or note text.
-- **Categories and tags**: start with a default set and edit it however you like.
-- **Dashboard**: net worth, this month's income and spending, spending by category, recent activity.
-- **Statistics**: month and year views, income vs expense trend for the last 12 months (also shown as a table), and breakdowns by category.
-- **Responsive**: a sidebar on desktop, and a bottom tab bar with a quick-add button on mobile.
-- **Dark mode**: follows the system setting.
+- **Accounts**: cash, bank, savings, credit card, investment. Each has its own currency and a live balance. Drag to reorder, archive what you no longer use, and fix a balance with a correction entry.
+- **Cards**: link Visa, Mastercard or Amex cards to a bank account. Paying with a card reduces that account.
+- **Credit cards**: just a limit and a monthly interest rate. Credit and savings are kept out of the home total and shown as small separate sections.
+- **Transactions**: expenses, income and transfers (including across currencies), with categories, tags and notes. Filter by month, type, account, category, tag or text. Select several to change category or delete, split one into parts, and undo a delete.
+- **Scan a screenshot**: read a bank SMS, bill or ride receipt in the browser (no AI service, nothing uploaded). It fills the form; you always confirm before saving. Possible duplicates are flagged.
+- **Budgets**: monthly limit per category with warnings at 80% and 100%.
+- **Repeats**: recurring bills and income; due ones are offered to add, never silently added.
+- **Goals**: savings goals with progress.
+- **Reminders**: payments due soon, a card close to its limit, an unusually high month.
+- **Partner access**: share a read-only view with a single-use link that expires after 7 days (optionally emailed).
+- **Installable and offline**: works as a home-screen app; entries made offline are sent when you reconnect.
+- **English and Sinhala**: switch in settings.
+- **Responsive**: sidebar on desktop, bottom tab bar with quick-add on mobile.
 
 ## Getting started
 
-Requires Node.js 20 or later.
+Requires Node.js 22 (Node 20 works for the app; CI uses 22).
 
 ```bash
 npm install
@@ -37,6 +43,7 @@ Open http://localhost:3000. If you seeded the demo account, the login is printed
 | `npm run build` | Build for production |
 | `npm start` | Run the production build |
 | `npm run lint` / `npm run typecheck` | ESLint / TypeScript checks |
+| `npm test` | Unit tests: money-moving actions, recurring, partner access, scan parsing |
 | `ALLOW_DEMO_SEED=1 npm run db:seed` | Reset and fill the demo account (local only) |
 | `npm run db:types` | Regenerate `src/lib/database.types.ts` from the linked project |
 
@@ -75,3 +82,24 @@ The app reads and writes through supabase-js on the server only, with the secret
 ## License
 
 MIT. See [LICENSE](LICENSE). NiHi started as a fork of [ezBookkeeping](https://github.com/mayswind/ezbookkeeping) by MaysWind and has since been rewritten from scratch.
+
+## Environment variables
+
+| Name | Needed | Purpose |
+| --- | --- | --- |
+| `SUPABASE_URL`, `SUPABASE_SECRET_KEY` | yes | Database (server-side only) |
+| `SESSION_SECRET` | yes | Signs session cookies |
+| `SMTP_USER`, `SMTP_PASSWORD` | no | Email partner invites (Gmail needs an app password) |
+| `ERROR_WEBHOOK_URL` | no | Receives server errors as JSON; otherwise they only go to the log |
+| `ALLOW_DEMO_SEED` | local only | Lets `db:seed` create the demo user |
+
+## Database migrations
+
+Apply every file in `supabase/migrations` in order (`npx supabase db push`, or paste them in the Supabase SQL editor). Each ends with `notify pgrst, 'reload schema'`. A "column does not exist" error means one is missing.
+
+## Quality and security
+
+- CI (`.github/workflows/ci.yml`) runs typecheck, lint, tests and build.
+- Security headers are set in `next.config.ts`. The Content-Security-Policy is report-only for now; reports go to `/api/csp-report`.
+- Server errors are logged and optionally posted to `ERROR_WEBHOOK_URL` (`instrumentation.ts`).
+- Real-device checks are listed in `docs/phone-checklist.md`.
