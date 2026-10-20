@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { LogOut } from "lucide-react";
+import { SignOut } from "@/components/icons";
 import { logout } from "@/actions/auth";
-import { getCurrentUser } from "@/lib/auth";
+import { getViewer } from "@/lib/auth";
 import { cn } from "@/lib/cn";
 
 function initials(name: string) {
@@ -27,14 +27,16 @@ export function Avatar({ name, className }: { name: string; className?: string }
 }
 
 export async function SidebarUser() {
-  const user = await getCurrentUser();
+  const { user, owner, readOnly } = await getViewer();
   return (
     <div className="flex items-center gap-2">
       <Link href="/settings" className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl p-1.5 hover:bg-muted">
         <Avatar name={user.name} />
         <span className="min-w-0">
           <span className="block truncate text-sm font-semibold">{user.name}</span>
-          <span className="block truncate text-xs text-ink-soft">{user.email}</span>
+          <span className="block truncate text-xs text-ink-soft">
+            {readOnly ? `Viewing ${owner.name}` : user.email}
+          </span>
         </span>
       </Link>
       <form action={logout}>
@@ -43,7 +45,7 @@ export async function SidebarUser() {
           aria-label="Sign out"
           className="rounded-xl p-2.5 text-ink-soft hover:bg-muted hover:text-ink"
         >
-          <LogOut className="size-5" aria-hidden />
+          <SignOut className="size-5" aria-hidden />
         </button>
       </form>
     </div>

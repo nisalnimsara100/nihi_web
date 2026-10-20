@@ -1,9 +1,9 @@
-import Link from "next/link";
-import { ArrowLeftRight } from "lucide-react";
+import { ArrowsLeftRight } from "@/components/icons";
 import type { TransactionRow } from "@/lib/data";
 import { dateToDay, formatDay, relativeDay } from "@/lib/dates";
-import { Amount } from "@/components/ui";
+import { Amount, MaybeLink } from "@/components/ui";
 import { CategoryIcon } from "@/lib/category-icons";
+import { cn } from "@/lib/cn";
 
 const iconTile =
   "relative flex size-12 shrink-0 items-center justify-center rounded-2xl bg-surface text-ink shadow-[0_1px_3px_rgb(20_21_28/0.08)] ring-1 ring-line/60";
@@ -12,7 +12,7 @@ function TransactionIcon({ tx }: { tx: TransactionRow }) {
   if (tx.type === "TRANSFER") {
     return (
       <span aria-hidden className={iconTile}>
-        <ArrowLeftRight className="size-5" />
+        <ArrowsLeftRight className="size-5" />
       </span>
     );
   }
@@ -27,7 +27,7 @@ function TransactionIcon({ tx }: { tx: TransactionRow }) {
   );
 }
 
-function TransactionItem({ tx, showDate }: { tx: TransactionRow; showDate: boolean }) {
+function TransactionItem({ tx, showDate, readOnly }: { tx: TransactionRow; showDate: boolean; readOnly: boolean }) {
   const isTransfer = tx.type === "TRANSFER";
   const title = isTransfer ? "Transfer" : (tx.category?.name ?? "Uncategorized");
   const where = isTransfer ? `${tx.account.name} → ${tx.toAccount?.name ?? "?"}` : tx.account.name;
@@ -37,9 +37,9 @@ function TransactionItem({ tx, showDate }: { tx: TransactionRow; showDate: boole
 
   return (
     <li>
-      <Link
-        href={`/transactions/${tx.id}`}
-        className="-mx-2 flex items-center gap-3 rounded-2xl px-2 py-2 transition-colors hover:bg-surface/70"
+      <MaybeLink
+        href={readOnly ? undefined : `/transactions/${tx.id}`}
+        className={cn("-mx-2 flex items-center gap-3 rounded-2xl px-2 py-2", !readOnly && "transition-colors hover:bg-surface/70")}
       >
         <TransactionIcon tx={tx} />
         <span className="min-w-0 flex-1">
@@ -67,18 +67,27 @@ function TransactionItem({ tx, showDate }: { tx: TransactionRow; showDate: boole
             <span className="max-w-full truncate text-sm text-ink-soft">{right || "\u00a0"}</span>
           )}
         </span>
-      </Link>
+      </MaybeLink>
     </li>
   );
 }
 
 /** Transactions as rounded tiles, optionally grouped under a heading per day. */
-export function TransactionList({ transactions, groupByDay = true }: { transactions: TransactionRow[]; groupByDay?: boolean }) {
+export function TransactionList({
+  transactions,
+  groupByDay = true,
+  readOnly = false,
+}: {
+  transactions: TransactionRow[];
+  groupByDay?: boolean;
+  /** Rows are not links to the edit page. */
+  readOnly?: boolean;
+}) {
   if (!groupByDay) {
     return (
       <ul className="space-y-1">
         {transactions.map((tx) => (
-          <TransactionItem key={tx.id} tx={tx} showDate />
+          <TransactionItem key={tx.id} tx={tx} showDate readOnly={readOnly} />
         ))}
       </ul>
     );
@@ -100,7 +109,7 @@ export function TransactionList({ transactions, groupByDay = true }: { transacti
           </h3>
           <ul className="space-y-1">
             {items.map((tx) => (
-              <TransactionItem key={tx.id} tx={tx} showDate={false} />
+              <TransactionItem key={tx.id} tx={tx} showDate={false} readOnly={readOnly} />
             ))}
           </ul>
         </section>

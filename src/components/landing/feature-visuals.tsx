@@ -1,19 +1,19 @@
 import type { CSSProperties } from "react";
 import {
+  Airplane,
   ArrowRight,
-  Banknote,
+  Bank,
   Car,
   Coffee,
   CreditCard,
-  Landmark,
+  ForkKnife,
+  Lightning,
+  MagnifyingGlass,
+  Money,
   PiggyBank,
-  Plane,
-  Search,
   ShoppingCart,
-  TrendingUp,
-  Utensils,
-  Zap,
-} from "lucide-react";
+  TrendUp,
+} from "@/components/icons";
 
 // Small static product pictures for the landing page feature cards.
 // Colors come from the app's category palette (COLORS in lib/constants).
@@ -23,8 +23,8 @@ import {
 const at = (i: number) => ({ "--i": i }) as CSSProperties;
 
 const ACCOUNTS = [
-  { icon: Banknote, color: "#1baf7a", name: "Cash", amount: "Rs. 18,450" },
-  { icon: Landmark, color: "#2a78d6", name: "Commercial Bank", amount: "Rs. 1,482,300" },
+  { icon: Money, color: "#1baf7a", name: "Cash", amount: "Rs. 18,450" },
+  { icon: Bank, color: "#2a78d6", name: "Commercial Bank", amount: "Rs. 1,482,300" },
   { icon: PiggyBank, color: "#6250d6", name: "Fixed savings", amount: "Rs. 1,250,000" },
   { icon: CreditCard, color: "#e34948", name: "Credit card", amount: "-Rs. 15,948" },
 ];
@@ -109,7 +109,7 @@ export function StatsVisual() {
           <p className="text-xs text-ink-soft">Saved in October</p>
           <p className="mt-1 text-lg font-semibold tabular-nums">Rs. 156,962</p>
           <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-semibold text-income">
-            <TrendingUp className="size-3" /> 63% of income
+            <TrendUp className="size-3" /> 63% of income
           </span>
         </div>
         <div className="fx-rise rounded-2xl bg-surface p-4 shadow-sm ring-1 ring-line/70" style={at(8)}>
@@ -148,7 +148,7 @@ export function TransferVisual() {
       </div>
       <div className="fx-slide flex items-center gap-2.5 rounded-2xl bg-surface p-3 shadow-sm ring-1 ring-line/70" style={at(3)}>
         <span className="flex size-9 items-center justify-center rounded-xl bg-muted">
-          <Landmark className="size-4 text-[#2a78d6]" />
+          <Bank className="size-4 text-[#2a78d6]" />
         </span>
         <span className="flex-1 text-sm leading-tight">
           <span className="block font-semibold">Travel card</span>
@@ -161,11 +161,11 @@ export function TransferVisual() {
 }
 
 const CATEGORIES = [
-  { icon: Utensils, color: "#eb6834", name: "Food" },
+  { icon: ForkKnife, color: "#eb6834", name: "Food" },
   { icon: ShoppingCart, color: "#eda100", name: "Groceries" },
   { icon: Car, color: "#2a78d6", name: "Transport" },
-  { icon: Zap, color: "#6250d6", name: "Utilities" },
-  { icon: Plane, color: "#1baf7a", name: "Travel" },
+  { icon: Lightning, color: "#6250d6", name: "Utilities" },
+  { icon: Airplane, color: "#1baf7a", name: "Travel" },
 ];
 
 const TAGS = [
@@ -206,7 +206,7 @@ export function SearchVisual() {
   return (
     <div aria-hidden className="space-y-2.5">
       <div className="fx-rise flex items-center gap-2 rounded-xl bg-surface px-3 py-2.5 text-sm shadow-sm ring-1 ring-line/70">
-        <Search className="size-4 text-ink-faint" />
+        <MagnifyingGlass className="size-4 text-ink-faint" />
         <span className="fx-type" style={at(2)}>
           coffee
         </span>

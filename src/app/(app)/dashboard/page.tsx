@@ -3,24 +3,24 @@ import Link from "next/link";
 import { Suspense } from "react";
 import {
   ArrowDownLeft,
-  ArrowLeftRight,
+  ArrowsLeftRight,
   ArrowUpRight,
-  ChartColumn,
-  ChevronRight,
+  CaretRight,
+  ChartBar,
+  GearSix,
   Receipt,
-  Settings,
   SlidersHorizontal,
-  TrendingUp,
-  TriangleAlert,
+  TrendUp,
   Wallet,
-} from "lucide-react";
+  Warning,
+} from "@/components/icons";
 import { BalanceCard } from "@/components/finance/balance-card";
 import { CategoryBars } from "@/components/finance/category-bars";
 import { Greeting } from "@/components/finance/greeting";
 import { TransactionList } from "@/components/finance/transaction-list";
 import { Avatar } from "@/components/shell/user-menu";
-import { ButtonLink, Card, CardHeader, ColorDot, EmptyState, PageSkeleton, SeeAll } from "@/components/ui";
-import { getCurrentUser } from "@/lib/auth";
+import { ButtonLink, Card, CardHeader, ColorDot, EmptyState, MaybeLink, PageSkeleton, SeeAll } from "@/components/ui";
+import { getViewer } from "@/lib/auth";
 import { accountTypeLabel } from "@/lib/constants";
 import { getAccounts, getCategoryBreakdown, getRecentTransactions, getTotalsByCurrency } from "@/lib/data";
 import { currentMonthKey, formatMonth, monthRange } from "@/lib/dates";
@@ -40,7 +40,7 @@ export default function DashboardPage() {
 const QUICK_ACTIONS = [
   { href: "/transactions/new?type=EXPENSE", label: "Expense", icon: ArrowUpRight },
   { href: "/transactions/new?type=INCOME", label: "Income", icon: ArrowDownLeft },
-  { href: "/transactions/new?type=TRANSFER", label: "Transfer", icon: ArrowLeftRight },
+  { href: "/transactions/new?type=TRANSFER", label: "Transfer", icon: ArrowsLeftRight },
   { href: "/accounts", label: "Wallet", icon: Wallet },
 ];
 
@@ -48,7 +48,7 @@ const heroButton =
   "flex h-13 items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-semibold text-white ring-1 ring-white/15 transition-colors hover:bg-primary-strong";
 
 async function Dashboard() {
-  const user = await getCurrentUser();
+  const { owner: user, readOnly } = await getViewer();
   const month = currentMonthKey();
   const { start, end } = monthRange(month);
   const currency = user.defaultCurrency;
@@ -86,7 +86,7 @@ async function Dashboard() {
             aria-label="Settings"
             className="flex size-11 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/20 hover:bg-white/25"
           >
-            <Settings className="size-5" aria-hidden />
+            <GearSix className="size-5" aria-hidden />
           </Link>
         </div>
 
@@ -103,16 +103,18 @@ async function Dashboard() {
           />
         </div>
 
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <Link href="/transactions/new?type=INCOME" className={heroButton}>
-            <ArrowDownLeft className="size-5" aria-hidden />
-            Add Income
-          </Link>
-          <Link href="/transactions/new?type=EXPENSE" className={heroButton}>
-            <ArrowUpRight className="size-5" aria-hidden />
-            Add Expense
-          </Link>
-        </div>
+        {readOnly ? null : (
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <Link href="/transactions/new?type=INCOME" className={heroButton}>
+              <ArrowDownLeft className="size-5" aria-hidden />
+              Add Income
+            </Link>
+            <Link href="/transactions/new?type=EXPENSE" className={heroButton}>
+              <ArrowUpRight className="size-5" aria-hidden />
+              Add Expense
+            </Link>
+          </div>
+        )}
       </section>
 
       <div className="mt-5 grid items-start gap-5 lg:mt-6 lg:grid-cols-5">
@@ -127,7 +129,7 @@ async function Dashboard() {
                 saved ? "bg-success-soft text-income" : "bg-warning-soft text-warning",
               )}
             >
-              {saved ? <TrendingUp className="size-6" aria-hidden /> : <TriangleAlert className="size-6" aria-hidden />}
+              {saved ? <TrendUp className="size-6" aria-hidden /> : <Warning className="size-6" aria-hidden />}
             </span>
             <span className="min-w-0 flex-1">
               <span className="block font-semibold">
@@ -138,9 +140,10 @@ async function Dashboard() {
                 {formatMoney(monthTotals.expense, currency)}
               </span>
             </span>
-            <ChevronRight className="size-5 shrink-0 text-ink-faint" aria-hidden />
+            <CaretRight className="size-5 shrink-0 text-ink-faint" aria-hidden />
           </Link>
 
+          {readOnly ? null : (
           <section>
             <h2 className="mb-3 text-base font-semibold">Quick Actions</h2>
             <div className="grid grid-cols-4 gap-3">
@@ -150,12 +153,13 @@ async function Dashboard() {
                   href={href}
                   className="flex aspect-square flex-col items-center justify-center gap-2 rounded-3xl bg-primary-soft text-on-primary-soft transition-colors hover:bg-primary-soft-strong sm:aspect-auto sm:py-5"
                 >
-                  <Icon className="size-6" strokeWidth={1.8} aria-hidden />
+                  <Icon className="size-6" aria-hidden />
                   <span className="text-xs font-semibold sm:text-sm">{label}</span>
                 </Link>
               ))}
             </div>
           </section>
+          )}
 
           <section className="rounded-3xl bg-muted p-4 sm:p-5">
             <div className="mb-3 flex items-center justify-between">
@@ -169,13 +173,13 @@ async function Dashboard() {
               </Link>
             </div>
             {recent.length > 0 ? (
-              <TransactionList transactions={recent} groupByDay={false} />
+              <TransactionList transactions={recent} groupByDay={false} readOnly={readOnly} />
             ) : (
               <EmptyState
                 icon={<Receipt className="size-6" />}
                 title="No transactions yet"
-                description="Add your first expense or income to see it here."
-                action={<ButtonLink href="/transactions/new">Add transaction</ButtonLink>}
+                description={readOnly ? "Nothing has been added yet." : "Add your first expense or income to see it here."}
+                action={readOnly ? undefined : <ButtonLink href="/transactions/new">Add transaction</ButtonLink>}
               />
             )}
           </section>
@@ -189,7 +193,7 @@ async function Dashboard() {
                 <CategoryBars data={breakdown} currency={currency} limit={6} />
               ) : (
                 <p className="flex items-center gap-2 text-sm text-ink-soft">
-                  <ChartColumn className="size-4" aria-hidden />
+                  <ChartBar className="size-4" aria-hidden />
                   No {currency} spending this month yet.
                 </p>
               )}
@@ -201,9 +205,9 @@ async function Dashboard() {
             <ul className="space-y-1 p-3">
               {accounts.map((a) => (
                 <li key={a.id}>
-                  <Link
-                    href={`/accounts/${a.id}`}
-                    className="flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-muted"
+                  <MaybeLink
+                    href={readOnly ? undefined : `/accounts/${a.id}`}
+                    className={cn("flex items-center gap-3 rounded-2xl px-3 py-2.5", !readOnly && "transition-colors hover:bg-muted")}
                   >
                     <ColorDot color={a.color} className="size-3" />
                     <span className="min-w-0 flex-1">
@@ -211,7 +215,7 @@ async function Dashboard() {
                       <span className="block text-xs text-ink-soft">{accountTypeLabel(a.type)}</span>
                     </span>
                     <span className="text-sm font-semibold tabular-nums">{formatMoney(a.balance, a.currency)}</span>
-                  </Link>
+                  </MaybeLink>
                 </li>
               ))}
             </ul>

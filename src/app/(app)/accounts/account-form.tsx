@@ -1,13 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { deleteAccount, saveAccount } from "@/actions/accounts";
+import { AccountCardFace } from "@/components/finance/account-card";
+import { CardThemePicker } from "@/components/finance/card-theme-picker";
 import { ColorPicker, DeleteButton, FormError, SubmitButton } from "@/components/form-bits";
 import { useActionForm } from "@/components/use-action-form";
 import { buttonClass, Card, Field, inputClass } from "@/components/ui";
 import type { Enums } from "@/lib/database.types";
-import { ACCOUNT_TYPES, CURRENCIES } from "@/lib/constants";
+import { ACCOUNT_TYPES, accountTypeLabel, CURRENCIES } from "@/lib/constants";
 import { cn } from "@/lib/cn";
+import { formatMoney, parseAmount } from "@/lib/money";
 
 type AccountType = Enums<"AccountType">;
 
@@ -18,13 +22,28 @@ export type AccountFormValues = {
   currency: string;
   initialBalance: string;
   color: string;
+  theme: string;
   note: string;
   archived: boolean;
+  /** Current balance minus the starting balance, so the preview shows the real balance while editing. */
+  balanceOffset?: number;
 };
 
 export function AccountForm({ initial }: { initial: AccountFormValues }) {
   const { state, pending, onSubmit } = useActionForm(saveAccount);
   const errors = state.fieldErrors ?? {};
+
+  // Everything the preview card shows, kept in sync with the inputs.
+  const [preview, setPreview] = useState({
+    name: initial.name,
+    type: initial.type,
+    currency: initial.currency,
+    initialBalance: initial.initialBalance,
+    color: initial.color,
+    theme: initial.theme,
+  });
+  const update = (patch: Partial<typeof preview>) => setPreview((p) => ({ ...p, ...patch }));
+  const previewBalance = (initial.balanceOffset ?? 0) + (parseAmount(preview.initialBalance || "0") ?? 0);
 
   return (
     <Card className="p-4 sm:p-6">
@@ -32,13 +51,40 @@ export function AccountForm({ initial }: { initial: AccountFormValues }) {
         {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
         <FormError state={state} />
 
+        <div className="rounded-3xl bg-muted p-4 sm:p-6">
+          <AccountCardFace
+            theme={preview.theme}
+            type={preview.type}
+            name={preview.name.trim() || "Account name"}
+            balance={formatMoney(previewBalance, preview.currency)}
+            currency={preview.currency}
+            color={preview.color}
+            label={accountTypeLabel(preview.type)}
+            className="mx-auto max-w-sm shadow-lg shadow-primary/10 transition-[background] duration-300"
+          />
+        </div>
+
         <Field label="Name" htmlFor="name" error={errors.name}>
-          <input id="name" name="name" defaultValue={initial.name} placeholder="e.g. Main bank" aria-invalid={!!errors.name} className={inputClass} />
+          <input
+            id="name"
+            name="name"
+            defaultValue={initial.name}
+            onChange={(e) => update({ name: e.target.value })}
+            placeholder="e.g. Main bank"
+            aria-invalid={!!errors.name}
+            className={inputClass}
+          />
         </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Type" htmlFor="type" error={errors.type}>
-            <select id="type" name="type" defaultValue={initial.type} className={inputClass}>
+            <select
+              id="type"
+              name="type"
+              defaultValue={initial.type}
+              onChange={(e) => update({ type: e.target.value as AccountType })}
+              className={inputClass}
+            >
               {ACCOUNT_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>
                   {t.label}
@@ -47,7 +93,13 @@ export function AccountForm({ initial }: { initial: AccountFormValues }) {
             </select>
           </Field>
           <Field label="Currency" htmlFor="currency" error={errors.currency}>
-            <select id="currency" name="currency" defaultValue={initial.currency} className={inputClass}>
+            <select
+              id="currency"
+              name="currency"
+              defaultValue={initial.currency}
+              onChange={(e) => update({ currency: e.target.value })}
+              className={inputClass}
+            >
               {CURRENCIES.map((c) => (
                 <option key={c} value={c}>
                   {c}
@@ -68,13 +120,16 @@ export function AccountForm({ initial }: { initial: AccountFormValues }) {
             name="initialBalance"
             inputMode="decimal"
             defaultValue={initial.initialBalance}
+            onChange={(e) => update({ initialBalance: e.target.value })}
             placeholder="0.00"
             aria-invalid={!!errors.initialBalance}
             className={cn(inputClass, "tabular-nums")}
           />
         </Field>
 
-        <ColorPicker defaultValue={initial.color} />
+        <CardThemePicker value={preview.theme} onChange={(theme) => update({ theme })} />
+
+        <ColorPicker defaultValue={initial.color} onChange={(color) => update({ color })} />
 
         <Field label="Note" htmlFor="note" error={errors.note}>
           <input id="note" name="note" defaultValue={initial.note} placeholder="Optional" className={inputClass} />

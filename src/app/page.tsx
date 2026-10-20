@@ -1,19 +1,19 @@
 import { Instrument_Serif } from "next/font/google";
 import {
   ArrowUpRight,
-  Banknote,
-  ChartColumn,
+  Bank,
+  CaretDown,
+  ChartBar,
   ChartLine,
   Check,
-  ChevronDown,
   CreditCard,
+  GitBranch,
   Globe,
-  Landmark,
+  Money,
   PiggyBank,
   ShieldCheck,
-  Sparkles,
   Wallet,
-} from "lucide-react";
+} from "@/components/icons";
 import Link from "next/link";
 import { DashboardMock } from "@/components/landing/dashboard-mock";
 import { HeroBackdrop } from "@/components/landing/hero-backdrop";
@@ -48,8 +48,8 @@ const NAV = [
 ];
 
 const ACCOUNT_KINDS = [
-  { icon: Banknote, label: "Cash" },
-  { icon: Landmark, label: "Bank accounts" },
+  { icon: Money, label: "Cash" },
+  { icon: Bank, label: "Bank accounts" },
   { icon: PiggyBank, label: "Savings" },
   { icon: CreditCard, label: "Credit cards" },
   { icon: ChartLine, label: "Investments" },
@@ -65,7 +65,7 @@ const WHY = [
     label: "account types",
   },
   {
-    icon: ChartColumn,
+    icon: ChartBar,
     title: "Trends you can read",
     text: "Month and year views, a 12-month income vs expense trend, and where the money went by category.",
     figure: "12",
@@ -171,7 +171,7 @@ export default function LandingPage() {
         <section className="relative px-4 pt-16 pb-12 sm:px-6 sm:pt-24">
           <div className="relative mx-auto max-w-3xl text-center">
             <span className="inline-flex items-center gap-2 rounded-full bg-surface px-3 py-1 text-xs font-medium text-ink-soft shadow-sm ring-1 ring-line/70">
-              <Sparkles className="size-3.5 text-primary" aria-hidden />
+              <GitBranch className="size-3.5 text-primary" aria-hidden />
               Free and open source personal finance
             </span>
             <h1 className="mt-6 text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
@@ -304,7 +304,7 @@ export default function LandingPage() {
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-3 text-sm font-medium">
                     <span className="flex size-5 items-center justify-center rounded-full bg-primary text-on-primary">
-                      <Check className="size-3" strokeWidth={3} aria-hidden />
+                      <Check className="size-3" strokeWidth={2.5} aria-hidden />
                     </span>
                     {item}
                   </li>
@@ -348,7 +348,7 @@ export default function LandingPage() {
               <details key={q} className="group rounded-2xl bg-surface ring-1 ring-line/70 open:shadow-sm">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-semibold [&::-webkit-details-marker]:hidden">
                   {q}
-                  <ChevronDown
+                  <CaretDown
                     className="size-4 shrink-0 text-ink-soft transition-transform group-open:rotate-180"
                     aria-hidden
                   />

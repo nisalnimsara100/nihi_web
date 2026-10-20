@@ -1,6 +1,6 @@
 import Link from "next/link";
-import type { ComponentProps, ReactNode } from "react";
-import { ChevronLeft } from "lucide-react";
+import type { ComponentProps, CSSProperties, ReactNode } from "react";
+import { CaretLeft } from "@/components/icons";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/money";
 
@@ -153,7 +153,7 @@ export function PageHeader({
       <div className="flex min-w-0 items-center gap-3">
         {backHref ? (
           <IconLink href={backHref} label="Back" className="size-9">
-            <ChevronLeft className="size-5" aria-hidden />
+            <CaretLeft className="size-5" aria-hidden />
           </IconLink>
         ) : null}
         <div className="min-w-0">
@@ -199,6 +199,32 @@ export function EmptyState({
       <p className="text-base font-semibold">{title}</p>
       {description ? <p className="mt-1 max-w-sm text-sm text-ink-soft">{description}</p> : null}
       {action ? <div className="mt-5">{action}</div> : null}
+    </div>
+  );
+}
+
+/** A link when there is an href, a plain block otherwise. Read-only views pass no href. */
+export function MaybeLink({
+  href,
+  className,
+  style,
+  children,
+}: {
+  href?: string;
+  className?: string;
+  style?: CSSProperties;
+  children: ReactNode;
+}) {
+  if (href) {
+    return (
+      <Link href={href} className={className} style={style}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <div className={className} style={style}>
+      {children}
     </div>
   );
 }

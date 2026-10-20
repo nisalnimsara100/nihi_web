@@ -2,7 +2,7 @@
 
 import { useState, useTransition, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
-import { Loader2, Trash2 } from "lucide-react";
+import { CircleNotch, Trash } from "@/components/icons";
 import type { ActionState } from "@/actions/state";
 import { CATEGORY_ICON_NAMES, CategoryIcon, DEFAULT_CATEGORY_ICON, isCategoryIcon } from "@/lib/category-icons";
 import { COLORS } from "@/lib/constants";
@@ -22,7 +22,7 @@ export function SubmitButton({
   const pending = pendingProp ?? status.pending;
   return (
     <Button type="submit" disabled={pending} className={className}>
-      {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+      {pending ? <CircleNotch className="size-4 animate-spin" aria-hidden /> : null}
       {children}
     </Button>
   );
@@ -33,7 +33,15 @@ export function FormError({ state }: { state: ActionState }) {
   return <Alert>{state.error}</Alert>;
 }
 
-export function ColorPicker({ name = "color", defaultValue }: { name?: string; defaultValue?: string }) {
+export function ColorPicker({
+  name = "color",
+  defaultValue,
+  onChange,
+}: {
+  name?: string;
+  defaultValue?: string;
+  onChange?: (color: string) => void;
+}) {
   const initial = defaultValue ?? COLORS[0];
   return (
     <fieldset>
@@ -46,6 +54,7 @@ export function ColorPicker({ name = "color", defaultValue }: { name?: string; d
               name={name}
               value={color}
               defaultChecked={color.toLowerCase() === initial.toLowerCase()}
+              onChange={() => onChange?.(color)}
               className="peer sr-only"
             />
             <span className="sr-only">{color}</span>
@@ -101,7 +110,7 @@ export function DeleteButton({
         }}
         className={cn(!armed && !iconOnly && "text-danger")}
       >
-        {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Trash2 className="size-4" aria-hidden />}
+        {pending ? <CircleNotch className="size-4 animate-spin" aria-hidden /> : <Trash className="size-4" aria-hidden />}
         {armed ? confirmLabel : iconOnly ? null : label}
       </Button>
       {error ? <Alert>{error}</Alert> : null}

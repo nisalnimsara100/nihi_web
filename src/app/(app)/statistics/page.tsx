@@ -5,7 +5,7 @@ import { CategoryBars } from "@/components/finance/category-bars";
 import { PeriodNav } from "@/components/finance/month-nav";
 import { StatTile } from "@/components/finance/stat-tile";
 import { Card, CardHeader, PageHeader, PageSkeleton } from "@/components/ui";
-import { getCurrentUser } from "@/lib/auth";
+import { getViewer } from "@/lib/auth";
 import { db, run } from "@/lib/db";
 import { getCategoryBreakdown, getMonthlyTrend, periodRange } from "@/lib/data";
 import { currentMonthKey, formatMonth, formatMonthShort, isMonthKey, shiftMonth } from "@/lib/dates";
@@ -25,7 +25,7 @@ export default function StatisticsPage({ searchParams }: { searchParams: SearchP
 }
 
 async function Statistics({ searchParams }: { searchParams: SearchParams }) {
-  const user = await getCurrentUser();
+  const { owner: user } = await getViewer();
   const sp = await searchParams;
 
   const period = param(sp, "period") === "year" ? "year" : "month";

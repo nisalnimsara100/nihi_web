@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { deleteTag, saveTag } from "@/actions/labels";
 import { LabelManager } from "@/components/label-manager";
 import { PageHeader, PageSkeleton } from "@/components/ui";
-import { getCurrentUser } from "@/lib/auth";
+import { getViewer } from "@/lib/auth";
 import { getTags } from "@/lib/data";
 
 export const metadata: Metadata = { title: "Tags" };
@@ -20,7 +20,7 @@ export default function TagsPage() {
 }
 
 async function Tags() {
-  const user = await getCurrentUser();
+  const { owner: user, readOnly } = await getViewer();
   const tags = await getTags(user.id);
   return (
     <div className="max-w-2xl">
@@ -30,6 +30,7 @@ async function Tags() {
         items={tags.map((t) => ({ id: t.id, name: t.name, color: t.color, count: t.transactionCount }))}
         save={saveTag}
         remove={deleteTag}
+        readOnly={readOnly}
       />
     </div>
   );

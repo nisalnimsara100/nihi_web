@@ -24,6 +24,7 @@ export type Database = {
           initialBalance: number
           name: string
           note: string
+          theme: string
           type: Database["public"]["Enums"]["AccountType"]
           userId: string
         }
@@ -36,6 +37,7 @@ export type Database = {
           initialBalance?: number
           name: string
           note?: string
+          theme?: string
           type?: Database["public"]["Enums"]["AccountType"]
           userId: string
         }
@@ -48,6 +50,7 @@ export type Database = {
           initialBalance?: number
           name?: string
           note?: string
+          theme?: string
           type?: Database["public"]["Enums"]["AccountType"]
           userId?: string
         }
@@ -93,6 +96,51 @@ export type Database = {
           {
             foreignKeyName: "Category_userId_fkey"
             columns: ["userId"]
+            isOneToOne: false
+            referencedRelation: "User"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      PartnerShare: {
+        Row: {
+          acceptedAt: string | null
+          createdAt: string
+          email: string
+          id: string
+          ownerId: string
+          partnerId: string | null
+          token: string
+        }
+        Insert: {
+          acceptedAt?: string | null
+          createdAt?: string
+          email: string
+          id?: string
+          ownerId: string
+          partnerId?: string | null
+          token: string
+        }
+        Update: {
+          acceptedAt?: string | null
+          createdAt?: string
+          email?: string
+          id?: string
+          ownerId?: string
+          partnerId?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "PartnerShare_ownerId_fkey"
+            columns: ["ownerId"]
+            isOneToOne: false
+            referencedRelation: "User"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "PartnerShare_partnerId_fkey"
+            columns: ["partnerId"]
             isOneToOne: false
             referencedRelation: "User"
             referencedColumns: ["id"]

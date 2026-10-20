@@ -3,6 +3,9 @@ import { cookies } from "next/headers";
 import { jwtVerify, SignJWT } from "jose";
 
 const COOKIE_NAME = "nihi_session";
+// The owner a partner is currently viewing. It only names the owner: every
+// request checks the PartnerShare row again, see getViewer in auth.ts.
+const VIEW_COOKIE_NAME = "nihi_view";
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
 function getKey() {
@@ -14,6 +17,8 @@ function getKey() {
 }
 
 export async function createSession(userId: string) {
+  // A new sign-in starts on the user's own account, not whoever the last user was viewing.
+  (await cookies()).delete(VIEW_COOKIE_NAME);
   const token = await new SignJWT({})
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(userId)
@@ -44,5 +49,26 @@ export async function getSessionUserId(): Promise<string | null> {
 }
 
 export async function deleteSession() {
-  (await cookies()).delete(COOKIE_NAME);
+  const store = await cookies();
+  store.delete(COOKIE_NAME);
+  store.delete(VIEW_COOKIE_NAME);
+}
+
+/** Sets the owner a partner is viewing. */
+export async function setViewCookie(ownerId: string) {
+  (await cookies()).set(VIEW_COOKIE_NAME, ownerId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: MAX_AGE_SECONDS,
+  });
+}
+
+export async function getViewCookie(): Promise<string | null> {
+  return (await cookies()).get(VIEW_COOKIE_NAME)?.value ?? null;
+}
+
+export async function clearViewCookie() {
+  (await cookies()).delete(VIEW_COOKIE_NAME);
 }

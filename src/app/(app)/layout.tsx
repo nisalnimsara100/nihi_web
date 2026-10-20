@@ -1,10 +1,9 @@
 import { Suspense } from "react";
-import { Plus } from "lucide-react";
 import { Logo } from "@/components/logo";
-import { BottomNav, BottomNavLinks } from "@/components/shell/bottom-nav";
+import { BottomNavLinks } from "@/components/shell/bottom-nav";
 import { SidebarNav, SidebarNavLinks } from "@/components/shell/sidebar-nav";
 import { SidebarUser } from "@/components/shell/user-menu";
-import { ButtonLink } from "@/components/ui";
+import { AppBottomNav, NewTransactionButton, ProfileSwitcher } from "@/components/shell/viewer-shell";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,10 +13,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Logo href="/dashboard" />
         </div>
         <div className="px-4">
-          <ButtonLink href="/transactions/new" className="w-full">
-            <Plus className="size-4" aria-hidden />
-            New transaction
-          </ButtonLink>
+          <Suspense fallback={<div className="h-11" />}>
+            <NewTransactionButton />
+          </Suspense>
         </div>
         <div className="mt-6 flex-1 overflow-y-auto px-3">
           <Suspense fallback={<SidebarNavLinks pathname="" />}>
@@ -33,12 +31,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       <main className="lg:pl-64">
         <div className="mx-auto max-w-6xl px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-32 sm:px-6 lg:px-8 lg:pt-10 lg:pb-12">
+          <Suspense>
+            <ProfileSwitcher />
+          </Suspense>
           {children}
         </div>
       </main>
 
       <Suspense fallback={<BottomNavLinks pathname="" />}>
-        <BottomNav />
+        <AppBottomNav />
       </Suspense>
     </div>
   );

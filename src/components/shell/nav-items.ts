@@ -1,24 +1,24 @@
 import {
-  ArrowLeftRight,
-  ChartColumn,
+  type AppIcon,
+  ArrowsLeftRight,
+  ChartBar,
+  GearSix,
   House,
-  Settings,
   Shapes,
   Tag,
   Wallet,
-  type LucideIcon,
-} from "lucide-react";
+} from "@/components/icons";
 
-export type NavItem = { href: string; label: string; icon: LucideIcon };
+export type NavItem = { href: string; label: string; icon: AppIcon };
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Home", icon: House },
-  { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-  { href: "/statistics", label: "Statistics", icon: ChartColumn },
+  { href: "/transactions", label: "Transactions", icon: ArrowsLeftRight },
+  { href: "/statistics", label: "Statistics", icon: ChartBar },
   { href: "/accounts", label: "Wallet", icon: Wallet },
   { href: "/categories", label: "Categories", icon: Shapes },
   { href: "/tags", label: "Tags", icon: Tag },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/settings", label: "Settings", icon: GearSix },
 ];
 
 /** Pages reachable from the mobile "Profile" tab. */

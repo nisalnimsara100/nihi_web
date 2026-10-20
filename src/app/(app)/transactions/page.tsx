@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Form from "next/form";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Plus, Receipt, Search } from "lucide-react";
+import { MagnifyingGlass, Plus, Receipt } from "@/components/icons";
 import { PeriodNav } from "@/components/finance/month-nav";
 import { TransactionList } from "@/components/finance/transaction-list";
 import { Button, ButtonLink, Card, EmptyState, inputClass, PageHeader, PageSkeleton } from "@/components/ui";
-import { getCurrentUser } from "@/lib/auth";
+import { getViewer } from "@/lib/auth";
 import { getAccounts, getCategories, getTags, getTransactions, getTotalsByCurrency } from "@/lib/data";
 import { currentMonthKey, formatMonth, isMonthKey, monthRange, shiftMonth } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
@@ -30,7 +30,7 @@ export default function TransactionsPage({ searchParams }: { searchParams: Searc
 }
 
 async function Transactions({ searchParams }: { searchParams: SearchParams }) {
-  const user = await getCurrentUser();
+  const { owner: user, readOnly } = await getViewer();
   const sp = await searchParams;
 
   const monthParam = param(sp, "month");
@@ -71,10 +71,12 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
         actions={
           <>
             <PeriodNav label={formatMonth(month)} prevHref={monthHref(-1)} nextHref={monthHref(1)} />
-            <ButtonLink href="/transactions/new" size="sm" className="hidden sm:inline-flex">
-              <Plus className="size-4" aria-hidden />
-              New
-            </ButtonLink>
+            {readOnly ? null : (
+              <ButtonLink href="/transactions/new" size="sm" className="hidden sm:inline-flex">
+                <Plus className="size-4" aria-hidden />
+                New
+              </ButtonLink>
+            )}
           </>
         }
       />
@@ -84,7 +86,7 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
           <input type="hidden" name="month" value={month} />
           <label className="relative col-span-2 sm:col-span-3 lg:col-span-2">
             <span className="sr-only">Search notes</span>
-            <Search className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-ink-faint" aria-hidden />
+            <MagnifyingGlass className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-ink-faint" aria-hidden />
             <input name="q" defaultValue={filters.q} placeholder="Search notes" className={`${inputClass} pl-9`} />
           </label>
           <select name="type" defaultValue={filters.type ?? ""} aria-label="Type" className={inputClass}>
@@ -151,13 +153,19 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
 
       <div className="rounded-3xl bg-muted p-4 sm:p-5">
         {transactions.length > 0 ? (
-          <TransactionList transactions={transactions} />
+          <TransactionList transactions={transactions} readOnly={readOnly} />
         ) : (
           <EmptyState
             icon={<Receipt className="size-6" />}
             title={activeCount > 0 ? "Nothing matches these filters" : "No transactions this month"}
-            description={activeCount > 0 ? "Try clearing a filter or picking another month." : "Add one to start tracking."}
-            action={<ButtonLink href="/transactions/new">Add transaction</ButtonLink>}
+            description={
+              activeCount > 0
+                ? "Try clearing a filter or picking another month."
+                : readOnly
+                  ? "Nothing was added this month."
+                  : "Add one to start tracking."
+            }
+            action={readOnly ? undefined : <ButtonLink href="/transactions/new">Add transaction</ButtonLink>}
           />
         )}
       </div>
