@@ -1,56 +1,56 @@
 import {
+  type AppIcon,
   ArrowDownLeft,
-  ArrowLeftRight,
+  ArrowsLeftRight,
   ArrowUpRight,
-  ChartColumn,
-  ChevronRight,
+  CaretRight,
+  ChartBar,
   Coffee,
+  ForkKnife,
+  GearSix,
   House,
+  Lightning,
   Lock,
   Plus,
-  Settings,
   Shapes,
   ShoppingCart,
   Tag,
-  TrendingUp,
-  Utensils,
+  TrendUp,
   Wallet,
-  Zap,
-  type LucideIcon,
-} from "lucide-react";
+} from "@/components/icons";
 import { MockAvatar } from "@/components/landing/mock-avatar";
 import { LogoMark } from "@/components/logo";
 import { cn } from "@/lib/cn";
 
-const NAV: { label: string; icon: LucideIcon }[] = [
+const NAV: { label: string; icon: AppIcon }[] = [
   { label: "Home", icon: House },
-  { label: "Transactions", icon: ArrowLeftRight },
-  { label: "Statistics", icon: ChartColumn },
+  { label: "Transactions", icon: ArrowsLeftRight },
+  { label: "Statistics", icon: ChartBar },
   { label: "Wallet", icon: Wallet },
   { label: "Categories", icon: Shapes },
   { label: "Tags", icon: Tag },
-  { label: "Settings", icon: Settings },
+  { label: "Settings", icon: GearSix },
 ];
 
 const ACTIONS = [
   { label: "Expense", icon: ArrowUpRight },
   { label: "Income", icon: ArrowDownLeft },
-  { label: "Transfer", icon: ArrowLeftRight },
+  { label: "Transfer", icon: ArrowsLeftRight },
   { label: "Wallet", icon: Wallet },
 ];
 
 const RECENT = [
   { icon: ShoppingCart, color: "#eda100", name: "Groceries", meta: "Today · Cash", amount: "-Rs. 4,280", income: false },
   { icon: Wallet, color: "#1baf7a", name: "Salary", meta: "Oct 25 · Bank", amount: "+Rs. 250,000", income: true },
-  { icon: Zap, color: "#2a78d6", name: "Electricity", meta: "Oct 24 · Bank", amount: "-Rs. 6,940", income: false },
+  { icon: Lightning, color: "#2a78d6", name: "Electricity", meta: "Oct 24 · Bank", amount: "-Rs. 6,940", income: false },
   { icon: Coffee, color: "#e34948", name: "Coffee", meta: "Oct 23 · Card", amount: "-Rs. 850", income: false },
 ];
 
 const SPENDING = [
-  { icon: Utensils, color: "#eb6834", name: "Food & Dining", amount: "Rs. 38,420", share: 34 },
+  { icon: ForkKnife, color: "#eb6834", name: "Food & Dining", amount: "Rs. 38,420", share: 34 },
   { icon: House, color: "#6250d6", name: "Housing", amount: "Rs. 32,000", share: 28 },
   { icon: ShoppingCart, color: "#eda100", name: "Groceries", amount: "Rs. 21,150", share: 19 },
-  { icon: Zap, color: "#2a78d6", name: "Utilities", amount: "Rs. 12,870", share: 11 },
+  { icon: Lightning, color: "#2a78d6", name: "Utilities", amount: "Rs. 12,870", share: 11 },
 ];
 
 const ACCOUNTS = [
@@ -114,7 +114,7 @@ export function DashboardMock({ className }: { className?: string }) {
                 <span className="block text-[11px] font-semibold">Nimal Perera</span>
               </span>
               <span className="flex size-7 items-center justify-center rounded-full bg-white/15">
-                <Settings className="size-3.5" />
+                <GearSix className="size-3.5" />
               </span>
             </div>
             <p className="mt-3 text-[9px] text-white/80">Total Balance</p>
@@ -134,13 +134,13 @@ export function DashboardMock({ className }: { className?: string }) {
             <div className="space-y-3 lg:col-span-3">
               <div className="flex items-center gap-2 rounded-xl bg-muted p-2.5">
                 <span className="flex size-7 items-center justify-center rounded-lg bg-success-soft text-income">
-                  <TrendingUp className="size-3.5" />
+                  <TrendUp className="size-3.5" />
                 </span>
                 <span className="flex-1 text-[10px] leading-tight">
                   <span className="block font-semibold">You saved Rs. 156,962</span>
                   <span className="block text-ink-soft">October 2026</span>
                 </span>
-                <ChevronRight className="size-3.5 text-ink-faint" />
+                <CaretRight className="size-3.5 text-ink-faint" />
               </div>
               <div className="grid grid-cols-4 gap-2">
                 {ACTIONS.map(({ label, icon: Icon }) => (
@@ -148,7 +148,7 @@ export function DashboardMock({ className }: { className?: string }) {
                     key={label}
                     className="flex flex-col items-center gap-1 rounded-xl bg-primary-soft py-2.5 text-on-primary-soft"
                   >
-                    <Icon className="size-3.5" strokeWidth={1.8} />
+                    <Icon className="size-3.5" />
                     <span className="text-[9px] font-semibold">{label}</span>
                   </span>
                 ))}

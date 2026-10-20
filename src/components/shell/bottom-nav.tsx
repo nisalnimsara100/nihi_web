@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChartColumn, CircleUser, House, Plus, Wallet } from "lucide-react";
+import { ChartBar, House, Plus, UserCircle, Wallet } from "@/components/icons";
 import { cn } from "@/lib/cn";
 import { isActive, MORE_ITEMS } from "./nav-items";
 
@@ -10,8 +10,8 @@ const TABS = [
   { href: "/dashboard", label: "Home", icon: House },
   { href: "/accounts", label: "Wallet", icon: Wallet },
   { href: "/transactions/new", label: "Add", icon: Plus },
-  { href: "/statistics", label: "Stats", icon: ChartColumn },
-  { href: "/more", label: "Profile", icon: CircleUser },
+  { href: "/statistics", label: "Stats", icon: ChartBar },
+  { href: "/more", label: "Profile", icon: UserCircle },
 ];
 
 export function BottomNav() {
@@ -45,10 +45,10 @@ export function BottomNavLinks({ pathname }: { pathname: string }) {
             >
               {isAdd ? (
                 <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-on-primary shadow-md shadow-primary/30">
-                  <Icon className="size-5" strokeWidth={2.4} aria-hidden />
+                  <Icon className="size-5" weight="bold" aria-hidden />
                 </span>
               ) : (
-                <Icon className="size-6" strokeWidth={active ? 2.3 : 1.8} aria-hidden />
+                <Icon className="size-6" weight={active ? "fill" : "duotone"} aria-hidden />
               )}
               {isAdd ? <span className="sr-only">{label}</span> : label}
             </Link>

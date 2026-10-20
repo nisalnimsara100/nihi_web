@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore, type ReactNode } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeSlash } from "@/components/icons";
 
 const STORAGE_KEY = "nihi:hide-balance";
 const CHANGE_EVENT = "nihi:hide-balance-change";
@@ -46,7 +46,7 @@ export function BalanceCard({ label, amount, footer }: { label: string; amount: 
           aria-pressed={hidden}
           className="rounded-full bg-white/15 p-1 hover:bg-white/25"
         >
-          {hidden ? <EyeOff className="size-3.5" aria-hidden /> : <Eye className="size-3.5" aria-hidden />}
+          {hidden ? <EyeSlash className="size-3.5" aria-hidden /> : <Eye className="size-3.5" aria-hidden />}
         </button>
       </div>
       <p className="mt-2 text-4xl font-semibold tracking-tight text-white tabular-nums sm:text-5xl">

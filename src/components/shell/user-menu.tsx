@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogOut } from "lucide-react";
+import { SignOut } from "@/components/icons";
 import { logout } from "@/actions/auth";
 import { getCurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/cn";
@@ -43,7 +43,7 @@ export async function SidebarUser() {
           aria-label="Sign out"
           className="rounded-xl p-2.5 text-ink-soft hover:bg-muted hover:text-ink"
         >
-          <LogOut className="size-5" aria-hidden />
+          <SignOut className="size-5" aria-hidden />
         </button>
       </form>
     </div>

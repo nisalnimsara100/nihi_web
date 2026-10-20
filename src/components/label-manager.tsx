@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, Plus } from "lucide-react";
+import { PencilSimple, Plus } from "@/components/icons";
 import type { ActionState } from "@/actions/state";
 import { ColorPicker, DeleteButton, FormError, IconPicker, SubmitButton } from "@/components/form-bits";
 import { useActionForm } from "@/components/use-action-form";
@@ -133,7 +133,7 @@ export function LabelManager({
                   </span>
                 </span>
                 <Button size="sm" variant="ghost" aria-label={`Edit ${item.name}`} onClick={() => setEditing(item.id)}>
-                  <Pencil className="size-4" aria-hidden />
+                  <PencilSimple className="size-4" aria-hidden />
                 </Button>
                 <DeleteButton
                   size="sm"

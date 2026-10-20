@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { ChevronRight, LogOut } from "lucide-react";
+import { CaretRight, SignOut } from "@/components/icons";
 import { logout } from "@/actions/auth";
 import { MORE_ITEMS } from "@/components/shell/nav-items";
 import { Avatar } from "@/components/shell/user-menu";
@@ -27,7 +27,7 @@ export default function MorePage() {
                 <Icon className="size-5" aria-hidden />
               </span>
               <span className="flex-1 font-semibold">{label}</span>
-              <ChevronRight className="size-5 text-ink-faint" aria-hidden />
+              <CaretRight className="size-5 text-ink-faint" aria-hidden />
             </Link>
           </li>
         ))}
@@ -35,7 +35,7 @@ export default function MorePage() {
           <form action={logout}>
             <button type="submit" className={`${tile} text-danger`}>
               <span className="flex size-10 items-center justify-center rounded-2xl bg-danger-soft">
-                <LogOut className="size-5" aria-hidden />
+                <SignOut className="size-5" aria-hidden />
               </span>
               <span className="flex-1 font-semibold">Sign out</span>
             </button>

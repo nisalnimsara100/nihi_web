@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Form from "next/form";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Plus, Receipt, Search } from "lucide-react";
+import { MagnifyingGlass, Plus, Receipt } from "@/components/icons";
 import { PeriodNav } from "@/components/finance/month-nav";
 import { TransactionList } from "@/components/finance/transaction-list";
 import { Button, ButtonLink, Card, EmptyState, inputClass, PageHeader, PageSkeleton } from "@/components/ui";
@@ -84,7 +84,7 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
           <input type="hidden" name="month" value={month} />
           <label className="relative col-span-2 sm:col-span-3 lg:col-span-2">
             <span className="sr-only">Search notes</span>
-            <Search className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-ink-faint" aria-hidden />
+            <MagnifyingGlass className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-ink-faint" aria-hidden />
             <input name="q" defaultValue={filters.q} placeholder="Search notes" className={`${inputClass} pl-9`} />
           </label>
           <select name="type" defaultValue={filters.type ?? ""} aria-label="Type" className={inputClass}>

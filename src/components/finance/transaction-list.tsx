@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeftRight } from "lucide-react";
+import { ArrowsLeftRight } from "@/components/icons";
 import type { TransactionRow } from "@/lib/data";
 import { dateToDay, formatDay, relativeDay } from "@/lib/dates";
 import { Amount } from "@/components/ui";
@@ -12,7 +12,7 @@ function TransactionIcon({ tx }: { tx: TransactionRow }) {
   if (tx.type === "TRANSFER") {
     return (
       <span aria-hidden className={iconTile}>
-        <ArrowLeftRight className="size-5" />
+        <ArrowsLeftRight className="size-5" />
       </span>
     );
   }

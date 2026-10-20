@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Wallet } from "lucide-react";
+import { Wallet } from "@/components/icons";
 import { ButtonLink, Card, EmptyState, PageHeader, Skeleton } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { todayDay } from "@/lib/dates";

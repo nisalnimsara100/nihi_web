@@ -3,17 +3,17 @@ import Link from "next/link";
 import { Suspense } from "react";
 import {
   ArrowDownLeft,
-  ArrowLeftRight,
+  ArrowsLeftRight,
   ArrowUpRight,
-  ChartColumn,
-  ChevronRight,
+  CaretRight,
+  ChartBar,
+  GearSix,
   Receipt,
-  Settings,
   SlidersHorizontal,
-  TrendingUp,
-  TriangleAlert,
+  TrendUp,
   Wallet,
-} from "lucide-react";
+  Warning,
+} from "@/components/icons";
 import { BalanceCard } from "@/components/finance/balance-card";
 import { CategoryBars } from "@/components/finance/category-bars";
 import { Greeting } from "@/components/finance/greeting";
@@ -40,7 +40,7 @@ export default function DashboardPage() {
 const QUICK_ACTIONS = [
   { href: "/transactions/new?type=EXPENSE", label: "Expense", icon: ArrowUpRight },
   { href: "/transactions/new?type=INCOME", label: "Income", icon: ArrowDownLeft },
-  { href: "/transactions/new?type=TRANSFER", label: "Transfer", icon: ArrowLeftRight },
+  { href: "/transactions/new?type=TRANSFER", label: "Transfer", icon: ArrowsLeftRight },
   { href: "/accounts", label: "Wallet", icon: Wallet },
 ];
 
@@ -86,7 +86,7 @@ async function Dashboard() {
             aria-label="Settings"
             className="flex size-11 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/20 hover:bg-white/25"
           >
-            <Settings className="size-5" aria-hidden />
+            <GearSix className="size-5" aria-hidden />
           </Link>
         </div>
 
@@ -127,7 +127,7 @@ async function Dashboard() {
                 saved ? "bg-success-soft text-income" : "bg-warning-soft text-warning",
               )}
             >
-              {saved ? <TrendingUp className="size-6" aria-hidden /> : <TriangleAlert className="size-6" aria-hidden />}
+              {saved ? <TrendUp className="size-6" aria-hidden /> : <Warning className="size-6" aria-hidden />}
             </span>
             <span className="min-w-0 flex-1">
               <span className="block font-semibold">
@@ -138,7 +138,7 @@ async function Dashboard() {
                 {formatMoney(monthTotals.expense, currency)}
               </span>
             </span>
-            <ChevronRight className="size-5 shrink-0 text-ink-faint" aria-hidden />
+            <CaretRight className="size-5 shrink-0 text-ink-faint" aria-hidden />
           </Link>
 
           <section>
@@ -150,7 +150,7 @@ async function Dashboard() {
                   href={href}
                   className="flex aspect-square flex-col items-center justify-center gap-2 rounded-3xl bg-primary-soft text-on-primary-soft transition-colors hover:bg-primary-soft-strong sm:aspect-auto sm:py-5"
                 >
-                  <Icon className="size-6" strokeWidth={1.8} aria-hidden />
+                  <Icon className="size-6" aria-hidden />
                   <span className="text-xs font-semibold sm:text-sm">{label}</span>
                 </Link>
               ))}
@@ -189,7 +189,7 @@ async function Dashboard() {
                 <CategoryBars data={breakdown} currency={currency} limit={6} />
               ) : (
                 <p className="flex items-center gap-2 text-sm text-ink-soft">
-                  <ChartColumn className="size-4" aria-hidden />
+                  <ChartBar className="size-4" aria-hidden />
                   No {currency} spending this month yet.
                 </p>
               )}

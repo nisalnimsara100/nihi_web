@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Plus } from "lucide-react";
+import { Plus } from "@/components/icons";
 import { Logo } from "@/components/logo";
 import { BottomNav, BottomNavLinks } from "@/components/shell/bottom-nav";
 import { SidebarNav, SidebarNavLinks } from "@/components/shell/sidebar-nav";

@@ -1,36 +1,36 @@
 import {
   ArrowDownLeft,
-  ArrowLeftRight,
+  ArrowsLeftRight,
   ArrowUpRight,
-  Banknote,
+  Basket,
   Briefcase,
-  ChartColumn,
-  ChevronRight,
-  CircleUser,
+  CaretRight,
+  ChartBar,
   Coffee,
+  GearSix,
   House,
+  Invoice,
+  Lightning,
+  Money,
   Plus,
-  ReceiptText,
-  Settings,
-  ShoppingBasket,
-  TrendingUp,
+  TrendUp,
+  UserCircle,
   Wallet,
-  Zap,
-} from "lucide-react";
+} from "@/components/icons";
 import { MockAvatar } from "@/components/landing/mock-avatar";
 import { cn } from "@/lib/cn";
 
 const ACTIONS = [
   { label: "Expense", icon: ArrowUpRight },
   { label: "Income", icon: ArrowDownLeft },
-  { label: "Transfer", icon: ArrowLeftRight },
+  { label: "Transfer", icon: ArrowsLeftRight },
   { label: "Wallet", icon: Wallet },
 ];
 
 const TRANSACTIONS = [
-  { icon: ShoppingBasket, name: "Groceries", note: "Keells", amount: "-Rs. 4,280", tone: "text-expense", chip: "bg-warning-soft text-warning" },
+  { icon: Basket, name: "Groceries", note: "Keells", amount: "-Rs. 4,280", tone: "text-expense", chip: "bg-warning-soft text-warning" },
   { icon: Briefcase, name: "Salary", note: "Bank transfer", amount: "+Rs. 250,000", tone: "text-income", chip: "bg-success-soft text-income" },
-  { icon: Zap, name: "Electricity", note: "CEB bill", amount: "-Rs. 6,940", tone: "text-expense", chip: "bg-primary-soft text-on-primary-soft" },
+  { icon: Lightning, name: "Electricity", note: "CEB bill", amount: "-Rs. 6,940", tone: "text-expense", chip: "bg-primary-soft text-on-primary-soft" },
   { icon: Coffee, name: "Coffee", note: "Cash", amount: "-Rs. 850", tone: "text-expense", chip: "bg-danger-soft text-danger" },
 ];
 
@@ -38,13 +38,13 @@ const TABS = [
   { label: "Home", icon: House },
   { label: "Wallet", icon: Wallet },
   { label: "Add", icon: Plus },
-  { label: "Stats", icon: ChartColumn },
-  { label: "Profile", icon: CircleUser },
+  { label: "Stats", icon: ChartBar },
+  { label: "Profile", icon: UserCircle },
 ];
 
 const INSIGHTS = [
-  { icon: Banknote, title: "Income", text: "Rs. 33,000 more than last month", tone: "bg-success-soft text-income" },
-  { icon: ReceiptText, title: "Bills & Utilities", text: "2 bills fewer than last month", tone: "bg-primary-soft text-on-primary-soft" },
+  { icon: Money, title: "Income", text: "Rs. 33,000 more than last month", tone: "bg-success-soft text-income" },
+  { icon: Invoice, title: "Bills & Utilities", text: "2 bills fewer than last month", tone: "bg-primary-soft text-on-primary-soft" },
 ];
 
 // Natural titanium edge, lit from the top left.
@@ -79,7 +79,7 @@ export function PhoneMock({ className, insights = true }: { className?: string; 
                     <span className="block text-xs font-semibold">Nimal Perera</span>
                   </span>
                   <span className="flex size-8 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/20">
-                    <Settings className="size-4" />
+                    <GearSix className="size-4" />
                   </span>
                 </div>
                 <p className="mt-4 text-[9px] text-white/80">Total Balance</p>
@@ -98,7 +98,7 @@ export function PhoneMock({ className, insights = true }: { className?: string; 
               <div className="min-h-0 flex-1 space-y-3 overflow-hidden p-3">
                 <div className="flex items-center gap-2 rounded-xl bg-muted p-2.5">
                   <span className="flex size-7 items-center justify-center rounded-lg bg-success-soft text-income">
-                    <TrendingUp className="size-4" />
+                    <TrendUp className="size-4" />
                   </span>
                   <span className="text-[9px] leading-tight">
                     <span className="block font-semibold">You saved Rs. 156,962</span>
@@ -108,7 +108,7 @@ export function PhoneMock({ className, insights = true }: { className?: string; 
                 <div className="grid grid-cols-4 gap-1.5">
                   {ACTIONS.map(({ label, icon: Icon }) => (
                     <span key={label} className="flex flex-col items-center gap-1 rounded-xl bg-primary-soft py-2.5 text-on-primary-soft">
-                      <Icon className="size-4" strokeWidth={1.8} />
+                      <Icon className="size-4" />
                       <span className="text-[8px] font-semibold">{label}</span>
                     </span>
                   ))}
@@ -137,7 +137,7 @@ export function PhoneMock({ className, insights = true }: { className?: string; 
                   label === "Add" ? (
                     <span key={label} className="flex items-center justify-center">
                       <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-on-primary shadow-md shadow-primary/30">
-                        <Icon className="size-4" strokeWidth={2.4} />
+                        <Icon className="size-4" weight="bold" />
                       </span>
                     </span>
                   ) : (
@@ -148,7 +148,7 @@ export function PhoneMock({ className, insights = true }: { className?: string; 
                         i === 0 ? "text-primary" : "text-ink-faint",
                       )}
                     >
-                      <Icon className="size-4" strokeWidth={i === 0 ? 2.3 : 1.8} />
+                      <Icon className="size-4" weight={i === 0 ? "fill" : "duotone"} />
                       {label}
                     </span>
                   ),
@@ -174,7 +174,7 @@ export function PhoneMock({ className, insights = true }: { className?: string; 
                 <span className="block text-[10px] font-semibold text-ink">{title}</span>
                 <span className="block truncate text-[9px] text-ink-soft">{text}</span>
               </span>
-              <ChevronRight className="size-3.5 text-ink-faint" />
+              <CaretRight className="size-3.5 text-ink-faint" />
             </div>
           ))}
         </div>

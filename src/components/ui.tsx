@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
-import { ChevronLeft } from "lucide-react";
+import { CaretLeft } from "@/components/icons";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/money";
 
@@ -153,7 +153,7 @@ export function PageHeader({
       <div className="flex min-w-0 items-center gap-3">
         {backHref ? (
           <IconLink href={backHref} label="Back" className="size-9">
-            <ChevronLeft className="size-5" aria-hidden />
+            <CaretLeft className="size-5" aria-hidden />
           </IconLink>
         ) : null}
         <div className="min-w-0">

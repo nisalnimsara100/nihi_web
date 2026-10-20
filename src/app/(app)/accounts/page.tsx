@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Plus, Wallet } from "lucide-react";
+import { Plus, Wallet } from "@/components/icons";
 import { ButtonLink, Card, ColorDot, EmptyState, IconLink, PageHeader, PageSkeleton } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { accountTypeLabel } from "@/lib/constants";

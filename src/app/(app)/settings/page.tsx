@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { LogOut } from "lucide-react";
+import { SignOut } from "@/components/icons";
 import { logout } from "@/actions/auth";
 import { Button, Card, CardHeader, PageHeader, Skeleton } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
@@ -21,7 +21,7 @@ export default function SettingsPage() {
           <CardHeader title="Session" />
           <form action={logout} className="p-4 sm:p-5">
             <Button type="submit" variant="secondary">
-              <LogOut className="size-4" aria-hidden />
+              <SignOut className="size-4" aria-hidden />
               Sign out
             </Button>
           </form>
