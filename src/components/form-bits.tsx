@@ -7,7 +7,8 @@ import type { ActionState } from "@/actions/state";
 import { CATEGORY_ICON_NAMES, CategoryIcon, DEFAULT_CATEGORY_ICON, isCategoryIcon } from "@/lib/category-icons";
 import { COLORS } from "@/lib/constants";
 import { cn } from "@/lib/cn";
-import { Alert, Button } from "./ui";
+import { notify } from "./toast";
+import { Button } from "./ui";
 
 export function SubmitButton({
   children,
@@ -26,11 +27,6 @@ export function SubmitButton({
       {children}
     </Button>
   );
-}
-
-export function FormError({ state }: { state: ActionState }) {
-  if (!state.error) return null;
-  return <Alert>{state.error}</Alert>;
 }
 
 export function ColorPicker({
@@ -85,7 +81,6 @@ export function DeleteButton({
   iconOnly?: boolean;
 }) {
   const [armed, setArmed] = useState(false);
-  const [error, setError] = useState<string>();
   const [pending, startTransition] = useTransition();
 
   return (
@@ -105,7 +100,8 @@ export function DeleteButton({
           startTransition(async () => {
             const result = await action();
             setArmed(false);
-            if (result?.error) setError(result.error);
+            if (result?.error) notify.error(result.error);
+            else if (result?.message) notify.success(result.message, result.detail);
           });
         }}
         className={cn(!armed && !iconOnly && "text-danger")}
@@ -113,7 +109,6 @@ export function DeleteButton({
         {pending ? <CircleNotch className="size-4 animate-spin" aria-hidden /> : <Trash className="size-4" aria-hidden />}
         {armed ? confirmLabel : iconOnly ? null : label}
       </Button>
-      {error ? <Alert>{error}</Alert> : null}
     </div>
   );
 }

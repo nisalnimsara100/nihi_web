@@ -1,9 +1,9 @@
 "use client";
 
 import { changePassword, updateProfile } from "@/actions/settings";
-import { FormError, SubmitButton } from "@/components/form-bits";
+import { SubmitButton } from "@/components/form-bits";
 import { useActionForm } from "@/components/use-action-form";
-import { Alert, Card, CardHeader, Field, inputClass } from "@/components/ui";
+import { Card, CardHeader, Field, inputClass } from "@/components/ui";
 import { CURRENCIES } from "@/lib/constants";
 
 export function ProfileForm({ name, email, defaultCurrency }: { name: string; email: string; defaultCurrency: string }) {
@@ -13,8 +13,6 @@ export function ProfileForm({ name, email, defaultCurrency }: { name: string; em
     <Card>
       <CardHeader title="Profile" />
       <form onSubmit={onSubmit} className="space-y-4 p-4 sm:p-5" noValidate>
-        <FormError state={state} />
-        {state.ok ? <Alert tone="success">Profile saved.</Alert> : null}
         <Field label="Email" htmlFor="email">
           <input id="email" value={email} disabled className={`${inputClass} opacity-70`} />
         </Field>
@@ -48,8 +46,6 @@ export function PasswordForm() {
     <Card>
       <CardHeader title="Password" />
       <form ref={formRef} onSubmit={onSubmit} className="space-y-4 p-4 sm:p-5" noValidate>
-        <FormError state={state} />
-        {state.ok ? <Alert tone="success">Password changed.</Alert> : null}
         <Field label="Current password" htmlFor="current" error={errors.current}>
           <input id="current" name="current" type="password" autoComplete="current-password" aria-invalid={!!errors.current} className={inputClass} />
         </Field>

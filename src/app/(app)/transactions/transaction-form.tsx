@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 import { deleteTransaction, saveTransaction } from "@/actions/transactions";
-import { DeleteButton, FormError, SubmitButton } from "@/components/form-bits";
+import { ScanSheet, type ScanResult } from "@/components/finance/scan-sheet";
+import { Scan } from "@/components/icons";
+import type { HistoryRow } from "@/lib/scan/categorize";
+import { DeleteButton, SubmitButton } from "@/components/form-bits";
 import { useActionForm } from "@/components/use-action-form";
 import { buttonClass, Card, Field, inputClass } from "@/components/ui";
 import type { Enums } from "@/lib/database.types";
@@ -40,11 +43,14 @@ export function TransactionForm({
   accounts,
   categories,
   tags,
+  history = [],
 }: {
   initial: TransactionFormValues;
   accounts: AccountOption[];
   categories: CategoryOption[];
   tags: Option[];
+  /** Past notes and categories, used to guess the category of a scanned receipt. */
+  history?: HistoryRow[];
 }) {
   const { state, pending, onSubmit } = useActionForm(saveTransaction);
   const [type, setType] = useState<TransactionType>(initial.type);
@@ -52,6 +58,9 @@ export function TransactionForm({
   const [toAccountId, setToAccountId] = useState(initial.toAccountId);
   const [categoryId, setCategoryId] = useState(initial.categoryId);
   const [tagIds, setTagIds] = useState(initial.tagIds);
+  const [scanOpen, setScanOpen] = useState(false);
+  // The amount, date and note inputs are uncontrolled; a new key remounts them with scanned values.
+  const [scanned, setScanned] = useState({ n: 0, amount: initial.amount, date: initial.date, note: initial.note });
   const errors = state.fieldErrors ?? {};
 
   const isTransfer = type === "TRANSFER";
@@ -67,6 +76,17 @@ export function TransactionForm({
     }
   }
 
+  function applyScan(r: ScanResult) {
+    setType(r.type);
+    setAccountId(r.accountId);
+    setCategoryId(r.type === "TRANSFER" ? "" : r.categoryId);
+    if (r.type === "TRANSFER" && (!toAccountId || toAccountId === r.accountId)) {
+      setToAccountId(accounts.find((a) => a.id !== r.accountId)?.id ?? "");
+    }
+    setScanned((s) => ({ n: s.n + 1, amount: r.amount, date: r.date, note: r.note }));
+    setScanOpen(false);
+  }
+
   function toggleTag(id: string) {
     setTagIds((ids) => (ids.includes(id) ? ids.filter((t) => t !== id) : [...ids, id]));
   }
@@ -79,6 +99,16 @@ export function TransactionForm({
         {tagIds.map((id) => (
           <input key={id} type="hidden" name="tags" value={id} />
         ))}
+
+        {!initial.id ? (
+          <button
+            type="button"
+            onClick={() => setScanOpen(true)}
+            className={buttonClass("soft", "md", "w-full")}
+          >
+            <Scan className="size-5" /> Scan screenshot or bill
+          </button>
+        ) : null}
 
         <div role="radiogroup" aria-label="Transaction type" className="grid grid-cols-3 gap-1 rounded-2xl bg-muted p-1">
           {TYPE_TABS.map((tab) => (
@@ -100,17 +130,17 @@ export function TransactionForm({
           ))}
         </div>
 
-        <FormError state={state} />
 
         <Field label={crossCurrency ? `Amount sent (${from.currency})` : "Amount"} htmlFor="amount" error={errors.amount}>
           <div className="relative">
             <input
+              key={`amount-${scanned.n}`}
               id="amount"
               name="amount"
               inputMode="decimal"
               autoComplete="off"
               placeholder="0.00"
-              defaultValue={initial.amount}
+              defaultValue={scanned.amount}
               autoFocus={!initial.id}
               aria-invalid={!!errors.amount}
               className={cn(inputClass, "h-14 pr-16 text-2xl font-semibold tabular-nums sm:text-2xl")}
@@ -221,7 +251,7 @@ export function TransactionForm({
         ) : null}
 
         <Field label="Date" htmlFor="date" error={errors.date}>
-          <input id="date" name="date" type="date" required defaultValue={initial.date} className={inputClass} />
+          <input key={`date-${scanned.n}`} id="date" name="date" type="date" required defaultValue={scanned.date} className={inputClass} />
         </Field>
 
         {tags.length > 0 ? (
@@ -254,11 +284,12 @@ export function TransactionForm({
 
         <Field label="Note" htmlFor="note" error={errors.note}>
           <textarea
+            key={`note-${scanned.n}`}
             id="note"
             name="note"
             rows={2}
             maxLength={500}
-            defaultValue={initial.note}
+            defaultValue={scanned.note}
             placeholder="Optional"
             className={cn(inputClass, "h-auto py-2.5")}
           />
@@ -278,6 +309,16 @@ export function TransactionForm({
           </div>
         </div>
       </form>
+      {scanOpen ? (
+        <ScanSheet
+          accounts={accounts}
+          categories={categories}
+          history={history}
+          currentAccountId={accountId}
+          onApply={applyScan}
+          onClose={() => setScanOpen(false)}
+        />
+      ) : null}
     </Card>
   );
 }

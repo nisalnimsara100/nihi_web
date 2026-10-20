@@ -4,6 +4,10 @@ export type ActionState = {
   error?: string;
   fieldErrors?: Record<string, string[] | undefined>;
   ok?: boolean;
+  /** Toast title for a successful action. */
+  message?: string;
+  /** Toast body that goes with `message`. */
+  detail?: string;
 };
 
 export function fromZodError(error: z.ZodError): ActionState {

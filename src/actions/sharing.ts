@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireUserId } from "@/lib/auth";
 import { db, run } from "@/lib/db";
+import { flash } from "@/lib/flash";
 import { clearViewCookie, getViewCookie, setViewCookie } from "@/lib/session";
 import { fromZodError, type ActionState } from "./state";
 
@@ -35,29 +36,41 @@ export async function invitePartner(_prev: ActionState, formData: FormData): Pro
   );
 
   revalidatePath("/", "layout");
-  return { ok: true };
+  return { ok: true, message: "Invite created", detail: `Copy the link and send it to ${email}.` };
 }
 
 /** Owner revokes a partner's access, or cancels a pending invite. */
 export async function removeShare(id: string): Promise<ActionState> {
   const userId = await requireUserId();
-  await run(db().from("PartnerShare").delete().eq("id", id).eq("ownerId", userId));
+  const removed = await run(
+    db().from("PartnerShare").delete().eq("id", id).eq("ownerId", userId).select("email, acceptedAt"),
+  );
   revalidatePath("/", "layout");
-  return { ok: true };
+  const [share] = removed;
+  return {
+    ok: true,
+    message: share?.acceptedAt ? "Access removed" : "Invite cancelled",
+    detail: share?.email,
+  };
 }
 
 /** Partner gives up access to someone's data. */
 export async function leaveShare(id: string): Promise<ActionState> {
   const userId = await requireUserId();
   const removed = await run(
-    db().from("PartnerShare").delete().eq("id", id).eq("partnerId", userId).select("ownerId"),
+    db()
+      .from("PartnerShare")
+      .delete()
+      .eq("id", id)
+      .eq("partnerId", userId)
+      .select("ownerId, owner:User!PartnerShare_ownerId_fkey(name)"),
   );
   const viewing = await getViewCookie();
   if (removed.some((share) => share.ownerId === viewing)) {
     await clearViewCookie();
   }
   revalidatePath("/", "layout");
-  return { ok: true };
+  return { ok: true, message: "You left the account", detail: removed[0]?.owner?.name };
 }
 
 /**
@@ -68,20 +81,31 @@ export async function leaveShare(id: string): Promise<ActionState> {
 export async function acceptInvite(token: string): Promise<ActionState> {
   const userId = await requireUserId();
   const [share, me] = await Promise.all([
-    run(db().from("PartnerShare").select("id, ownerId, email, partnerId").eq("token", token).maybeSingle()),
+    run(
+      db()
+        .from("PartnerShare")
+        .select("id, ownerId, email, partnerId, owner:User!PartnerShare_ownerId_fkey(name)")
+        .eq("token", token)
+        .maybeSingle(),
+    ),
     run(db().from("User").select("email").eq("id", userId).single()),
   ]);
+  // Failures can't go back to a form, so they toast on the invite page.
+  const fail = async (title: string, description?: string): Promise<never> => {
+    await flash({ type: "error", title, description });
+    redirect(`/invite/${token}`);
+  };
   if (!share) {
-    return { error: "This invite is no longer valid." };
+    return fail("This invite is no longer valid");
   }
   if (share.ownerId === userId) {
-    return { error: "This is your own invite. Send the link to your partner." };
+    return fail("This is your own invite", "Send the link to your partner.");
   }
   if (share.email !== me.email) {
-    return { error: `This invite is for ${share.email}. Sign in with that email to accept it.` };
+    return fail("This invite is for another email", `Sign in as ${share.email} to accept it.`);
   }
   if (share.partnerId && share.partnerId !== userId) {
-    return { error: "This invite has already been used." };
+    return fail("This invite has already been used");
   }
 
   await run(
@@ -91,6 +115,11 @@ export async function acceptInvite(token: string): Promise<ActionState> {
       .eq("id", share.id),
   );
   await setViewCookie(share.ownerId);
+  await flash({
+    type: "success",
+    title: "You're connected",
+    description: `You can now view ${share.owner?.name ?? "their"} finances. Switch any time from the bar at the top.`,
+  });
   revalidatePath("/", "layout");
   redirect("/dashboard");
 }
@@ -101,16 +130,22 @@ export async function viewAs(ownerId: string): Promise<ActionState> {
   const share = await run(
     db()
       .from("PartnerShare")
-      .select("id")
+      .select("id, owner:User!PartnerShare_ownerId_fkey(name)")
       .eq("ownerId", ownerId)
       .eq("partnerId", userId)
       .not("acceptedAt", "is", null)
       .maybeSingle(),
   );
   if (!share) {
-    return { error: "You no longer have access to this account." };
+    await flash({ type: "error", title: "No access", description: "You no longer have access to this account." });
+    redirect("/dashboard");
   }
   await setViewCookie(ownerId);
+  await flash({
+    type: "info",
+    title: `Viewing ${share.owner?.name ?? "their"} finances`,
+    description: "Read-only: nothing here can be changed.",
+  });
   revalidatePath("/", "layout");
   redirect("/dashboard");
 }
@@ -119,6 +154,7 @@ export async function viewAs(ownerId: string): Promise<ActionState> {
 export async function stopViewing() {
   await requireUserId();
   await clearViewCookie();
+  await flash({ type: "success", title: "Back to your account" });
   revalidatePath("/", "layout");
   redirect("/dashboard");
 }

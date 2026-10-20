@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { PencilSimple, Plus } from "@/components/icons";
 import type { ActionState } from "@/actions/state";
-import { ColorPicker, DeleteButton, FormError, IconPicker, SubmitButton } from "@/components/form-bits";
+import { ColorPicker, DeleteButton, IconPicker, SubmitButton } from "@/components/form-bits";
 import { useActionForm } from "@/components/use-action-form";
 import { Button, Card, ColorDot, Field, inputClass } from "@/components/ui";
 import { CategoryIcon } from "@/lib/category-icons";
@@ -39,7 +39,6 @@ function LabelForm({
       {Object.entries(hidden ?? {}).map(([k, v]) => (
         <input key={k} type="hidden" name={k} value={v} />
       ))}
-      <FormError state={state} />
       <Field label="Name" htmlFor={nameId} error={errors.name}>
         <input id={nameId} name="name" defaultValue={item?.name} aria-invalid={!!errors.name} className={inputClass} />
       </Field>

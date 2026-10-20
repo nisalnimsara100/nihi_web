@@ -21,7 +21,7 @@ export async function updateProfile(_prev: ActionState, formData: FormData): Pro
   }
   await run(db().from("User").update(parsed.data).eq("id", userId));
   revalidatePath("/", "layout");
-  return { ok: true };
+  return { ok: true, message: "Profile saved", detail: "Your name and main currency are up to date." };
 }
 
 const passwordSchema = z
@@ -48,5 +48,5 @@ export async function changePassword(_prev: ActionState, formData: FormData): Pr
       .update({ passwordHash: await bcrypt.hash(parsed.data.next, 10) })
       .eq("id", userId),
   );
-  return { ok: true };
+  return { ok: true, message: "Password changed", detail: "Use the new one next time you sign in." };
 }

@@ -41,6 +41,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# OCR engine copied from node_modules by scripts/copy-tesseract.mjs
+/public/tesseract/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
+import { isBlockedDemo } from "./demo";
 import { db, run } from "./db";
 import { getSessionUserId, getViewCookie } from "./session";
 
@@ -20,7 +21,8 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser> => {
   const user = await run(
     db().from("User").select("id, name, email, defaultCurrency").eq("id", userId).maybeSingle(),
   );
-  if (!user) {
+  // The demo account never works on the live site, even with an old session cookie.
+  if (!user || isBlockedDemo(user.email)) {
     redirect("/login");
   }
   return user;

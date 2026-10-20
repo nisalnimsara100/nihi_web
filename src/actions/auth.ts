@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { CURRENCIES, DEFAULT_CATEGORIES, COLORS } from "@/lib/constants";
 import { db, run, UNIQUE_VIOLATION } from "@/lib/db";
+import { isBlockedDemo } from "@/lib/demo";
+import { flash } from "@/lib/flash";
 import { safeNext } from "@/lib/next-path";
 import { createSession, deleteSession } from "@/lib/session";
 import { fromZodError, type ActionState } from "./state";
@@ -22,6 +24,10 @@ export async function signup(_prev: ActionState, formData: FormData): Promise<Ac
     return fromZodError(parsed.error);
   }
   const { name, email, password, currency } = parsed.data;
+
+  if (isBlockedDemo(email)) {
+    return { fieldErrors: { email: ["An account with this email already exists"] } };
+  }
 
   const { data: user, error } = await db()
     .from("User")
@@ -47,6 +53,11 @@ export async function signup(_prev: ActionState, formData: FormData): Promise<Ac
   }
 
   await createSession(user.id);
+  await flash({
+    type: "success",
+    title: `Welcome to NiHi, ${name.split(/\s+/)[0]}`,
+    description: "Your Cash account and default categories are ready.",
+  });
   redirect(safeNext(formData.get("next")));
 }
 
@@ -62,16 +73,18 @@ export async function login(_prev: ActionState, formData: FormData): Promise<Act
   }
   const { email, password } = parsed.data;
 
-  const user = await run(db().from("User").select("id, passwordHash").eq("email", email).maybeSingle());
-  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+  const user = await run(db().from("User").select("id, name, passwordHash").eq("email", email).maybeSingle());
+  if (isBlockedDemo(email) || !user || !(await bcrypt.compare(password, user.passwordHash))) {
     return { error: "Email or password is incorrect." };
   }
 
   await createSession(user.id);
+  await flash({ type: "success", title: `Welcome back, ${user.name.split(/\s+/)[0]}` });
   redirect(safeNext(formData.get("next")));
 }
 
 export async function logout() {
   await deleteSession();
+  await flash({ type: "info", title: "Signed out", description: "See you soon." });
   redirect("/login");
 }
