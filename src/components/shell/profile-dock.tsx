@@ -30,8 +30,8 @@ function Face({ name, className }: { name: string; className?: string }) {
 /**
  * Profile switcher as a small floating bubble above the bottom menu. It shows the face of whoever
  * you are looking at; tapping it fans the other profiles out above it, and tapping one switches.
- * While you view someone else the bubble gets an amber ring, an eye badge and a "Read-only" tag, so
- * it can't be mistaken for your own data. It takes no room in the page.
+ * While you view someone else the bubble gets an amber ring and an eye badge, so it can't be
+ * mistaken for your own data. It takes no room in the page.
  */
 export function ProfileDock({
   me,
@@ -123,11 +123,6 @@ export function ProfileDock({
               {viewing ? <Eye className="size-3" /> : <ArrowsLeftRight className="size-3" />}
             </span>
           </motion.button>
-          {viewing && !open ? (
-            <span className="rounded-full bg-warning-soft px-2.5 py-1 text-[11px] font-semibold text-ink shadow-sm">
-              {viewing.name.split(/\s+/)[0]} · read-only
-            </span>
-          ) : null}
         </div>
       </div>
     </>
