@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import {
@@ -26,6 +26,10 @@ import { getAccounts, getCategoryBreakdown, getRecentTransactions, getTotalsByCu
 import { currentMonthKey, formatMonth, monthRange } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/cn";
+
+// The blue header reaches the top edge, so the phone's status bar takes its colour
+// (the middle of the header gradient) instead of the white used elsewhere.
+export const viewport: Viewport = { themeColor: "#5a5efc" };
 
 export const metadata: Metadata = { title: "Home" };
 
