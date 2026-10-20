@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Form from "next/form";
 import Link from "next/link";
 import { Suspense } from "react";
-import { MagnifyingGlass, Plus, Receipt } from "@/components/icons";
+import { CheckmarkSquare, MagnifyingGlass, Plus, Receipt } from "@/components/icons";
 import { PeriodNav } from "@/components/finance/month-nav";
+import { BulkForm } from "@/components/finance/bulk-form";
 import { TransactionList } from "@/components/finance/transaction-list";
-import { Button, ButtonLink, Card, EmptyState, inputClass, PageHeader, PageSkeleton } from "@/components/ui";
+import { Button, ButtonLink, Card, EmptyState, IconLink, inputClass, PageHeader, PageSkeleton } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
 import { getAccounts, getCategories, getTags, getTransactions, getTotalsByCurrency } from "@/lib/data";
 import { currentMonthKey, formatMonth, isMonthKey, monthRange, shiftMonth } from "@/lib/dates";
@@ -60,8 +61,11 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
     getTags(user.id),
   ]);
 
+  const selecting = !readOnly && param(sp, "select") === "1";
   const activeCount = Object.values(filters).filter(Boolean).length;
-  const monthHref = (delta: number) => buildHref("/transactions", { ...filters, month: shiftMonth(month, delta) });
+  const monthHref = (delta: number) => buildHref("/transactions", { ...filters, month: shiftMonth(month, delta), select: selecting ? "1" : undefined });
+  const plainHref = buildHref("/transactions", { ...filters, month });
+  const selectHref = buildHref("/transactions", { ...filters, month, select: "1" });
 
   return (
     <>
@@ -71,6 +75,11 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
         actions={
           <>
             <PeriodNav label={formatMonth(month)} prevHref={monthHref(-1)} nextHref={monthHref(1)} />
+            {readOnly || transactions.length === 0 ? null : (
+              <IconLink href={selecting ? plainHref : selectHref} label={selecting ? "Stop selecting" : "Select transactions"} tone={selecting ? "soft" : "outline"}>
+                <CheckmarkSquare className="size-5" aria-hidden />
+              </IconLink>
+            )}
             {readOnly ? null : (
               <ButtonLink href="/transactions/new" size="sm" className="hidden sm:inline-flex">
                 <Plus className="size-4" aria-hidden />
@@ -153,7 +162,13 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
 
       <div className="rounded-3xl bg-muted p-4 sm:p-5">
         {transactions.length > 0 ? (
-          <TransactionList transactions={transactions} readOnly={readOnly} />
+          selecting ? (
+            <BulkForm categories={categories.map((c) => ({ id: c.id, name: c.name, type: c.type }))} doneHref={plainHref}>
+              <TransactionList transactions={transactions} readOnly selectable />
+            </BulkForm>
+          ) : (
+            <TransactionList transactions={transactions} readOnly={readOnly} />
+          )
         ) : (
           <EmptyState
             icon={<Receipt className="size-6" />}

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { notify } from "@/components/toast";
 import { DateField } from "@/components/form-bits";
+import { SimilarWarning } from "@/components/finance/similar-warning";
 import { Button, buttonClass, inputClass } from "@/components/ui";
 import { Camera, CircleNotch, ImageSquare, X } from "@/components/icons";
 import { networkLabel } from "@/lib/card-networks";
@@ -429,6 +430,8 @@ export function ScanSheet({
                 </select>
               </FieldRow>
             ) : null}
+
+            <SimilarWarning type={draft.type} amount={amountMinor} accountId={draft.accountId} day={draft.date} />
 
             <details className="rounded-2xl bg-muted px-4 py-2 text-sm">
               <summary className="cursor-pointer font-semibold text-ink">What I read</summary>

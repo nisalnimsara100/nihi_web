@@ -579,6 +579,10 @@ export type Database = {
         }
         Returns: string
       }
+      split_transaction: {
+        Args: { p_id: string; p_parts: Json; p_user_id: string }
+        Returns: string[]
+      }
       totals_by_currency: {
         Args: { p_end: string; p_start: string; p_user_id: string }
         Returns: {

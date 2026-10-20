@@ -25,7 +25,19 @@ function show(type: ToastType, title: string, description?: string) {
   gooeyToast[type](title, { description, preset, duration, showProgress: true });
 }
 
+/** A success message with an Undo button that stays a little longer than usual. */
+function undo(title: string, description: string | undefined, onUndo: () => void) {
+  gooeyToast.success(title, {
+    description,
+    preset: "smooth",
+    duration: 9000,
+    showProgress: true,
+    action: { label: "Undo", onClick: onUndo },
+  });
+}
+
 export const notify = {
+  undo,
   success: (title: string, description?: string) => show("success", title, description),
   info: (title: string, description?: string) => show("info", title, description),
   warning: (title: string, description?: string) => show("warning", title, description),

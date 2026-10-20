@@ -28,7 +28,7 @@ function TransactionIcon({ tx }: { tx: TransactionRow }) {
   );
 }
 
-function TransactionItem({ tx, showDate, readOnly }: { tx: TransactionRow; showDate: boolean; readOnly: boolean }) {
+function TransactionItem({ tx, showDate, readOnly, selectable }: { tx: TransactionRow; showDate: boolean; readOnly: boolean; selectable: boolean }) {
   const isTransfer = tx.type === "TRANSFER";
   const title = isTransfer ? "Transfer" : (tx.category?.name ?? "Uncategorized");
   const where = isTransfer ? `${tx.account.name} → ${tx.toAccount?.name ?? "?"}` : tx.account.name;
@@ -36,44 +36,61 @@ function TransactionItem({ tx, showDate, readOnly }: { tx: TransactionRow; showD
   const left = showDate ? relativeDay(tx.date) : tx.note || where;
   const right = isTransfer ? "Transfer" : showDate || tx.note ? tx.account.name : "";
 
+  const content = (
+    <>
+      <TransactionIcon tx={tx} />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-semibold">{title}</span>
+        <span className="block truncate text-sm text-ink-soft">{left}</span>
+        {tx.tags.length > 0 || tx.card ? (
+          <span className="mt-1.5 flex flex-wrap gap-1">
+            {tx.card ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-semibold text-on-primary-soft tabular-nums">
+                <CreditCard className="size-3" aria-hidden />
+                {cardLabel(tx.card.network, tx.card.last4)}
+              </span>
+            ) : null}
+            {tx.tags.map((tag) => (
+              <span
+                key={tag.id}
+                className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-ink-soft ring-1 ring-line/60"
+              >
+                <span className="size-1.5 rounded-full" style={{ background: tag.color }} aria-hidden />
+                {tag.name}
+              </span>
+            ))}
+          </span>
+        ) : null}
+      </span>
+      <span className="flex max-w-[45%] shrink-0 flex-col items-end">
+        <Amount minor={tx.amount} currency={tx.account.currency} kind={tx.type} />
+        {isTransfer && tx.toAccount && tx.toAccount.currency !== tx.account.currency && tx.toAmount ? (
+          <Amount minor={tx.toAmount} currency={tx.toAccount.currency} kind="TRANSFER" className="text-xs font-medium" />
+        ) : (
+          <span className="max-w-full truncate text-sm text-ink-soft">{right || "\u00a0"}</span>
+        )}
+      </span>
+    </>
+  );
+
+  if (selectable) {
+    return (
+      <li>
+        <label className="-mx-2 flex cursor-pointer items-center gap-3 rounded-2xl px-2 py-2 transition-colors has-[:checked]:bg-primary-soft/70">
+          <input type="checkbox" name="ids" value={tx.id} className="size-5 shrink-0 accent-primary" aria-label={`Select ${title}`} />
+          {content}
+        </label>
+      </li>
+    );
+  }
+
   return (
     <li>
       <MaybeLink
         href={readOnly ? undefined : `/transactions/${tx.id}`}
         className={cn("-mx-2 flex items-center gap-3 rounded-2xl px-2 py-2", !readOnly && "transition-colors hover:bg-surface/70")}
       >
-        <TransactionIcon tx={tx} />
-        <span className="min-w-0 flex-1">
-          <span className="block truncate font-semibold">{title}</span>
-          <span className="block truncate text-sm text-ink-soft">{left}</span>
-          {tx.tags.length > 0 || tx.card ? (
-            <span className="mt-1.5 flex flex-wrap gap-1">
-              {tx.card ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-semibold text-on-primary-soft tabular-nums">
-                  <CreditCard className="size-3" aria-hidden />
-                  {cardLabel(tx.card.network, tx.card.last4)}
-                </span>
-              ) : null}
-              {tx.tags.map((tag) => (
-                <span
-                  key={tag.id}
-                  className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-ink-soft ring-1 ring-line/60"
-                >
-                  <span className="size-1.5 rounded-full" style={{ background: tag.color }} aria-hidden />
-                  {tag.name}
-                </span>
-              ))}
-            </span>
-          ) : null}
-        </span>
-        <span className="flex max-w-[45%] shrink-0 flex-col items-end">
-          <Amount minor={tx.amount} currency={tx.account.currency} kind={tx.type} />
-          {isTransfer && tx.toAccount && tx.toAccount.currency !== tx.account.currency && tx.toAmount ? (
-            <Amount minor={tx.toAmount} currency={tx.toAccount.currency} kind="TRANSFER" className="text-xs font-medium" />
-          ) : (
-            <span className="max-w-full truncate text-sm text-ink-soft">{right || "\u00a0"}</span>
-          )}
-        </span>
+        {content}
       </MaybeLink>
     </li>
   );
@@ -84,17 +101,20 @@ export function TransactionList({
   transactions,
   groupByDay = true,
   readOnly = false,
+  selectable = false,
 }: {
   transactions: TransactionRow[];
   groupByDay?: boolean;
   /** Rows are not links to the edit page. */
   readOnly?: boolean;
+  /** Rows become checkboxes named "ids" (for bulk actions) instead of links. */
+  selectable?: boolean;
 }) {
   if (!groupByDay) {
     return (
       <ul className="space-y-1">
         {transactions.map((tx) => (
-          <TransactionItem key={tx.id} tx={tx} showDate readOnly={readOnly} />
+          <TransactionItem key={tx.id} tx={tx} showDate readOnly={readOnly} selectable={selectable} />
         ))}
       </ul>
     );
@@ -116,7 +136,7 @@ export function TransactionList({
           </h3>
           <ul className="space-y-1">
             {items.map((tx) => (
-              <TransactionItem key={tx.id} tx={tx} showDate={false} readOnly={readOnly} />
+              <TransactionItem key={tx.id} tx={tx} showDate={false} readOnly={readOnly} selectable={selectable} />
             ))}
           </ul>
         </section>

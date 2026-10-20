@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { deleteTransaction, saveTransaction } from "@/actions/transactions";
+import { saveTransaction } from "@/actions/transactions";
+import { SimilarWarning } from "@/components/finance/similar-warning";
+import { parseAmount } from "@/lib/money";
+import { DeleteTransactionButton } from "@/components/finance/delete-transaction-button";
 import { ScanSheet, type ScanCard, type ScanResult } from "@/components/finance/scan-sheet";
 import { CreditCard, Prohibit, Scan } from "@/components/icons";
 import { cardLabel } from "@/lib/card-networks";
 import type { HistoryRow } from "@/lib/scan/categorize";
-import { DateField, DeleteButton, SubmitButton } from "@/components/form-bits";
+import { DateField, SubmitButton } from "@/components/form-bits";
 import { useActionForm } from "@/components/use-action-form";
 import { buttonClass, Card, Field, inputClass } from "@/components/ui";
 import type { Enums } from "@/lib/database.types";
@@ -66,6 +69,7 @@ export function TransactionForm({
   const [scanOpen, setScanOpen] = useState(false);
   const [date, setDate] = useState(initial.date);
   const [cardId, setCardId] = useState(initial.cardId);
+  const [amountText, setAmountText] = useState(initial.amount);
   // The amount, date and note inputs are uncontrolled; a new key remounts them with scanned values.
   const [scanned, setScanned] = useState({ n: 0, amount: initial.amount, date: initial.date, note: initial.note });
   const errors = state.fieldErrors ?? {};
@@ -92,6 +96,7 @@ export function TransactionForm({
       setToAccountId(accounts.find((a) => a.id !== r.accountId)?.id ?? "");
     }
     setDate(r.date);
+    setAmountText(r.amount);
     setCardId(r.cardId);
     setScanned((s) => ({ n: s.n + 1, amount: r.amount, date: r.date, note: r.note }));
     setScanOpen(false);
@@ -151,6 +156,7 @@ export function TransactionForm({
               autoComplete="off"
               placeholder="0.00"
               defaultValue={scanned.amount}
+              onChange={(e) => setAmountText(e.target.value)}
               autoFocus={!initial.id}
               aria-invalid={!!errors.amount}
               className={cn(inputClass, "h-14 pr-16 text-2xl font-semibold tabular-nums sm:text-2xl")}
@@ -160,6 +166,8 @@ export function TransactionForm({
             </span>
           </div>
         </Field>
+
+        {!initial.id ? <SimilarWarning type={type} amount={parseAmount(amountText)} accountId={accountId} day={date} /> : null}
 
         <div className={cn("grid gap-4", isTransfer && "sm:grid-cols-2")}>
           <Field label={isTransfer ? "From account" : "Account"} htmlFor="accountId" error={errors.accountId}>
@@ -337,7 +345,7 @@ export function TransactionForm({
 
         <div className="flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-start sm:justify-between">
           {initial.id ? (
-            <DeleteButton action={deleteTransaction.bind(null, initial.id)} />
+            <DeleteTransactionButton id={initial.id} />
           ) : (
             <span className="hidden sm:block" />
           )}

@@ -6,6 +6,7 @@ import { requireOwnView } from "@/lib/auth";
 import { getAccounts, getCards } from "@/lib/data";
 import { toInputAmount } from "@/lib/money";
 import { AccountForm } from "../account-form";
+import { BalanceAdjust } from "../balance-adjust";
 import { CardManager } from "../card-manager";
 
 export const metadata: Metadata = { title: "Edit account" };
@@ -47,6 +48,7 @@ async function EditAccount({ params }: { params: Promise<{ id: string }> }) {
         balanceOffset: account.balance - account.initialBalance,
         }}
       />
+      <BalanceAdjust accountId={account.id} balance={account.balance} currency={account.currency} isCredit={account.type === "CREDIT_CARD"} />
       <CardManager accountId={account.id} cards={cards} />
     </>
   );

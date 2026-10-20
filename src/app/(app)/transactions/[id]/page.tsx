@@ -8,6 +8,7 @@ import { getTransaction } from "@/lib/data";
 import { dateToDay } from "@/lib/dates";
 import { toInputAmount } from "@/lib/money";
 import { getTransactionFormOptions } from "../form-data";
+import { SplitPanel } from "@/components/finance/split-panel";
 import { TransactionForm } from "../transaction-form";
 
 export const metadata: Metadata = { title: "Edit transaction" };
@@ -63,6 +64,16 @@ async function EditTransaction({ params }: { params: Promise<{ id: string }> }) 
         Make this repeat
       </Link>
     </p>
+    {tx.type !== "TRANSFER" ? (
+      <SplitPanel
+        id={tx.id}
+        total={tx.amount}
+        currency={tx.account.currency}
+        categories={options.categories.filter((c) => c.type === tx.type).map((c) => ({ id: c.id, name: c.name }))}
+        note={tx.note}
+        categoryId={tx.categoryId ?? ""}
+      />
+    ) : null}
     </>
   );
 }
