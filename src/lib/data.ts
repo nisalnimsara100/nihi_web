@@ -27,7 +27,7 @@ export async function getAccounts(userId: string, opts: { includeArchived?: bool
 
 /** Cards (last 4 digits only) the user has linked to their accounts. */
 export async function getCards(userId: string, accountId?: string) {
-  let query = db().from("Card").select("id, accountId, last4, name").eq("userId", userId);
+  let query = db().from("Card").select("id, accountId, last4, name, network").eq("userId", userId);
   if (accountId) {
     query = query.eq("accountId", accountId);
   }
@@ -114,6 +114,7 @@ const transactionSelect = `*,
   account:Account!Transaction_accountId_fkey(id, name, currency, color),
   toAccount:Account!Transaction_toAccountId_fkey(id, name, currency, color),
   category:Category(id, name, color, icon),
+  card:Card(id, last4, network),
   tags:Tag(id, name, color)`;
 
 function transactionQuery(userId: string) {

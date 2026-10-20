@@ -1,6 +1,8 @@
 import { Bank, PiggyBank, TrendUp, type AppIcon } from "@/components/icons";
 import { ColorDot } from "@/components/ui";
 import { getCardTheme } from "@/lib/card-themes";
+import { networkShort } from "@/lib/card-networks";
+import type { CreditFaceInfo } from "@/lib/credit-card";
 import { cn } from "@/lib/cn";
 import type { Enums } from "@/lib/database.types";
 
@@ -23,6 +25,8 @@ export function AccountCardFace({
   currency,
   color,
   label,
+  cards = [],
+  credit,
   dimmed = false,
   className,
 }: {
@@ -33,6 +37,10 @@ export function AccountCardFace({
   currency: string;
   color: string;
   label: string;
+  /** Cards linked to this account; shown as small badges beside the balance. */
+  cards?: { last4: string; network: string }[];
+  /** Limit and due date of a credit card account. */
+  credit?: CreditFaceInfo;
   dimmed?: boolean;
   className?: string;
 }) {
@@ -63,16 +71,39 @@ export function AccountCardFace({
             {name}
           </p>
           <span className="flex shrink-0 items-center gap-1.5 text-xs font-semibold">
+            {credit?.due ? (
+              <span
+                className="rounded-md px-1.5 py-0.5 text-[10px] leading-none font-bold"
+                style={credit.due.soon ? { background: "#f6b23e", color: "#3b2a00" } : { background: fade(ink, 16) }}
+              >
+                {credit.due.label}
+              </span>
+            ) : null}
             <ColorDot color={color} className="ring-2 ring-white/40" />
             {currency}
           </span>
         </div>
-        <p className="mt-1 text-2xl font-extrabold tracking-tight tabular-nums sm:text-3xl">{balance}</p>
+        <div className="mt-1 flex items-end justify-between gap-3">
+          <p className="min-w-0 truncate text-2xl font-extrabold tracking-tight tabular-nums sm:text-3xl">{balance}</p>
+          <CardBadges cards={cards} ink={ink} />
+        </div>
       </div>
 
       <div className="relative flex items-end justify-between gap-3">
         <div className="min-w-0">
-          {type === "CREDIT_CARD" ? (
+          {type === "CREDIT_CARD" && credit?.available ? (
+            <div className="mb-1.5 w-40 max-w-full">
+              <div className="h-1.5 overflow-hidden rounded-full" style={{ background: fade(ink, 18) }}>
+                <div
+                  className="h-full rounded-full"
+                  style={{ width: `${Math.min(100, Math.round((credit.utilization ?? 0) * 100))}%`, background: credit.overLimit ? "#e03a3a" : ink }}
+                />
+              </div>
+              <p className="mt-1 truncate text-[11px] font-semibold" style={{ color: fade(ink, credit.overLimit ? 100 : 75) }}>
+                {credit.available}
+              </p>
+            </div>
+          ) : type === "CREDIT_CARD" ? (
             <p className="mb-1 font-mono text-xs tracking-[0.25em]" style={{ color: fade(ink, 60) }}>
               •••• •••• ••••
             </p>
@@ -94,6 +125,31 @@ export function AccountCardFace({
         ) : null}
       </div>
     </div>
+  );
+}
+
+/** The account's linked cards as frosted badges ("VISA ••8663"), at most two plus a count. */
+function CardBadges({ cards, ink }: { cards: { last4: string; network: string }[]; ink: string }) {
+  if (cards.length === 0) return null;
+  const shown = cards.slice(0, 2);
+  return (
+    <span className="flex shrink-0 flex-col items-end gap-1" aria-label={`${cards.length} linked ${cards.length === 1 ? "card" : "cards"}`}>
+      {shown.map((c) => (
+        <span
+          key={`${c.network}-${c.last4}`}
+          className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 font-mono text-[10px] leading-none font-semibold tracking-wide backdrop-blur-sm"
+          style={{ background: fade(ink, 14), boxShadow: `inset 0 0 0 1px ${fade(ink, 18)}` }}
+        >
+          <span className="font-sans font-extrabold">{networkShort(c.network)}</span>
+          <span>••{c.last4}</span>
+        </span>
+      ))}
+      {cards.length > shown.length ? (
+        <span className="text-[10px] font-semibold" style={{ color: fade(ink, 70) }}>
+          +{cards.length - shown.length} more
+        </span>
+      ) : null}
+    </span>
   );
 }
 

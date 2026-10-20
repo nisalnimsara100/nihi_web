@@ -68,6 +68,8 @@ import {
   TShirtIcon,
   Tag01Icon,
   Tick02Icon,
+  UnavailableIcon,
+  Calendar03Icon,
   Camera01Icon,
   Cancel01Icon,
   Image01Icon,
@@ -120,6 +122,7 @@ export const CaretLeft = icon(ArrowLeft01Icon, "CaretLeft");
 export const CaretRight = icon(ArrowRight01Icon, "CaretRight");
 export const ChartBar = icon(ChartColumnIcon, "ChartBar");
 export const ChartLine = icon(ChartLineData01Icon, "ChartLine");
+export const Calendar = icon(Calendar03Icon, "Calendar");
 export const Camera = icon(Camera01Icon, "Camera");
 export const Check = icon(Tick02Icon, "Check");
 export const ImageSquare = icon(Image01Icon, "ImageSquare");
@@ -157,6 +160,7 @@ export const MusicNotes = icon(MusicNote03Icon, "MusicNotes");
 export const Palette = icon(PaintBoardIcon, "Palette");
 export const PencilSimple = icon(PencilEdit02Icon, "PencilSimple");
 export const PiggyBank = icon(PiggyBankIcon, "PiggyBank");
+export const Prohibit = icon(UnavailableIcon, "Prohibit");
 export const Pill = icon(Medicine02Icon, "Pill");
 export const Plus = icon(Add01Icon, "Plus");
 export const Receipt = icon(Invoice03Icon, "Receipt");

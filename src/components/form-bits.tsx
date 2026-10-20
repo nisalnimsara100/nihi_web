@@ -2,13 +2,13 @@
 
 import { useState, useTransition, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
-import { CircleNotch, Trash } from "@/components/icons";
+import { Calendar, CircleNotch, Trash } from "@/components/icons";
 import type { ActionState } from "@/actions/state";
 import { CATEGORY_ICON_NAMES, CategoryIcon, DEFAULT_CATEGORY_ICON, isCategoryIcon } from "@/lib/category-icons";
 import { COLORS } from "@/lib/constants";
 import { cn } from "@/lib/cn";
 import { notify } from "./toast";
-import { Button } from "./ui";
+import { Button, inputClass } from "./ui";
 
 export function SubmitButton({
   children,
@@ -133,5 +133,47 @@ export function IconPicker({ name = "icon", defaultValue }: { name?: string; def
         ))}
       </div>
     </fieldset>
+  );
+}
+
+/**
+ * A date field the same size as the other inputs. It is the browser's own date input (so tapping
+ * anywhere opens the native calendar, as before), with the app's calendar icon at the right
+ * instead of the browser's. Submits `name` as YYYY-MM-DD.
+ */
+export function DateField({
+  id,
+  name,
+  value,
+  onChange,
+  invalid,
+}: {
+  id: string;
+  name: string;
+  value: string;
+  onChange: (day: string) => void;
+  invalid?: boolean;
+}) {
+  return (
+    <div className="relative">
+      <input
+        id={id}
+        name={name}
+        type="date"
+        required
+        value={value}
+        aria-invalid={invalid}
+        onChange={(e) => onChange(e.target.value)}
+        onClick={(e) => {
+          try {
+            e.currentTarget.showPicker();
+          } catch {
+            // Browsers that cannot do this open their picker from the tap itself.
+          }
+        }}
+        className={cn(inputClass, "date-field cursor-pointer pr-12")}
+      />
+      <Calendar className="pointer-events-none absolute top-1/2 right-4 size-5 -translate-y-1/2 text-ink-soft" aria-hidden />
+    </div>
   );
 }

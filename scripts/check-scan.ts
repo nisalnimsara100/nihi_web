@@ -53,6 +53,9 @@ for (const c of cases) {
   console.log(`${problems.length ? "FAIL" : "ok  "} ${c.name}${problems.length ? ": " + problems.join("; ") : ""}`);
 }
 
+const net = parseScan("Visa ++++8663 (Nisal - Sampath Bank) LKR 330.33", TODAY)[0].account;
+if (net.network !== "VISA" || net.last4 !== "8663") { failed++; console.log("FAIL card network", net); } else console.log("ok   card network");
+
 // The date line inside one SMS must not split it.
 const one = parseScan("LKR .56 debited from AC\n**8462 for\nCEFTLV-01-98841328778478\n8-02-6289-03-000\n20/10/2026 11:25:31\nTo Inq Call\nGet protected -Do not Share\nOTP", TODAY);
 if (one.length !== 1 || one[0].date.day !== "2026-10-20" || one[0].date.confidence === "missing") { failed++; console.log("FAIL date line inside one SMS"); } else console.log("ok   date line inside one SMS");

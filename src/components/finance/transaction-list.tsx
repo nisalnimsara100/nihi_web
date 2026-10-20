@@ -1,4 +1,5 @@
-import { ArrowsLeftRight } from "@/components/icons";
+import { ArrowsLeftRight, CreditCard } from "@/components/icons";
+import { cardLabel } from "@/lib/card-networks";
 import type { TransactionRow } from "@/lib/data";
 import { dateToDay, formatDay, relativeDay } from "@/lib/dates";
 import { Amount, MaybeLink } from "@/components/ui";
@@ -45,8 +46,14 @@ function TransactionItem({ tx, showDate, readOnly }: { tx: TransactionRow; showD
         <span className="min-w-0 flex-1">
           <span className="block truncate font-semibold">{title}</span>
           <span className="block truncate text-sm text-ink-soft">{left}</span>
-          {tx.tags.length > 0 ? (
+          {tx.tags.length > 0 || tx.card ? (
             <span className="mt-1.5 flex flex-wrap gap-1">
+              {tx.card ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-semibold text-on-primary-soft tabular-nums">
+                  <CreditCard className="size-3" aria-hidden />
+                  {cardLabel(tx.card.network, tx.card.last4)}
+                </span>
+              ) : null}
               {tx.tags.map((tag) => (
                 <span
                   key={tag.id}

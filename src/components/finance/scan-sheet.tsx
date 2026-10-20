@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { notify } from "@/components/toast";
+import { DateField } from "@/components/form-bits";
 import { Button, buttonClass, inputClass } from "@/components/ui";
 import { Camera, CircleNotch, ImageSquare, X } from "@/components/icons";
+import { networkLabel } from "@/lib/card-networks";
 import { cn } from "@/lib/cn";
 import { todayDay } from "@/lib/dates";
 import { formatMoney, parseAmount, toInputAmount } from "@/lib/money";
@@ -14,7 +16,7 @@ import { readScan } from "@/lib/scan/read";
 
 export type ScanAccount = { id: string; name: string; currency: string };
 /** A card the user linked to an account, by its last 4 digits. */
-export type ScanCard = { accountId: string; last4: string; name: string };
+export type ScanCard = { id: string; accountId: string; last4: string; name: string; network: string };
 export type ScanCategory = CategoryRef & { color: string };
 
 export type ScanResult = {
@@ -22,6 +24,8 @@ export type ScanResult = {
   amount: string;
   accountId: string;
   categoryId: string;
+  /** The linked card that paid, when the receipt's card number matched one. */
+  cardId: string;
   date: string;
   note: string;
 };
@@ -58,7 +62,9 @@ const TYPE_LABEL = Object.fromEntries(TYPES.map((t) => [t.value, t.label])) as R
 function matchAccount(parsed: ParsedScan, accounts: ScanAccount[], cards: ScanCard[], fallback: string) {
   const { hint, last4 } = parsed.account;
   const lower = (s: string) => s.toLowerCase();
-  const card = last4 ? cards.find((c) => c.last4 === last4.slice(-4) && accounts.some((a) => a.id === c.accountId)) : undefined;
+  // Two cards can end in the same digits; the network on the receipt ("Visa ••••8663") tells them apart.
+  const sameDigits = last4 ? cards.filter((c) => c.last4 === last4.slice(-4) && accounts.some((a) => a.id === c.accountId)) : [];
+  const card = sameDigits.find((c) => parsed.account.network && c.network === parsed.account.network) ?? sameDigits[0];
   if (card) return { id: card.accountId, confidence: "high" as const, card };
   const byLast4 = last4 ? accounts.find((a) => a.name.includes(last4)) : undefined;
   const byBank = hint
@@ -112,6 +118,8 @@ export function ScanSheet({
   const [review, setReview] = useState<Review | null>(null);
   const [pick, setPick] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [viewing, setViewing] = useState(false);
+  const [zoomed, setZoomed] = useState(false);
   const runId = useRef(0);
 
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
@@ -163,6 +171,7 @@ export function ScanSheet({
               date: parsed.date.day,
               accountId: account.id,
               categoryId: category.id,
+              cardId: account.card?.id ?? "",
             },
           };
         });
@@ -194,11 +203,14 @@ export function ScanSheet({
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key !== "Escape") return;
+      // Escape closes the full-size image first, then the sheet.
+      if (viewing) setViewing(false);
+      else onClose();
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, viewing]);
 
   function choose(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -210,6 +222,7 @@ export function ScanSheet({
     runId.current++;
     setReview(null);
     setPreview(null);
+    setViewing(false);
     setBusy("idle");
   }
 
@@ -224,6 +237,9 @@ export function ScanSheet({
         const draft = { ...c.draft, ...patch };
         const edited = { ...c.edited };
         for (const key of Object.keys(patch) as Field[]) edited[key] = true;
+        // A card belongs to one account: keep it only while that account is selected.
+        if (patch.accountId && c.matchedCard && patch.accountId !== c.matchedCard.accountId) draft.cardId = "";
+        else if (patch.accountId && c.matchedCard) draft.cardId = c.matchedCard.id;
         let categoryConfidence = c.categoryConfidence;
         if (patch.type && patch.type !== c.draft.type && !c.edited.categoryId) {
           const guess = guessCategory(draft.note, patch.type, r.raw);
@@ -265,7 +281,7 @@ export function ScanSheet({
           if (file) void handleFile(file);
         }}
         className={cn(
-          "max-h-[92dvh] w-full overflow-y-auto rounded-t-3xl bg-surface p-5 shadow-xl sm:max-w-lg sm:rounded-3xl",
+          "max-h-[92dvh] w-full overflow-x-hidden overflow-y-auto overscroll-contain rounded-t-3xl [&_input]:min-w-0 [&_select]:min-w-0 bg-surface p-5 shadow-xl sm:max-w-lg sm:rounded-3xl",
           dragging && "ring-4 ring-primary/40",
         )}
       >
@@ -296,8 +312,16 @@ export function ScanSheet({
         ) : null}
 
         {preview ? (
-          // eslint-disable-next-line @next/next/no-img-element -- local blob preview, nothing to optimise
-          <img src={preview} alt="Selected screenshot" className="mx-auto mb-4 max-h-40 rounded-2xl object-contain" />
+          <button
+            type="button"
+            onClick={() => { setZoomed(false); setViewing(true); }}
+            aria-label="View the full image"
+            className="group relative mx-auto mb-4 block overflow-hidden rounded-2xl"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- local blob preview, nothing to optimise */}
+            <img src={preview} alt="Selected screenshot" className="max-h-40 max-w-full object-contain" />
+            <span className="absolute inset-x-0 bottom-0 bg-black/55 py-1 text-center text-xs font-semibold text-white">Tap to view</span>
+          </button>
         ) : null}
 
         {busy !== "idle" ? (
@@ -375,7 +399,7 @@ export function ScanSheet({
             </FieldRow>
 
             <FieldRow label="Date" htmlFor="scan-date" level={current.parsed.date.confidence} edited={current.edited.date}>
-              <input id="scan-date" type="date" value={draft.date} onChange={(e) => edit({ date: e.target.value })} className={inputClass} />
+              <DateField id="scan-date" name="scan-date" value={draft.date} onChange={(day) => edit({ date: day })} />
             </FieldRow>
 
             <FieldRow label="Account" htmlFor="scan-account" level={currencyMismatch ? "low" : current.accountConfidence} edited={current.edited.accountId}>
@@ -386,7 +410,7 @@ export function ScanSheet({
               </select>
               {current.matchedCard && draft.accountId === current.matchedCard.accountId ? (
                 <p className="text-sm text-ink-soft">
-                  Card •••• {current.matchedCard.last4}
+                  {networkLabel(current.matchedCard.network)} card •••• {current.matchedCard.last4}
                   {current.matchedCard.name ? ` (${current.matchedCard.name})` : ""} is linked to this account, so the amount will come out of it.
                 </p>
               ) : null}
@@ -419,6 +443,39 @@ export function ScanSheet({
           </div>
         ) : null}
       </div>
+
+      {viewing && preview ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Full image"
+          onClick={(e) => { e.stopPropagation(); setViewing(false); }}
+          className="fixed inset-0 z-[60] flex flex-col bg-black/90"
+        >
+          <div className="flex items-center justify-between px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-2 text-white">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setZoomed((z) => !z); }}
+              className="h-9 rounded-full bg-white/15 px-4 text-sm font-semibold"
+            >
+              {zoomed ? "Fit to screen" : "Zoom in"}
+            </button>
+            <button type="button" aria-label="Close image" onClick={() => setViewing(false)} className="inline-flex size-9 items-center justify-center rounded-full bg-white/15">
+              <X className="size-5" />
+            </button>
+          </div>
+          <div className="flex min-h-0 flex-1 overflow-auto p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            {/* eslint-disable-next-line @next/next/no-img-element -- local blob preview, nothing to optimise */}
+            <img
+              src={preview}
+              alt="Selected screenshot, full size"
+              onClick={(e) => { e.stopPropagation(); setZoomed((z) => !z); }}
+              className={zoomed ? "m-auto max-w-none cursor-zoom-out" : "m-auto max-h-full max-w-full cursor-zoom-in object-contain"}
+              style={zoomed ? { width: "220%" } : undefined}
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

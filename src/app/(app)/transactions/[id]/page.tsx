@@ -46,6 +46,7 @@ async function EditTransaction({ params }: { params: Promise<{ id: string }> }) 
         accountId: tx.accountId,
         toAccountId: tx.toAccountId ?? "",
         categoryId: tx.categoryId ?? "",
+        cardId: tx.cardId ?? "",
         date: dateToDay(tx.date),
         note: tx.note,
         tagIds: tx.tags.map((t) => t.id),

@@ -7,6 +7,7 @@ import { getAccounts, getCards } from "@/lib/data";
 import { toInputAmount } from "@/lib/money";
 import { AccountForm } from "../account-form";
 import { CardManager } from "../card-manager";
+import { CreditPanel } from "../credit-panel";
 
 export const metadata: Metadata = { title: "Edit account" };
 
@@ -31,6 +32,9 @@ async function EditAccount({ params }: { params: Promise<{ id: string }> }) {
   }
   return (
     <>
+      {account.type === "CREDIT_CARD" ? (
+        <CreditPanel accountId={account.id} balance={account.balance} currency={account.currency} terms={account} />
+      ) : null}
       <AccountForm
         initial={{
           id: account.id,
@@ -42,6 +46,14 @@ async function EditAccount({ params }: { params: Promise<{ id: string }> }) {
           theme: account.theme,
           note: account.note,
           archived: account.archived,
+        creditLimit: account.creditLimit !== null ? toInputAmount(account.creditLimit) : "",
+        statementDay: account.statementDay?.toString() ?? "",
+        dueDay: account.dueDay?.toString() ?? "",
+        interestRate: account.interestRate?.toString() ?? "",
+        annualFee: account.annualFee !== null ? toInputAmount(account.annualFee) : "",
+        lateFee: account.lateFee !== null ? toInputAmount(account.lateFee) : "",
+        minPaymentPercent: account.minPaymentPercent.toString(),
+        minPaymentFloor: toInputAmount(account.minPaymentFloor),
           balanceOffset: account.balance - account.initialBalance,
         }}
       />

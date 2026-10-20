@@ -42,7 +42,17 @@ async function NewTransaction({ searchParams }: { searchParams: SearchParams }) 
   const typeParam = param(sp, "type");
   const type = typeParam === "INCOME" || typeParam === "TRANSFER" ? typeParam : "EXPENSE";
   const accountParam = param(sp, "account");
-  const accountId = accounts.some((a) => a.id === accountParam) ? accountParam! : accounts[0].id;
+  // Shortcuts from the credit card page: pay a card (`to`), or record a fee with an amount and note.
+  const toParam = param(sp, "to");
+  const toId = type === "TRANSFER" && accounts.some((a) => a.id === toParam) ? toParam! : "";
+  const amountParam = param(sp, "amount");
+  const amount = amountParam && /^\d{1,9}(\.\d{1,2})?$/.test(amountParam) ? amountParam : "";
+  const noteParam = (param(sp, "note") ?? "").slice(0, 200);
+  // A card payment comes from another account than the card itself.
+  const fromChoices = accounts.filter((a) => a.id !== toId);
+  const accountId = fromChoices.some((a) => a.id === accountParam) ? accountParam! : (fromChoices[0]?.id ?? accounts[0].id);
+  // Fees and interest are not groceries: pick a category named like a fee, or leave it empty.
+  const feeCategory = noteParam ? categories.find((c) => c.type === type && /fee|charge|interest|bank/i.test(c.name)) : undefined;
 
   return (
     <TransactionForm
@@ -53,13 +63,15 @@ async function NewTransaction({ searchParams }: { searchParams: SearchParams }) 
       cards={cards}
       initial={{
         type,
-        amount: "",
+        amount,
         toAmount: "",
         accountId,
-        toAccountId: accounts.find((a) => a.id !== accountId)?.id ?? "",
-        categoryId: type === "TRANSFER" ? "" : (categories.find((c) => c.type === type)?.id ?? ""),
+        toAccountId: toId || (accounts.find((a) => a.id !== accountId)?.id ?? ""),
+        categoryId:
+          type === "TRANSFER" ? "" : noteParam ? (feeCategory?.id ?? "") : (categories.find((c) => c.type === type)?.id ?? ""),
         date: todayDay(),
-        note: "",
+        cardId: "",
+        note: noteParam,
         tagIds: [],
       }}
     />

@@ -17,6 +17,14 @@ export type Database = {
       Account: {
         Row: {
           archived: boolean
+          annualFee: number | null
+          creditLimit: number | null
+          dueDay: number | null
+          interestRate: number | null
+          lateFee: number | null
+          minPaymentFloor: number
+          minPaymentPercent: number
+          statementDay: number | null
           color: string
           createdAt: string
           currency: string
@@ -30,6 +38,14 @@ export type Database = {
         }
         Insert: {
           archived?: boolean
+          annualFee?: number | null
+          creditLimit?: number | null
+          dueDay?: number | null
+          interestRate?: number | null
+          lateFee?: number | null
+          minPaymentFloor?: number
+          minPaymentPercent?: number
+          statementDay?: number | null
           color: string
           createdAt?: string
           currency: string
@@ -43,6 +59,14 @@ export type Database = {
         }
         Update: {
           archived?: boolean
+          annualFee?: number | null
+          creditLimit?: number | null
+          dueDay?: number | null
+          interestRate?: number | null
+          lateFee?: number | null
+          minPaymentFloor?: number
+          minPaymentPercent?: number
+          statementDay?: number | null
           color?: string
           createdAt?: string
           currency?: string
@@ -71,6 +95,7 @@ export type Database = {
           id: string
           last4: string
           name: string
+          network: string
           userId: string
         }
         Insert: {
@@ -79,6 +104,7 @@ export type Database = {
           id?: string
           last4: string
           name?: string
+          network?: string
           userId: string
         }
         Update: {
@@ -87,6 +113,7 @@ export type Database = {
           id?: string
           last4?: string
           name?: string
+          network?: string
           userId?: string
         }
         Relationships: [
@@ -225,6 +252,7 @@ export type Database = {
         Row: {
           accountId: string
           amount: number
+          cardId: string | null
           categoryId: string | null
           createdAt: string
           date: string
@@ -238,6 +266,7 @@ export type Database = {
         Insert: {
           accountId: string
           amount: number
+          cardId?: string | null
           categoryId?: string | null
           createdAt?: string
           date: string
@@ -251,6 +280,7 @@ export type Database = {
         Update: {
           accountId?: string
           amount?: number
+          cardId?: string | null
           categoryId?: string | null
           createdAt?: string
           date?: string
@@ -267,6 +297,13 @@ export type Database = {
             columns: ["accountId"]
             isOneToOne: false
             referencedRelation: "Account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Transaction_cardId_fkey"
+            columns: ["cardId"]
+            isOneToOne: false
+            referencedRelation: "Card"
             referencedColumns: ["id"]
           },
           {
