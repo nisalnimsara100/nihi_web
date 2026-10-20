@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useTransition, type ComponentProps } from "react";
+import { useRouter } from "next/navigation";
 import { Reorder } from "framer-motion";
 import { reorderAccounts } from "@/actions/accounts";
 import { AccountCardFace } from "@/components/finance/account-card";
-import { Check } from "@/components/icons";
+import { Check, DragHandle } from "@/components/icons";
 import { notify } from "@/components/toast";
 import { Button, MaybeLink } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -26,12 +27,12 @@ export function AccountTile({ item, index, stacked, readOnly }: { item: WalletIt
 }
 
 /**
- * The active accounts. "Reorder" switches to a plain list where each card can be dragged
- * up or down; "Done" saves the new order. Dragging is only on in that mode, so scrolling and
- * tapping a card to open it keep working the rest of the time.
+ * The active accounts. In reorder mode (`editing`, switched on by the header button) they become
+ * a plain list where each card can be dragged up or down, and a floating bar offers Done to save.
+ * Dragging is only on in that mode, so scrolling and tapping a card to open it work the rest of the time.
  */
-export function WalletList({ items, readOnly }: { items: WalletItem[]; readOnly: boolean }) {
-  const [editing, setEditing] = useState(false);
+export function WalletList({ items, readOnly, editing }: { items: WalletItem[]; readOnly: boolean; editing: boolean }) {
+  const router = useRouter();
   const [order, setOrder] = useState(items.map((i) => i.id));
   const [saving, startSaving] = useTransition();
   const byId = new Map(items.map((i) => [i.id, i]));
@@ -46,52 +47,50 @@ export function WalletList({ items, readOnly }: { items: WalletItem[]; readOnly:
         return;
       }
       notify.success("Wallet order saved");
-      setEditing(false);
+      router.replace("/accounts");
     });
   }
 
-  const canReorder = !readOnly && items.length > 1;
+  if (!editing) {
+    return (
+      <div className="mx-auto max-w-md sm:mx-0 sm:grid sm:max-w-none sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+        {ids.map((id, i) => (
+          <AccountTile key={id} item={byId.get(id)!} index={i} stacked readOnly={readOnly} />
+        ))}
+      </div>
+    );
+  }
 
   return (
-    <div>
-      {canReorder ? (
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <p className="text-sm text-ink-soft">{editing ? "Drag a card up or down to move it." : ""}</p>
-          {editing ? (
-            <Button size="sm" onClick={done} disabled={saving}>
-              <Check className="size-4" aria-hidden /> Done
-            </Button>
-          ) : (
-            <Button size="sm" variant="secondary" onClick={() => { setOrder(ids); setEditing(true); }}>
-              Reorder
-            </Button>
-          )}
-        </div>
-      ) : null}
+    <>
+      <Reorder.Group axis="y" values={ids} onReorder={setOrder} className="mx-auto flex max-w-md flex-col gap-3 pb-24 sm:mx-0">
+        {ids.map((id) => (
+          <Reorder.Item
+            key={id}
+            value={id}
+            whileDrag={{ scale: 1.03, boxShadow: "0 18px 40px rgb(20 21 28 / 0.25)", zIndex: 10 }}
+            className="wiggle relative cursor-grab touch-none rounded-3xl active:cursor-grabbing"
+          >
+            {/* pointer-events-none keeps the card from being a link while it is being moved */}
+            <div className="pointer-events-none relative select-none">
+              <AccountCardFace {...byId.get(id)!.face} className="shadow-lg shadow-primary/10" />
+              <span aria-hidden className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full bg-black/25 p-1 text-white backdrop-blur-sm">
+                <DragHandle className="size-5" />
+              </span>
+            </div>
+          </Reorder.Item>
+        ))}
+      </Reorder.Group>
 
-      {editing ? (
-        <Reorder.Group axis="y" values={ids} onReorder={setOrder} className="mx-auto flex max-w-md flex-col gap-3 sm:mx-0">
-          {ids.map((id) => (
-            <Reorder.Item
-              key={id}
-              value={id}
-              whileDrag={{ scale: 1.03, boxShadow: "0 18px 40px rgb(20 21 28 / 0.25)", zIndex: 10 }}
-              className="relative cursor-grab touch-none rounded-3xl active:cursor-grabbing"
-            >
-              {/* pointer-events-none keeps the card from being a link while it is being moved */}
-              <div className="pointer-events-none select-none">
-                <AccountCardFace {...byId.get(id)!.face} className="shadow-lg shadow-primary/10" />
-              </div>
-            </Reorder.Item>
-          ))}
-        </Reorder.Group>
-      ) : (
-        <div className="mx-auto max-w-md sm:mx-0 sm:grid sm:max-w-none sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
-          {ids.map((id, i) => (
-            <AccountTile key={id} item={byId.get(id)!} index={i} stacked readOnly={readOnly} />
-          ))}
+      {/* A floating bar above the bottom navigation, so Done is always in reach. */}
+      <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] z-40 flex justify-center px-4 lg:bottom-6 lg:pl-64">
+        <div className="flex items-center gap-3 rounded-full bg-ink py-1.5 pr-1.5 pl-5 text-sm font-semibold text-surface shadow-xl">
+          <span>Drag cards to reorder</span>
+          <Button size="sm" onClick={done} disabled={saving} className="rounded-full">
+            <Check className="size-4" aria-hidden /> Done
+          </Button>
         </div>
-      )}
-    </div>
+      </div>
+    </>
   );
 }

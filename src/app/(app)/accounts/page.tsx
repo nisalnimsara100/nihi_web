@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Plus, Wallet } from "@/components/icons";
+import { DragHandle, Plus, Wallet } from "@/components/icons";
 import { ButtonLink, Card, EmptyState, IconLink, PageHeader, PageSkeleton } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
+import { param, type SearchParams } from "@/lib/search-params";
 import { accountTypeLabel } from "@/lib/constants";
 import { getAccounts, getCards, type AccountWithBalance } from "@/lib/data";
 import { creditFaceInfo, creditSummary } from "@/lib/credit-card";
@@ -12,10 +13,10 @@ import { AccountTile, WalletList, type WalletItem } from "./wallet-list";
 
 export const metadata: Metadata = { title: "Wallet" };
 
-export default function AccountsPage() {
+export default function AccountsPage({ searchParams }: { searchParams: SearchParams }) {
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <Accounts />
+      <Accounts searchParams={searchParams} />
     </Suspense>
   );
 }
@@ -44,12 +45,15 @@ function toItem(
   };
 }
 
-async function Accounts() {
+async function Accounts({ searchParams }: { searchParams: SearchParams }) {
   const { owner: user, readOnly } = await getViewer();
+  const sp = await searchParams;
   const [accounts, allCards] = await Promise.all([getAccounts(user.id, { includeArchived: true }), getCards(user.id)]);
   const cardsOf = (accountId: string) => allCards.filter((c) => c.accountId === accountId);
   const active = accounts.filter((a) => !a.archived);
   const archived = accounts.filter((a) => a.archived);
+  const canReorder = !readOnly && active.length > 1;
+  const reordering = canReorder && param(sp, "reorder") === "1";
 
   const totals = new Map<string, number>();
   for (const a of active) totals.set(a.currency, (totals.get(a.currency) ?? 0) + a.balance);
@@ -63,9 +67,20 @@ async function Accounts() {
         }
         actions={
           readOnly ? undefined : (
-            <IconLink href="/accounts/new" label="New account" tone="primary">
-              <Plus className="size-5" aria-hidden />
-            </IconLink>
+            <div className="flex items-center gap-2">
+              {canReorder ? (
+                <IconLink
+                  href={reordering ? "/accounts" : "/accounts?reorder=1"}
+                  label={reordering ? "Stop reordering" : "Reorder accounts"}
+                  tone={reordering ? "soft" : "outline"}
+                >
+                  <DragHandle className="size-5" aria-hidden />
+                </IconLink>
+              ) : null}
+              <IconLink href="/accounts/new" label="New account" tone="primary">
+                <Plus className="size-5" aria-hidden />
+              </IconLink>
+            </div>
           )
         }
       />
@@ -82,7 +97,7 @@ async function Accounts() {
       ) : null}
 
       {active.length > 0 ? (
-        <WalletList items={active.map((a) => toItem(a, cardsOf(a.id)))} readOnly={readOnly} />
+        <WalletList items={active.map((a) => toItem(a, cardsOf(a.id)))} readOnly={readOnly} editing={reordering} />
       ) : null}
 
       {archived.length > 0 ? (

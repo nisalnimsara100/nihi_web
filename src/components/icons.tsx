@@ -68,6 +68,7 @@ import {
   TShirtIcon,
   Tag01Icon,
   Tick02Icon,
+  DragDropVerticalIcon,
   UnavailableIcon,
   Calendar03Icon,
   Camera01Icon,
@@ -123,6 +124,7 @@ export const CaretRight = icon(ArrowRight01Icon, "CaretRight");
 export const ChartBar = icon(ChartColumnIcon, "ChartBar");
 export const ChartLine = icon(ChartLineData01Icon, "ChartLine");
 export const Calendar = icon(Calendar03Icon, "Calendar");
+export const DragHandle = icon(DragDropVerticalIcon, "DragHandle");
 export const Camera = icon(Camera01Icon, "Camera");
 export const Check = icon(Tick02Icon, "Check");
 export const ImageSquare = icon(Image01Icon, "ImageSquare");
