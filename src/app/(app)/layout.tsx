@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { OfflineSync } from "@/components/pwa";
 import { Logo } from "@/components/logo";
 import { BottomNavLinks } from "@/components/shell/bottom-nav";
 import { SidebarNav, SidebarNavLinks } from "@/components/shell/sidebar-nav";
@@ -34,6 +35,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {children}
         </div>
       </main>
+      <OfflineSync />
       <Suspense>
         <ProfileSwitcher />
       </Suspense>

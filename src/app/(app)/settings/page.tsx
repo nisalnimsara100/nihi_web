@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { db, run } from "@/lib/db";
 import { mailConfigured } from "@/lib/mail";
 import { daysUntil } from "@/lib/time";
+import { InstallApp } from "@/components/pwa";
 import { PartnerSharing } from "./partner-sharing";
 import { PasswordForm, ProfileForm } from "./settings-forms";
 
@@ -24,6 +25,13 @@ export default function SettingsPage() {
         <Suspense fallback={<Skeleton className="h-64" />}>
           <Partners />
         </Suspense>
+        <Card>
+          <CardHeader title="Install on your phone" />
+          <div className="space-y-2 p-4 sm:p-5">
+            <p className="text-sm text-ink-soft">Open NiHi from your home screen like an app, and add transactions even without a connection.</p>
+            <InstallApp />
+          </div>
+        </Card>
         <Card>
           <CardHeader title="Session" />
           <form action={logout} className="p-4 sm:p-5">

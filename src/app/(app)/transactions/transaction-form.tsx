@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
+import { notify } from "@/components/toast";
+import { enqueue } from "@/lib/offline-queue";
 import { saveTransaction } from "@/actions/transactions";
 import { SimilarWarning } from "@/components/finance/similar-warning";
 import { parseAmount } from "@/lib/money";
@@ -50,6 +52,7 @@ export function TransactionForm({
   tags,
   history = [],
   cards = [],
+  autoScan = false,
 }: {
   initial: TransactionFormValues;
   accounts: AccountOption[];
@@ -59,6 +62,8 @@ export function TransactionForm({
   history?: HistoryRow[];
   /** Linked cards, so a scanned card number can pick the account. */
   cards?: ScanCard[];
+  /** Open the scan sheet straight away (the home screen's Scan shortcut). */
+  autoScan?: boolean;
 }) {
   const { state, pending, onSubmit } = useActionForm(saveTransaction);
   const [type, setType] = useState<TransactionType>(initial.type);
@@ -66,13 +71,32 @@ export function TransactionForm({
   const [toAccountId, setToAccountId] = useState(initial.toAccountId);
   const [categoryId, setCategoryId] = useState(initial.categoryId);
   const [tagIds, setTagIds] = useState(initial.tagIds);
-  const [scanOpen, setScanOpen] = useState(false);
+  const [scanOpen, setScanOpen] = useState(autoScan && !initial.id);
   const [date, setDate] = useState(initial.date);
   const [cardId, setCardId] = useState(initial.cardId);
   const [amountText, setAmountText] = useState(initial.amount);
   // The amount, date and note inputs are uncontrolled; a new key remounts them with scanned values.
   const [scanned, setScanned] = useState({ n: 0, amount: initial.amount, date: initial.date, note: initial.note });
   const errors = state.fieldErrors ?? {};
+
+  /** With no connection a new transaction is kept on the phone and added later (see OfflineSync). */
+  function submit(event: FormEvent<HTMLFormElement>) {
+    if (initial.id || navigator.onLine) {
+      onSubmit(event);
+      return;
+    }
+    event.preventDefault();
+    const entries = [...new FormData(event.currentTarget).entries()].filter((e): e is [string, string] => typeof e[1] === "string");
+    const label = `${entries.find(([k]) => k === "note")?.[1] || type.toLowerCase()} ${amountText}`.trim();
+    if (!enqueue(entries, label)) {
+      notify.error("Couldn't save it on this phone", "Your browser blocked storage. Try again when you're online.");
+      return;
+    }
+    notify.success("Saved on this phone", "It will be added when you're back online.");
+    setAmountText("");
+    setScanned((s) => ({ n: s.n + 1, amount: "", date: initial.date, note: "" }));
+    setDate(initial.date);
+  }
 
   const isTransfer = type === "TRANSFER";
   const visibleCategories = categories.filter((c) => c.type === type);
@@ -108,7 +132,7 @@ export function TransactionForm({
 
   return (
     <Card className="p-4 sm:p-6">
-      <form onSubmit={onSubmit} className="space-y-5" noValidate>
+      <form onSubmit={submit} className="space-y-5" noValidate>
         {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
         <input type="hidden" name="type" value={type} />
         {tagIds.map((id) => (

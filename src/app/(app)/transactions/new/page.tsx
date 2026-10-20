@@ -61,6 +61,7 @@ async function NewTransaction({ searchParams }: { searchParams: SearchParams }) 
       tags={tags}
       history={history}
       cards={cards}
+      autoScan={param(sp, "scan") === "1"}
       initial={{
         type,
         amount,

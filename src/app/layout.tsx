@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { Suspense } from "react";
 import "goey-toast/styles.css";
 import "./globals.css";
+import { ServiceWorkerRegister } from "@/components/pwa";
 import { AppToaster, FlashToast } from "@/components/toast";
 import { readFlash } from "@/lib/flash";
 
@@ -15,6 +16,8 @@ export const metadata: Metadata = {
   title: { default: "NiHi", template: "%s · NiHi" },
   description: "NiHi is a simple personal finance tracker for your accounts, spending and income.",
   applicationName: "NiHi",
+  appleWebApp: { capable: true, title: "NiHi", statusBarStyle: "default" },
+  icons: { apple: "/icons/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {
@@ -36,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full">
         {children}
         <AppToaster />
+        <ServiceWorkerRegister />
         <Suspense>
           <FlashMessage />
         </Suspense>

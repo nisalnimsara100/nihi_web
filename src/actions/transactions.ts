@@ -49,11 +49,13 @@ const transactionSchema = z
     }
   });
 
-export async function saveTransaction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const userId = await requireUserId();
+type Saved = { state: ActionState } | { saved: { amount: number; currency: string; kind: string; updated: boolean } };
+
+/** Validates and saves one transaction. Shared by the form and by the offline queue. */
+async function persist(userId: string, formData: FormData): Promise<Saved> {
   const parsed = transactionSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
-    return fromZodError(parsed.error);
+    return { state: fromZodError(parsed.error) };
   }
   const data = parsed.data;
   const isTransfer = data.type === "TRANSFER";
@@ -81,14 +83,14 @@ export async function saveTransaction(_prev: ActionState, formData: FormData): P
       : null,
   ]);
   if (accounts.length !== accountIds.length) {
-    return { error: "Account not found." };
+    return { state: { error: "Account not found." } };
   }
   if (!isTransfer && data.categoryId && !category) {
-    return { fieldErrors: { categoryId: ["Choose a category of the same type"] } };
+    return { state: { fieldErrors: { categoryId: ["Choose a category of the same type"] } } };
   }
 
   if (!isTransfer && data.cardId && !card) {
-    return { fieldErrors: { cardId: ["Choose a card linked to this account"] } };
+    return { state: { fieldErrors: { cardId: ["Choose a card linked to this account"] } } };
   }
 
   const amount = data.amount!;
@@ -113,18 +115,48 @@ export async function saveTransaction(_prev: ActionState, formData: FormData): P
     db().rpc("save_transaction", args as Database["public"]["Functions"]["save_transaction"]["Args"]),
   );
   if (!savedId) {
-    return { error: "Transaction not found." };
+    return { state: { error: "Transaction not found." } };
   }
   const currency = accounts.find((a) => a.id === data.accountId)?.currency ?? "LKR";
   const kind = { INCOME: "Income", EXPENSE: "Expense", TRANSFER: "Transfer" }[data.type];
+  return { saved: { amount, currency, kind, updated: !!data.id } };
+}
+
+export async function saveTransaction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const userId = await requireUserId();
+  const result = await persist(userId, formData);
+  if ("state" in result) {
+    return result.state;
+  }
+  const { amount, currency, kind, updated } = result.saved;
   await flash({
     type: "success",
-    title: data.id ? "Transaction updated" : "Transaction added",
+    title: updated ? "Transaction updated" : "Transaction added",
     description: `${kind} · ${formatMoney(amount, currency)}`,
   });
 
   revalidatePath("/", "layout");
   redirect("/transactions");
+}
+
+/**
+ * Adds a transaction that was filled in while offline, now that the phone is back online. It does
+ * not redirect, so the page the user is on stays put. `entries` are the form's field names and values.
+ */
+export async function syncQueuedTransaction(entries: [string, string][]): Promise<ActionState> {
+  const userId = await requireUserId();
+  const formData = new FormData();
+  for (const [key, value] of entries.slice(0, 60)) {
+    // An offline entry is always a new transaction.
+    if (key !== "id") formData.append(key, String(value).slice(0, 600));
+  }
+  const result = await persist(userId, formData);
+  if ("state" in result) {
+    const first = Object.values(result.state.fieldErrors ?? {}).flat()[0];
+    return { error: first ?? result.state.error ?? "This could not be added." };
+  }
+  revalidatePath("/", "layout");
+  return { ok: true, message: "Added", detail: `${result.saved.kind} · ${formatMoney(result.saved.amount, result.saved.currency)}` };
 }
 
 export type DeleteResult = ActionState & { snapshots?: TxSnapshot[] };
