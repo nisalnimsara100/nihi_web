@@ -19,8 +19,8 @@ import { CategoryBars } from "@/components/finance/category-bars";
 import { Greeting } from "@/components/finance/greeting";
 import { TransactionList } from "@/components/finance/transaction-list";
 import { Avatar } from "@/components/shell/user-menu";
-import { ButtonLink, Card, CardHeader, ColorDot, EmptyState, PageSkeleton, SeeAll } from "@/components/ui";
-import { getCurrentUser } from "@/lib/auth";
+import { ButtonLink, Card, CardHeader, ColorDot, EmptyState, MaybeLink, PageSkeleton, SeeAll } from "@/components/ui";
+import { getViewer } from "@/lib/auth";
 import { accountTypeLabel } from "@/lib/constants";
 import { getAccounts, getCategoryBreakdown, getRecentTransactions, getTotalsByCurrency } from "@/lib/data";
 import { currentMonthKey, formatMonth, monthRange } from "@/lib/dates";
@@ -48,7 +48,7 @@ const heroButton =
   "flex h-13 items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-semibold text-white ring-1 ring-white/15 transition-colors hover:bg-primary-strong";
 
 async function Dashboard() {
-  const user = await getCurrentUser();
+  const { owner: user, readOnly } = await getViewer();
   const month = currentMonthKey();
   const { start, end } = monthRange(month);
   const currency = user.defaultCurrency;
@@ -103,16 +103,18 @@ async function Dashboard() {
           />
         </div>
 
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <Link href="/transactions/new?type=INCOME" className={heroButton}>
-            <ArrowDownLeft className="size-5" aria-hidden />
-            Add Income
-          </Link>
-          <Link href="/transactions/new?type=EXPENSE" className={heroButton}>
-            <ArrowUpRight className="size-5" aria-hidden />
-            Add Expense
-          </Link>
-        </div>
+        {readOnly ? null : (
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <Link href="/transactions/new?type=INCOME" className={heroButton}>
+              <ArrowDownLeft className="size-5" aria-hidden />
+              Add Income
+            </Link>
+            <Link href="/transactions/new?type=EXPENSE" className={heroButton}>
+              <ArrowUpRight className="size-5" aria-hidden />
+              Add Expense
+            </Link>
+          </div>
+        )}
       </section>
 
       <div className="mt-5 grid items-start gap-5 lg:mt-6 lg:grid-cols-5">
@@ -141,6 +143,7 @@ async function Dashboard() {
             <CaretRight className="size-5 shrink-0 text-ink-faint" aria-hidden />
           </Link>
 
+          {readOnly ? null : (
           <section>
             <h2 className="mb-3 text-base font-semibold">Quick Actions</h2>
             <div className="grid grid-cols-4 gap-3">
@@ -156,6 +159,7 @@ async function Dashboard() {
               ))}
             </div>
           </section>
+          )}
 
           <section className="rounded-3xl bg-muted p-4 sm:p-5">
             <div className="mb-3 flex items-center justify-between">
@@ -169,13 +173,13 @@ async function Dashboard() {
               </Link>
             </div>
             {recent.length > 0 ? (
-              <TransactionList transactions={recent} groupByDay={false} />
+              <TransactionList transactions={recent} groupByDay={false} readOnly={readOnly} />
             ) : (
               <EmptyState
                 icon={<Receipt className="size-6" />}
                 title="No transactions yet"
-                description="Add your first expense or income to see it here."
-                action={<ButtonLink href="/transactions/new">Add transaction</ButtonLink>}
+                description={readOnly ? "Nothing has been added yet." : "Add your first expense or income to see it here."}
+                action={readOnly ? undefined : <ButtonLink href="/transactions/new">Add transaction</ButtonLink>}
               />
             )}
           </section>
@@ -201,9 +205,9 @@ async function Dashboard() {
             <ul className="space-y-1 p-3">
               {accounts.map((a) => (
                 <li key={a.id}>
-                  <Link
-                    href={`/accounts/${a.id}`}
-                    className="flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-muted"
+                  <MaybeLink
+                    href={readOnly ? undefined : `/accounts/${a.id}`}
+                    className={cn("flex items-center gap-3 rounded-2xl px-3 py-2.5", !readOnly && "transition-colors hover:bg-muted")}
                   >
                     <ColorDot color={a.color} className="size-3" />
                     <span className="min-w-0 flex-1">
@@ -211,7 +215,7 @@ async function Dashboard() {
                       <span className="block text-xs text-ink-soft">{accountTypeLabel(a.type)}</span>
                     </span>
                     <span className="text-sm font-semibold tabular-nums">{formatMoney(a.balance, a.currency)}</span>
-                  </Link>
+                  </MaybeLink>
                 </li>
               ))}
             </ul>

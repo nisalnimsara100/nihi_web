@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
 import { Plus, Wallet } from "@/components/icons";
 import { AccountCardFace } from "@/components/finance/account-card";
-import { ButtonLink, Card, EmptyState, IconLink, PageHeader, PageSkeleton } from "@/components/ui";
-import { getCurrentUser } from "@/lib/auth";
+import { ButtonLink, Card, EmptyState, IconLink, MaybeLink, PageHeader, PageSkeleton } from "@/components/ui";
+import { getViewer } from "@/lib/auth";
 import { accountTypeLabel } from "@/lib/constants";
 import { getAccounts, type AccountWithBalance } from "@/lib/data";
 import { formatMoney } from "@/lib/money";
@@ -20,12 +19,23 @@ export default function AccountsPage() {
   );
 }
 
-function AccountCard({ account, index, stacked }: { account: AccountWithBalance; index: number; stacked: boolean }) {
+function AccountCard({
+  account,
+  index,
+  stacked,
+  readOnly,
+}: {
+  account: AccountWithBalance;
+  index: number;
+  stacked: boolean;
+  readOnly: boolean;
+}) {
   return (
-    <Link
-      href={`/accounts/${account.id}`}
+    <MaybeLink
+      href={readOnly ? undefined : `/accounts/${account.id}`}
       className={cn(
-        "group relative block transition-transform hover:-translate-y-1",
+        "group relative block",
+        !readOnly && "transition-transform hover:-translate-y-1",
         // On phones the cards overlap so each one shows its top strip, like a wallet.
         stacked && index > 0 && "-mt-28 sm:mt-0",
       )}
@@ -42,12 +52,12 @@ function AccountCard({ account, index, stacked }: { account: AccountWithBalance;
         dimmed={account.archived}
         className="shadow-[0_-6px_24px_rgb(20_21_28/0.14)] sm:shadow-lg sm:shadow-primary/10"
       />
-    </Link>
+    </MaybeLink>
   );
 }
 
 async function Accounts() {
-  const user = await getCurrentUser();
+  const { owner: user, readOnly } = await getViewer();
   const accounts = await getAccounts(user.id, { includeArchived: true });
   const active = accounts.filter((a) => !a.archived);
   const archived = accounts.filter((a) => a.archived);
@@ -63,9 +73,11 @@ async function Accounts() {
           totals.size > 0 ? `Total ${[...totals].map(([c, v]) => formatMoney(v, c)).join(" · ")}` : "Where your money lives."
         }
         actions={
-          <IconLink href="/accounts/new" label="New account" tone="primary">
-            <Plus className="size-5" aria-hidden />
-          </IconLink>
+          readOnly ? undefined : (
+            <IconLink href="/accounts/new" label="New account" tone="primary">
+              <Plus className="size-5" aria-hidden />
+            </IconLink>
+          )
         }
       />
 
@@ -74,8 +86,8 @@ async function Accounts() {
           <EmptyState
             icon={<Wallet className="size-6" />}
             title="No accounts yet"
-            description="Add your wallet, bank account or card to start tracking."
-            action={<ButtonLink href="/accounts/new">Add account</ButtonLink>}
+            description={readOnly ? "No accounts have been added yet." : "Add your wallet, bank account or card to start tracking."}
+            action={readOnly ? undefined : <ButtonLink href="/accounts/new">Add account</ButtonLink>}
           />
         </Card>
       ) : null}
@@ -83,7 +95,7 @@ async function Accounts() {
       {active.length > 0 ? (
         <div className="mx-auto max-w-md sm:mx-0 sm:grid sm:max-w-none sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
           {active.map((a, i) => (
-            <AccountCard key={a.id} account={a} index={i} stacked />
+            <AccountCard key={a.id} account={a} index={i} stacked readOnly={readOnly} />
           ))}
         </div>
       ) : null}
@@ -93,7 +105,7 @@ async function Accounts() {
           <h2 className="mb-3 text-base font-semibold">Archived</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {archived.map((a, i) => (
-              <AccountCard key={a.id} account={a} index={i} stacked={false} />
+              <AccountCard key={a.id} account={a} index={i} stacked={false} readOnly={readOnly} />
             ))}
           </div>
         </section>

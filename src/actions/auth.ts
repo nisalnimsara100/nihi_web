@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { CURRENCIES, DEFAULT_CATEGORIES, COLORS } from "@/lib/constants";
 import { db, run, UNIQUE_VIOLATION } from "@/lib/db";
+import { safeNext } from "@/lib/next-path";
 import { createSession, deleteSession } from "@/lib/session";
 import { fromZodError, type ActionState } from "./state";
 
@@ -46,7 +47,7 @@ export async function signup(_prev: ActionState, formData: FormData): Promise<Ac
   }
 
   await createSession(user.id);
-  redirect("/dashboard");
+  redirect(safeNext(formData.get("next")));
 }
 
 const loginSchema = z.object({
@@ -67,7 +68,7 @@ export async function login(_prev: ActionState, formData: FormData): Promise<Act
   }
 
   await createSession(user.id);
-  redirect("/dashboard");
+  redirect(safeNext(formData.get("next")));
 }
 
 export async function logout() {

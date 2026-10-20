@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { deleteCategory, saveCategory } from "@/actions/labels";
 import { LabelManager } from "@/components/label-manager";
 import { PageHeader, PageSkeleton } from "@/components/ui";
-import { getCurrentUser } from "@/lib/auth";
+import { getViewer } from "@/lib/auth";
 import { getCategories } from "@/lib/data";
 
 export const metadata: Metadata = { title: "Categories" };
@@ -23,7 +23,7 @@ export default function CategoriesPage() {
 }
 
 async function Categories() {
-  const user = await getCurrentUser();
+  const { owner: user, readOnly } = await getViewer();
   const categories = await getCategories(user.id);
   const toItems = (type: "INCOME" | "EXPENSE") =>
     categories
@@ -40,6 +40,7 @@ async function Categories() {
         save={saveCategory}
         remove={deleteCategory}
         hidden={{ type: "EXPENSE" }}
+        readOnly={readOnly}
       />
       <LabelManager
         title="Income"
@@ -49,6 +50,7 @@ async function Categories() {
         save={saveCategory}
         remove={deleteCategory}
         hidden={{ type: "INCOME" }}
+        readOnly={readOnly}
       />
     </div>
   );

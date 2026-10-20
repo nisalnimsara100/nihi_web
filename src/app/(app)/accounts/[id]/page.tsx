@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { PageHeader, Skeleton } from "@/components/ui";
-import { getCurrentUser } from "@/lib/auth";
+import { requireOwnView } from "@/lib/auth";
 import { getAccounts } from "@/lib/data";
 import { toInputAmount } from "@/lib/money";
 import { AccountForm } from "../account-form";
@@ -21,7 +21,7 @@ export default function EditAccountPage({ params }: { params: Promise<{ id: stri
 }
 
 async function EditAccount({ params }: { params: Promise<{ id: string }> }) {
-  const user = await getCurrentUser();
+  const { user } = await requireOwnView();
   const { id } = await params;
   const account = (await getAccounts(user.id, { includeArchived: true })).find((a) => a.id === id);
   if (!account) {

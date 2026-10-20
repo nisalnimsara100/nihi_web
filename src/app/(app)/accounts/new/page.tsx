@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { PageHeader, Skeleton } from "@/components/ui";
-import { getCurrentUser } from "@/lib/auth";
+import { requireOwnView } from "@/lib/auth";
 import { DEFAULT_CARD_THEME } from "@/lib/card-themes";
 import { COLORS } from "@/lib/constants";
 import { AccountForm } from "../account-form";
@@ -20,7 +20,7 @@ export default function NewAccountPage() {
 }
 
 async function NewAccount() {
-  const user = await getCurrentUser();
+  const { user } = await requireOwnView();
   return (
     <AccountForm
       initial={{

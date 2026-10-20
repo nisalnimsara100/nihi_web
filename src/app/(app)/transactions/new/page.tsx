@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Wallet } from "@/components/icons";
 import { ButtonLink, Card, EmptyState, PageHeader, Skeleton } from "@/components/ui";
-import { getCurrentUser } from "@/lib/auth";
+import { requireOwnView } from "@/lib/auth";
 import { todayDay } from "@/lib/dates";
 import { param, type SearchParams } from "@/lib/search-params";
 import { getTransactionFormOptions } from "../form-data";
@@ -22,7 +22,7 @@ export default function NewTransactionPage({ searchParams }: { searchParams: Sea
 }
 
 async function NewTransaction({ searchParams }: { searchParams: SearchParams }) {
-  const user = await getCurrentUser();
+  const { user } = await requireOwnView();
   const sp = await searchParams;
   const { accounts, categories, tags } = await getTransactionFormOptions(user.id);
 

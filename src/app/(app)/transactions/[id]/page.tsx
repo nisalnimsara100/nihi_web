@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { PageHeader, Skeleton } from "@/components/ui";
-import { getCurrentUser } from "@/lib/auth";
+import { requireOwnView } from "@/lib/auth";
 import { getTransaction } from "@/lib/data";
 import { dateToDay } from "@/lib/dates";
 import { toInputAmount } from "@/lib/money";
@@ -23,7 +23,7 @@ export default function EditTransactionPage({ params }: { params: Promise<{ id: 
 }
 
 async function EditTransaction({ params }: { params: Promise<{ id: string }> }) {
-  const user = await getCurrentUser();
+  const { user } = await requireOwnView();
   const { id } = await params;
   const tx = await getTransaction(user.id, id);
   if (!tx) {

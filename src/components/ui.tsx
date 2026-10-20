@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ComponentProps, ReactNode } from "react";
+import type { ComponentProps, CSSProperties, ReactNode } from "react";
 import { CaretLeft } from "@/components/icons";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/money";
@@ -199,6 +199,32 @@ export function EmptyState({
       <p className="text-base font-semibold">{title}</p>
       {description ? <p className="mt-1 max-w-sm text-sm text-ink-soft">{description}</p> : null}
       {action ? <div className="mt-5">{action}</div> : null}
+    </div>
+  );
+}
+
+/** A link when there is an href, a plain block otherwise. Read-only views pass no href. */
+export function MaybeLink({
+  href,
+  className,
+  style,
+  children,
+}: {
+  href?: string;
+  className?: string;
+  style?: CSSProperties;
+  children: ReactNode;
+}) {
+  if (href) {
+    return (
+      <Link href={href} className={className} style={style}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <div className={className} style={style}>
+      {children}
     </div>
   );
 }

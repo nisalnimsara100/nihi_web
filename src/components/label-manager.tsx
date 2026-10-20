@@ -7,6 +7,7 @@ import { ColorPicker, DeleteButton, FormError, IconPicker, SubmitButton } from "
 import { useActionForm } from "@/components/use-action-form";
 import { Button, Card, ColorDot, Field, inputClass } from "@/components/ui";
 import { CategoryIcon } from "@/lib/category-icons";
+import { cn } from "@/lib/cn";
 import { COLORS } from "@/lib/constants";
 
 /** `icon` is set for categories; tags have none and show a color dot. */
@@ -64,6 +65,7 @@ export function LabelManager({
   hidden,
   noun,
   withIcon = false,
+  readOnly = false,
 }: {
   title: string;
   items: Item[];
@@ -72,6 +74,8 @@ export function LabelManager({
   hidden?: Record<string, string>;
   noun: string;
   withIcon?: boolean;
+  /** Shows the list without add, edit or delete controls. */
+  readOnly?: boolean;
 }) {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
@@ -82,17 +86,19 @@ export function LabelManager({
         <h2 className="text-base font-semibold">
           {title} <span className="font-normal text-ink-soft">({items.length})</span>
         </h2>
-        <Button size="sm" variant={adding ? "ghost" : "secondary"} onClick={() => setAdding((v) => !v)} aria-expanded={adding}>
-          {adding ? "Close" : (
-            <>
-              <Plus className="size-4" aria-hidden />
-              Add {noun}
-            </>
-          )}
-        </Button>
+        {readOnly ? null : (
+          <Button size="sm" variant={adding ? "ghost" : "secondary"} onClick={() => setAdding((v) => !v)} aria-expanded={adding}>
+            {adding ? "Close" : (
+              <>
+                <Plus className="size-4" aria-hidden />
+                Add {noun}
+              </>
+            )}
+          </Button>
+        )}
       </div>
 
-      {adding ? (
+      {adding && !readOnly ? (
         <div className="mx-4 mt-4 rounded-3xl p-4 ring-1 ring-line sm:mx-5">
           <LabelForm save={save} hidden={hidden} submitLabel={`Add ${noun}`} withIcon={withIcon} />
         </div>
@@ -103,7 +109,7 @@ export function LabelManager({
       ) : (
         <ul className="mt-3 space-y-1 px-2 pb-3">
           {items.map((item) =>
-            editing === item.id ? (
+            editing === item.id && !readOnly ? (
               <li key={item.id} className="rounded-2xl p-4 ring-1 ring-line">
                 <LabelForm
                   save={save}
@@ -115,7 +121,7 @@ export function LabelManager({
                 />
               </li>
             ) : (
-              <li key={item.id} className="flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-muted">
+              <li key={item.id} className={cn("flex items-center gap-3 rounded-2xl px-3 py-2.5", !readOnly && "transition-colors hover:bg-muted")}>
                 <span className="relative flex size-11 shrink-0 items-center justify-center rounded-2xl bg-surface text-ink shadow-[0_1px_3px_rgb(20_21_28/0.08)] ring-1 ring-line/60" aria-hidden>
                   {item.icon ? (
                     <>
@@ -132,16 +138,20 @@ export function LabelManager({
                     {item.count} transaction{item.count === 1 ? "" : "s"}
                   </span>
                 </span>
-                <Button size="sm" variant="ghost" aria-label={`Edit ${item.name}`} onClick={() => setEditing(item.id)}>
-                  <PencilSimple className="size-4" aria-hidden />
-                </Button>
-                <DeleteButton
-                  size="sm"
-                  iconOnly
-                  label={`Delete ${item.name}`}
-                  confirmLabel="Delete?"
-                  action={() => remove(item.id)}
-                />
+                {readOnly ? null : (
+                  <>
+                    <Button size="sm" variant="ghost" aria-label={`Edit ${item.name}`} onClick={() => setEditing(item.id)}>
+                      <PencilSimple className="size-4" aria-hidden />
+                    </Button>
+                    <DeleteButton
+                      size="sm"
+                      iconOnly
+                      label={`Delete ${item.name}`}
+                      confirmLabel="Delete?"
+                      action={() => remove(item.id)}
+                    />
+                  </>
+                )}
               </li>
             ),
           )}
