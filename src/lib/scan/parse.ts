@@ -24,7 +24,7 @@ const CURRENCY_WORDS: Record<string, string> = {
 // The number may sit on the next line ("Rs\n7025.00") and may lack a leading zero (".56").
 const MONEY = /(LKR|Rs\.?|රු\.?|USD|EUR|GBP|INR|\$|£|€)\s*(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?|\.\d{1,2})/gi;
 
-const PAID_WORDS = /\b(debited|debit|paid|payment|purchase|spent|withdrawn|withdrawal|sent|sale|total|grand\s*total|net\s*amount|amount|txn|transaction|credited|credit|received|deposit)\b/i;
+const PAID_WORDS = /\b(debited|debit|fare|paid|payment|purchase|spent|withdrawn|withdrawal|sent|sale|total|grand\s*total|net\s*amount|amount|txn|transaction|credited|credit|received|deposit)\b/i;
 const IGNORE_WORDS = /\b(balance|bal|available|avl|limit|fee|fees|charge|charges|outstanding|points|cash|change|tendered)\b/i;
 
 function normalise(text: string) {
@@ -68,6 +68,8 @@ export function parseAmount(text: string): ParsedScan["amount"] {
     if (PAID_WORDS.test(before.slice(-40)) || PAID_WORDS.test(line)) score += 3;
     if (/\b(total|grand\s*total|net\s*amount)\b/i.test(line)) score += 2;
     if (/\.\d{2}$/.test(m[2])) score += 1;
+    // Ride apps print an estimate above the real fare; prefer the actual one.
+    if (/\bestimated\b/i.test(line)) score -= 1;
     if (ignored) score -= 10;
     score -= (at / Math.max(1, t.length)) * 0.5; // earlier text wins ties
     hits.push({ minor, currency: currencyOf(m[1]), score });
@@ -89,7 +91,9 @@ export function parseAmount(text: string): ParsedScan["amount"] {
   const best = usable[0];
   const rivals = usable.filter((h) => h.minor !== best.minor && h.score >= best.score - 0.5);
   const currency = best.currency ?? usable.find((h) => h.minor === best.minor && h.currency)?.currency ?? null;
-  return { minor: best.minor, currency, confidence: rivals.length === 0 && best.score >= 3 ? "high" : "low" };
+  // One amount on the whole image (a ride summary with just "LKR 169.19") is not ambiguous.
+  const onlyOne = usable.every((h) => h.minor === best.minor);
+  return { minor: best.minor, currency, confidence: rivals.length === 0 && (best.score >= 3 || onlyOne) ? "high" : "low" };
 }
 
 export function parseType(text: string): ParsedScan["type"] {
@@ -168,19 +172,32 @@ export function parseDate(text: string, today: string): ParsedScan["date"] {
   }
   for (const m of t.matchAll(/(?<![\d/-])(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})(?![\d/-])/g)) {
     const [a, b, c] = [+m[1], +m[2], +m[3]];
-    if (m[3].length === 4) {
-      // Day-first (Sri Lanka); swap only when day-first is impossible.
-      const first = validDay(c, b, a);
-      if (first && plausible(first, today)) return { day: first, confidence: a <= 12 && b <= 12 && a !== b ? "low" : "high" };
-      const swapped = validDay(c, a, b);
-      if (swapped && plausible(swapped, today)) return { day: swapped, confidence: "low" };
-    } else {
-      // Two-digit year: "18-10-26" is day-month-year, but "26-10-08" (bus tickets) is
-      // year-month-day. Keep whichever reading is a plausible recent date.
-      const candidates = [validDay(2000 + c, b, a), validDay(2000 + a, b, c)];
-      const pick = candidates.find((d): d is string => !!d && plausible(d, today));
-      if (pick) return { day: pick, confidence: candidates[0] === pick && candidates[1] && plausible(candidates[1], today) ? "low" : "high" };
-    }
+    const full = m[3].length === 4;
+    // Every reading that is a real, recent date. Day-first (Sri Lanka) comes first;
+    // "26-10-08" (year first) and "9/15/26" (month first, as the Uber app prints) follow.
+    const readings = full
+      ? [validDay(c, b, a), validDay(c, a, b)]
+      : [validDay(2000 + c, b, a), validDay(2000 + a, b, c), validDay(2000 + c, a, b)];
+    const options = [...new Set(readings.filter((d): d is string => !!d && plausible(d, today)))];
+    if (options.length === 0) continue;
+    if (options.length === 1) return { day: options[0], confidence: "high" };
+    // Still ambiguous ("10/4/26"). A time with AM/PM after a slash date is the US style.
+    const after = t.slice((m.index ?? 0) + m[0].length, (m.index ?? 0) + m[0].length + 14);
+    const monthFirst = m[0].includes("/") && /^\s*,?\s*\d{1,2}:\d{2}\s*[AP]M/i.test(after);
+    const usReading = full ? readings[1] : readings[2];
+    if (monthFirst && usReading && options.includes(usReading)) return { day: usReading, confidence: "low" };
+    // Otherwise the reading closest to today: a payment screenshot is almost always recent.
+    const distance = (d: string) => Math.abs(new Date(`${d}T12:00:00Z`).getTime() - new Date(`${today}T12:00:00Z`).getTime());
+    const closest = [...options].sort((x, y) => distance(x) - distance(y) || options.indexOf(x) - options.indexOf(y))[0];
+    return { day: closest, confidence: "low" };
+  }
+  // "Oct 10 12:26PM": a month and day with no year means the latest such day not in the future.
+  for (const m of t.matchAll(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?\b(?!\s*,?\s*\d{4})/gi)) {
+    const mi = MONTHS.indexOf(m[1].toLowerCase());
+    const year = +today.slice(0, 4);
+    let day = validDay(year, mi + 1, +m[2]);
+    if (day && day > addDays(today, 1)) day = validDay(year - 1, mi + 1, +m[2]);
+    if (day && plausible(day, today)) return { day, confidence: "high" };
   }
   for (const m of t.matchAll(/\b(today|yesterday|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi)) {
     named.push(m[1]);
@@ -203,12 +220,31 @@ export function parseAccountHint(text: string): ParsedScan["account"] {
   // Masked numbers keep 3 or 4 digits: "XXXXXXXXXX570", "**8462", "A/C ending 4521".
   const last4 =
     t.match(/\b(?:a\/?c|acc(?:ount)?|card)\s*(?:no\.?|number|ending|ends|#)?\s*(?:with)?\s*[:\-]?\s*[x*•.]*\s*(\d{3,4})\b/i)?.[1] ??
+    t.match(/\b(?:visa|master(?:card)?|amex)\s*[x*•+·.]{2,}\s*(\d{4})\b/i)?.[1] ??
+    t.match(/[x*•+·]{3,}\s*(\d{3,4})\b/i)?.[1] ??
     t.match(/[x*•]{2,}\s*(\d{3,4})\b/i)?.[1] ??
     null;
   const lower = t.toLowerCase();
   const bank = BANKS.find((b) => new RegExp(`\\b${b.toLowerCase().replace(/[.*+?^${}()|[\]\\']/g, "\\$&")}\\b`).test(lower)) ?? "";
-  return { hint: bank, last4, confidence: last4 || bank ? "low" : "missing" };
+  // A receipt paid in cash ("Paid by Cash", "Cash LKR 337.80") belongs to the Cash account.
+  const cash = !bank && !last4 && /\bcash\b/i.test(t) ? "Cash" : "";
+  const hint = bank || cash;
+  return { hint, last4, confidence: last4 || hint ? "low" : "missing" };
 }
+
+/**
+ * Ride-hailing receipts name the driver, not a shop, so they get the app's name instead.
+ * PickMe's layout is "TRIP ID ... Estimated Fare"; Uber's mentions its products.
+ */
+function rideLabel(text: string) {
+  if (/\b(uber|moto\s*saver|uberx)\b/i.test(text) && /\b(ride|trip|fare|driver)\b/i.test(text)) return "Uber ride";
+  // A scroll-cropped screenshot may lack the "TRIP ID" heading, but still shows fare and duration/distance.
+  if (/\b(estimated|actual|total\s+trip)\s+fare\b/i.test(text) && (/\btrip\s*id\b/i.test(text) || /\b(duration|distance)\b/i.test(text))) return "PickMe ride";
+  if (/\bride\s+details\b/i.test(text)) return "Ride";
+  return "";
+}
+
+const RECEIPT_FOR = /\b(?:receipt\s+for|order\s+from|your\s+order\s+at)\s+([A-Za-z0-9][A-Za-z0-9 &'.\-_/]{2,40})/i;
 
 const MERCHANT_CUE = /\b(?:paid\s+to|payment\s+to|purchase\s+at|spent\s+at|merchant|vpa|to|at|from)\s*[:\-]?\s+(?=([A-Za-z0-9][A-Za-z0-9 &'.\-_/@]{2,40}))/gi; // lookahead so one cue's text never hides the next cue
 const MERCHANT_STOP = /\s+(?:on|via|using|ref|reference|txn|transaction|dated|date|for|with|has|is|was|card|a\/c|ac|avl|available|balance|bal|rs|lkr|usd)\b.*$/i;
@@ -235,6 +271,15 @@ const BANK_SMS = /\b(a\/?c|acc(?:ount)?|balance|debited|credited|debit|credit)\b
 export function parseMerchant(text: string): ParsedScan["merchant"] {
   const norm = normalise(text);
   const flat = norm.replace(/\n/g, " ");
+  // Delivery receipts: "Here's your receipt for Feek Health Mart ."
+  const named = flat.match(RECEIPT_FOR);
+  if (named) {
+    // The name may wrap onto the next line and run into "Mart . Total"; stop at the sentence end.
+    const merchant = cleanMerchant(named[1].split(/\s+\.(?:\s|$)|\s+total\b/i)[0]);
+    if (merchant.length >= 3 && /[A-Za-z]{3}/.test(merchant)) return { text: merchant, confidence: "high" };
+  }
+  const ride = rideLabel(flat);
+  if (ride) return { text: ride, confidence: "low" };
   for (const cue of flat.matchAll(MERCHANT_CUE)) {
     const merchant = cleanMerchant(cue[1]);
     // "at 2026-10-20", "from A/C xx7788" or "to your account" are not merchants.

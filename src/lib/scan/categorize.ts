@@ -17,12 +17,12 @@ export function words(text: string) {
 
 // Keyword -> words that may appear in the category name.
 const KEYWORDS: [RegExp, string[]][] = [
+  [/pharmacy|hospital|clinic|medic|health|channel|lab/i, ["health", "medic", "pharm"]],
   [/keells|cargills|arpico|supermarket|grocer|mart|food\s*city|laugfs\s*super/i, ["grocer", "food", "shopping"]],
   [/restaurant|cafe|coffee|pizza|burger|kfc|mcdonald|dominos|bakery|hotel|uber\s*eats|pickme\s*food/i, ["dining", "food", "restaurant", "eating"]],
   [/fuel|petrol|diesel|ceypetco|ioc|lanka\s*ioc|shell/i, ["fuel", "transport", "vehicle", "car"]],
   [/uber|pickme|taxi|bus|train|toll|parking/i, ["transport", "taxi", "travel"]],
   [/electricity|ceb|leco|water\s*board|nwsdb|dialog|mobitel|slt|airtel|hutch|internet|broadband|bill/i, ["bill", "utilit"]],
-  [/pharmacy|hospital|clinic|medic|health|channel|lab/i, ["health", "medic", "pharm"]],
   [/cinema|netflix|spotify|movie|concert|game/i, ["entertain", "fun", "subscription"]],
   [/salary|payroll|wages/i, ["salary", "income", "wage"]],
   [/rent|landlord/i, ["rent", "housing", "home"]],

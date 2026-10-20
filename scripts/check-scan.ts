@@ -2,7 +2,7 @@
 import { parseScan } from "../src/lib/scan/parse";
 
 const TODAY = "2026-10-20"; // a Tuesday
-type Case = { name: string; text: string; amount: number | null; type: string; day: string; merchant?: RegExp; last4?: string };
+type Case = { name: string; text: string; amount: number | null; type: string; day: string; merchant?: RegExp; last4?: string; hint?: string; high?: boolean };
 
 const cases: Case[] = [
   { name: "ComBank SMS", text: "Commercial Bank: Your Card ending 4521 was used for LKR 1,250.00 purchase at KEELLS SUPER on 18/10/2026. Avl Bal LKR 45,300.50", amount: 125000, type: "EXPENSE", day: "2026-10-18", merchant: /KEELLS/i, last4: "4521" },
@@ -31,6 +31,11 @@ const cases: Case[] = [
   { name: "Bakery photo, split decimals", text: "he}\n-\nEW PERERA AND SON BAKERS\nTOTAL 680. 00\nCash 1,000.00\nChange* 320.00\n18-10-2026 16:2]", amount: 68000, type: "EXPENSE", day: "2026-10-18", merchant: /PERERA/i },
   { name: "Card slip photo (real)", text: "UNSTOPPABLE YOU J\nSASHA FOOD J\nCOURT(PVT).L oD 1\nSALE\nCARD TYPE Visa (1 it\nAPP JIE \"8/7144\nhe. MOUNT LKR 5,870.00 ]\nSIGN: o", amount: 587000, type: "EXPENSE", day: TODAY, merchant: /SASHA/i },
   { name: "Bus ticket photo (real)", text: "wpNG-1111 ]\nLONIJA EXPRESS\nAT#:52771 Luxury-RT#:EX02/138/2%\nREF: 907070116257\nDATE:26-10-08 TIME:17:18:52\nROUTE: NEGOMBO-NAVINNA\nNAVINNA\n- NEGOMBO 0\nFULL: 1x 610.00 = 610-7\nTOTAL: Rs.610.00 .\nCONTACT FOR : 070644511", amount: 61000, type: "EXPENSE", day: "2026-10-08", merchant: /LONIJA/i },
+  { name: "PickMe receipt (real)", text: "17:34 ut! 46 | TRIP ID - 1574573041 | Nisal 0702970984 | 276, Kulasiri Kumarage Mawatha, | o Homagama, Colombo | 2026-10-19 18:44 PM | Receipt Help | Estimated Fare LKR 167.07 | Estimated Duration 7 minutes 36 seconds | Estimated Distance 2.61km | Actual Fare LKR 167.07 | Actual Duration 7 minutes 22 seconds | Actual Distance 2.66 km | Total Trip Fare LKR 167.07 | Paid Amount LKR 167.07 | Paid by | (@) cash LKR 167.07 | Driver tip Tip Driver | 100% of your tip goes to the driver. | Help BE Mail Receipt".replaceAll(" | ", "\n"), amount: 16707, type: "EXPENSE", day: "2026-10-19", merchant: /PickMe/i, hint: "Cash" },
+  { name: "PickMe summary, cut off (real)", text: "17:31 ut 4c ED | Nisal 0702970984 | 19 October 2026 | Io Rides 06:34 PM | Completed Rate now | Ganithage 4.6 | Bike | (o] Hiripitiya Road, Pannipitiya, Colombo | 2026-10-19 18:34 PM | Receipt Help | Estimated Fare LKR 167.07 | Estimated Duration 7 minutes 36 seconds | Actual Fare LKR 167.07 | Actual Duration 7 minutes 22 seconds".replaceAll(" | ", "\n"), amount: 16707, type: "EXPENSE", day: "2026-10-19", merchant: /PickMe/i, high: true },
+  { name: "Uber ride details (real)", text: "X Ride Details | MAMBULGODA | Moto Saver | ride with | SOORIYA | ARACHCHILA | GE DINESH... | Oct 10 12:26PM | LKR 169.19 | [3] Receipt | 46/1/D Mabulgoda, Pannipitiya, : | Sri Lanka | No tip added Add tip | No rating Rate | Help & safety".replaceAll(" | ", "\n"), amount: 16919, type: "EXPENSE", day: "2026-10-10", merchant: /Uber/i, high: true },
+  { name: "Uber ride receipt (real)", text: "7:33 1 4G GD | X | Receipt | We hope you enjoyed your ride this | evening. | Total LKR 337.80 | Trip fare LKR 317.80 | Booking Fee LKR 20.00 | Payments | Cash LKR 337.80 | 9/15/26 7:33 PM | Visit the trip page for more information, including | invoices (where available) | Uber does not provide transportation services; | Issued on behalf of KURUKULASURIYA RUMESH".replaceAll(" | ", "\n"), amount: 33780, type: "EXPENSE", day: "2026-09-15", merchant: /Uber/i, hint: "Cash" },
+  { name: "Uber Eats receipt (real)", text: "17:34 it 4G EB | X | Here's your receipt for Feek Health | Mart . | Total LKR 330.33 | Panadol 500mg (12 | 2 Tablets) LKR 120.00 | Item Subtotal LKR 120.00 | Tax LKR 61.33 | Delivery Fee LKR 99.00 | Service Fee LKR 50.00 | Payments | Visa ++++8663 (Nisal - | visa Sampath Bank) LKR S20.55 | 10/4/26 8:10 AM | Tax includes the applicable tax on meal fare | collected on behalf of merchant partners and".replaceAll(" | ", "\n"), amount: 33033, type: "EXPENSE", day: "2026-10-04", merchant: /Feek Health Mart/i, last4: "8663", hint: "Sampath" },
 ];
 
 let failed = 0;
@@ -42,6 +47,8 @@ for (const c of cases) {
   if (r.date.day !== c.day) problems.push(`day ${r.date.day} != ${c.day}`);
   if (c.merchant && !c.merchant.test(r.merchant.text)) problems.push(`merchant "${r.merchant.text}"`);
   if (c.last4 && r.account.last4 !== c.last4) problems.push(`last4 ${r.account.last4} != ${c.last4}`);
+  if (c.hint && r.account.hint !== c.hint) problems.push(`hint "${r.account.hint}" != ${c.hint}`);
+  if (c.high && r.amount.confidence !== "high") problems.push("amount not high");
   if (problems.length) failed++;
   console.log(`${problems.length ? "FAIL" : "ok  "} ${c.name}${problems.length ? ": " + problems.join("; ") : ""}`);
 }
