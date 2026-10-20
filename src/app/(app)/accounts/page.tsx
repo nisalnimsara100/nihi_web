@@ -55,14 +55,26 @@ async function Accounts({ searchParams }: { searchParams: SearchParams }) {
   const reordering = canReorder && param(sp, "reorder") === "1";
 
   const totals = new Map<string, number>();
-  for (const a of active) totals.set(a.currency, (totals.get(a.currency) ?? 0) + a.balance);
+  const cardsOwed = new Map<string, number>();
+  for (const a of active) {
+    // Credit cards are debt, so they are not part of the total. They are listed beside it.
+    if (a.type !== "CREDIT_CARD") totals.set(a.currency, (totals.get(a.currency) ?? 0) + a.balance);
+    else if (a.balance < 0) cardsOwed.set(a.currency, (cardsOwed.get(a.currency) ?? 0) - a.balance);
+  }
 
   return (
     <>
       <PageHeader
         title="Wallet"
         description={
-          totals.size > 0 ? `Total ${[...totals].map(([c, v]) => formatMoney(v, c)).join(" · ")}` : "Where your money lives."
+          totals.size > 0 || cardsOwed.size > 0
+            ? [
+                totals.size > 0 ? `Total ${[...totals].map(([c, v]) => formatMoney(v, c)).join(" · ")}` : "",
+                cardsOwed.size > 0 ? `Cards owe ${[...cardsOwed].map(([c, v]) => formatMoney(v, c)).join(" · ")}` : "",
+              ]
+                .filter(Boolean)
+                .join(" · ")
+            : "Where your money lives."
         }
         actions={
           readOnly ? undefined : (

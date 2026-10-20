@@ -7,6 +7,7 @@ import {
   ArrowUpRight,
   CaretRight,
   ChartBar,
+  CreditCard,
   GearSix,
   Receipt,
   SlidersHorizontal,
@@ -65,9 +66,16 @@ async function Dashboard() {
     getRecentTransactions(user.id, 6),
   ]);
 
+  // The total balance is money you have. Credit cards are debt to a bank, so they stay out of it
+  // and show on their own, small, under the total.
+  const ownAccounts = accounts.filter((a) => a.type !== "CREDIT_CARD");
   const netWorth = new Map<string, number>();
-  for (const a of accounts) {
+  for (const a of ownAccounts) {
     netWorth.set(a.currency, (netWorth.get(a.currency) ?? 0) + a.balance);
+  }
+  const cardsOwed = new Map<string, number>();
+  for (const a of accounts) {
+    if (a.type === "CREDIT_CARD" && a.balance < 0) cardsOwed.set(a.currency, (cardsOwed.get(a.currency) ?? 0) - a.balance);
   }
   const otherNetWorth = [...netWorth].filter(([c]) => c !== currency);
   const monthTotals = totals.find((t) => t.currency === currency) ?? { income: 0, expense: 0 };
@@ -102,8 +110,14 @@ async function Dashboard() {
             amount={formatMoney(netWorth.get(currency) ?? 0, currency)}
             footer={
               <>
-                {accounts.length} account{accounts.length === 1 ? "" : "s"}
+                {ownAccounts.length} account{ownAccounts.length === 1 ? "" : "s"}
                 {otherNetWorth.length > 0 ? ` · ${otherNetWorth.map(([c, v]) => formatMoney(v, c)).join(" · ")}` : ""}
+                {cardsOwed.size > 0 ? (
+                  <span className="mt-2 flex w-fit items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
+                    <CreditCard className="size-3.5" aria-hidden />
+                    Cards owe {[...cardsOwed].map(([c, v]) => formatMoney(v, c)).join(" · ")}
+                  </span>
+                ) : null}
               </>
             }
           />
