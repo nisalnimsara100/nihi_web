@@ -5,13 +5,15 @@ import { SubmitButton } from "@/components/form-bits";
 import { useActionForm } from "@/components/use-action-form";
 import { Card, CardHeader, Field, inputClass } from "@/components/ui";
 import { CURRENCIES } from "@/lib/constants";
+import { useT } from "@/lib/i18n/client";
 
 export function ProfileForm({ name, email, defaultCurrency }: { name: string; email: string; defaultCurrency: string }) {
+  const t = useT();
   const { state, pending, onSubmit } = useActionForm(updateProfile);
   const errors = state.fieldErrors ?? {};
   return (
     <Card>
-      <CardHeader title="Profile" />
+      <CardHeader title={t("Profile")} />
       <form onSubmit={onSubmit} className="space-y-4 p-4 sm:p-5" noValidate>
         <Field label="Email" htmlFor="email">
           <input id="email" value={email} disabled className={`${inputClass} opacity-70`} />
@@ -33,18 +35,19 @@ export function ProfileForm({ name, email, defaultCurrency }: { name: string; em
             ))}
           </select>
         </Field>
-        <SubmitButton pending={pending}>Save profile</SubmitButton>
+        <SubmitButton pending={pending}>{t("Save profile")}</SubmitButton>
       </form>
     </Card>
   );
 }
 
 export function PasswordForm() {
+  const t = useT();
   const { state, pending, formRef, onSubmit } = useActionForm(changePassword, { resetOnSuccess: true });
   const errors = state.fieldErrors ?? {};
   return (
     <Card>
-      <CardHeader title="Password" />
+      <CardHeader title={t("Password")} />
       <form ref={formRef} onSubmit={onSubmit} className="space-y-4 p-4 sm:p-5" noValidate>
         <Field label="Current password" htmlFor="current" error={errors.current}>
           <input id="current" name="current" type="password" autoComplete="current-password" aria-invalid={!!errors.current} className={inputClass} />
@@ -55,7 +58,7 @@ export function PasswordForm() {
         <Field label="Confirm new password" htmlFor="confirm" error={errors.confirm}>
           <input id="confirm" name="confirm" type="password" autoComplete="new-password" aria-invalid={!!errors.confirm} className={inputClass} />
         </Field>
-        <SubmitButton pending={pending}>Change password</SubmitButton>
+        <SubmitButton pending={pending}>{t("Change password")}</SubmitButton>
       </form>
     </Card>
   );

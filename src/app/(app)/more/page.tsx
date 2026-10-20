@@ -7,15 +7,17 @@ import { MORE_ITEMS } from "@/components/shell/nav-items";
 import { Avatar } from "@/components/shell/user-menu";
 import { PageHeader, Skeleton } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
+import { getT } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "Profile" };
 
 const tile = "flex w-full items-center gap-3 rounded-2xl bg-muted px-4 py-3.5 text-left transition-colors hover:bg-line/70";
 
-export default function MorePage() {
+export default async function MorePage() {
+  const t = await getT();
   return (
     <div className="max-w-2xl">
-      <PageHeader title="Profile" />
+      <PageHeader title={t("Profile")} />
       <Suspense fallback={<Skeleton className="mb-4 h-24" />}>
         <ProfileCard />
       </Suspense>
@@ -37,7 +39,7 @@ export default function MorePage() {
               <span className="flex size-10 items-center justify-center rounded-2xl bg-danger-soft">
                 <SignOut className="size-5" aria-hidden />
               </span>
-              <span className="flex-1 font-semibold">Sign out</span>
+              <span className="flex-1 font-semibold">{t("Sign out")}</span>
             </button>
           </form>
         </li>

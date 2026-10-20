@@ -5,6 +5,7 @@ import {
   ArrowDownLeft,
   ArrowsLeftRight,
   ArrowUpRight,
+  Bell,
   CaretRight,
   ChartBar,
   CreditCard,
@@ -25,8 +26,14 @@ import { Avatar } from "@/components/shell/user-menu";
 import { ButtonLink, Card, CardHeader, ColorDot, EmptyState, MaybeLink, PageSkeleton, SeeAll } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
 import { accountTypeLabel } from "@/lib/constants";
-import { getAccounts, getCategoryBreakdown, getRecentTransactions, getTotalsByCurrency } from "@/lib/data";
-import { currentMonthKey, formatMonth, monthRange } from "@/lib/dates";
+import { DueRecurring } from "@/components/finance/due-recurring";
+import { getT } from "@/lib/i18n/server";
+import { buildAlerts } from "@/lib/alerts";
+import { goalProgress } from "@/lib/goals";
+import { budgetStatus, monthProgress } from "@/lib/budgets";
+import { dueCount, type Frequency } from "@/lib/recurring";
+import { getAccounts, getBudgetRows, getDueRecurring, getGoals, getMonthlyTrend, getUpcomingRecurring, getCategoryBreakdown, getRecentTransactions, getTotalsByCurrency } from "@/lib/data";
+import { addDays, currentMonthKey, daysBetween, dueLabel, formatMonth, monthRange, shiftMonth, todayDay } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/cn";
 
@@ -56,16 +63,45 @@ const heroButton =
 
 async function Dashboard() {
   const { owner: user, readOnly } = await getViewer();
+  const t = await getT();
   const month = currentMonthKey();
   const { start, end } = monthRange(month);
   const currency = user.defaultCurrency;
 
-  const [accounts, totals, breakdown, recent] = await Promise.all([
+  const today = todayDay();
+  const [accounts, totals, breakdown, recent, budgetRows, dueRules, upcoming, trend, goals] = await Promise.all([
     getAccounts(user.id),
     getTotalsByCurrency(user.id, start, end),
     getCategoryBreakdown(user.id, "EXPENSE", currency, start, end),
     getRecentTransactions(user.id, 6),
+    getBudgetRows(user.id, currency, month),
+    readOnly ? Promise.resolve([]) : getDueRecurring(user.id, today),
+    readOnly ? Promise.resolve([]) : getUpcomingRecurring(user.id, today, addDays(today, 3)),
+    getMonthlyTrend(user.id, currency, shiftMonth(month, -3), month),
+    getGoals(user.id),
   ]);
+
+  // Heads-up messages are for the owner; a partner only looks.
+  const previous = trend.filter((m) => m.month !== month && m.expense > 0);
+  const alerts = readOnly
+    ? []
+    : buildAlerts({
+        budgets: budgetRows.filter((r) => r.limit !== null).map((r) => ({ id: r.category.id, name: r.category.name, spent: r.spent, limit: r.limit! })),
+        upcoming: upcoming.map((r) => ({
+          id: r.id,
+          title: r.note || r.category?.name || t("Repeating transaction"),
+          daysAway: daysBetween(today, r.nextDate),
+          money: formatMoney(r.amount, r.account.currency),
+        })),
+        cards: accounts
+          .filter((a) => a.type === "CREDIT_CARD" && a.creditLimit)
+          .map((a) => ({ id: a.id, name: a.name, utilization: Math.max(0, -a.balance) / a.creditLimit! })),
+        spendNow: trend.find((m) => m.month === month)?.expense ?? 0,
+        spendAverage: previous.length ? previous.reduce((sum, m) => sum + m.expense, 0) / previous.length : 0,
+        monthProgress: monthProgress(today),
+        money: (minor) => formatMoney(minor, currency),
+        t,
+      });
 
   // The total balance is money you have. Credit cards are debt to a bank, so they stay out of it
   // and show on their own, small, under the total.
@@ -103,7 +139,7 @@ async function Dashboard() {
           </div>
           <Link
             href="/settings"
-            aria-label="Settings"
+            aria-label={t("Settings")}
             className="flex size-11 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/20 hover:bg-white/25"
           >
             <GearSix className="size-5" aria-hidden />
@@ -112,24 +148,24 @@ async function Dashboard() {
 
         <div className="mt-7">
           <BalanceCard
-            label="Total Balance"
+            label={t("Total Balance")}
             amount={formatMoney(netWorth.get(currency) ?? 0, currency)}
             footer={
               <>
-                {ownAccounts.length} account{ownAccounts.length === 1 ? "" : "s"}
+                {ownAccounts.length === 1 ? t("1 account") : t("{count} accounts", { count: ownAccounts.length })}
                 {otherNetWorth.length > 0 ? ` · ${otherNetWorth.map(([c, v]) => formatMoney(v, c)).join(" · ")}` : ""}
                 {cardsOwed.size > 0 || savings.size > 0 ? (
                   <span className="mt-2 flex flex-wrap gap-2">
                     {savings.size > 0 ? (
                       <span className="flex w-fit items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
                         <PiggyBank className="size-3.5" aria-hidden />
-                        Savings {[...savings].map(([c, v]) => formatMoney(v, c)).join(" · ")}
+                        {t("Savings")} {[...savings].map(([c, v]) => formatMoney(v, c)).join(" · ")}
                       </span>
                     ) : null}
                     {cardsOwed.size > 0 ? (
                       <span className="flex w-fit items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
                         <CreditCard className="size-3.5" aria-hidden />
-                        Cards owe {[...cardsOwed].map(([c, v]) => formatMoney(v, c)).join(" · ")}
+                        {t("Cards owe")} {[...cardsOwed].map(([c, v]) => formatMoney(v, c)).join(" · ")}
                       </span>
                     ) : null}
                   </span>
@@ -143,11 +179,11 @@ async function Dashboard() {
           <div className="mt-6 grid grid-cols-2 gap-3">
             <Link href="/transactions/new?type=INCOME" className={heroButton}>
               <ArrowDownLeft className="size-5" aria-hidden />
-              Add Income
+              {t("Add Income")}
             </Link>
             <Link href="/transactions/new?type=EXPENSE" className={heroButton}>
               <ArrowUpRight className="size-5" aria-hidden />
-              Add Expense
+              {t("Add Expense")}
             </Link>
           </div>
         )}
@@ -169,11 +205,14 @@ async function Dashboard() {
             </span>
             <span className="min-w-0 flex-1">
               <span className="block font-semibold">
-                {saved ? `You saved ${formatMoney(net, currency)}` : `Overspent by ${formatMoney(-net, currency)}`}
+                {saved ? t("You saved {amount}", { amount: formatMoney(net, currency) }) : t("Overspent by {amount}", { amount: formatMoney(-net, currency) })}
               </span>
               <span className="block truncate text-sm text-ink-soft">
-                {formatMonth(month)} · in {formatMoney(monthTotals.income, currency)} · out{" "}
-                {formatMoney(monthTotals.expense, currency)}
+                {t("{month} · in {income} · out {expense}", {
+                  month: formatMonth(month),
+                  income: formatMoney(monthTotals.income, currency),
+                  expense: formatMoney(monthTotals.expense, currency),
+                })}
               </span>
             </span>
             <CaretRight className="size-5 shrink-0 text-ink-faint" aria-hidden />
@@ -181,7 +220,7 @@ async function Dashboard() {
 
           {readOnly ? null : (
           <section>
-            <h2 className="mb-3 text-base font-semibold">Quick Actions</h2>
+            <h2 className="mb-3 text-base font-semibold">{t("Quick Actions")}</h2>
             <div className="grid grid-cols-4 gap-3">
               {QUICK_ACTIONS.map(({ href, label, icon: Icon }) => (
                 <Link
@@ -190,7 +229,7 @@ async function Dashboard() {
                   className="flex aspect-square flex-col items-center justify-center gap-2 rounded-3xl bg-primary-soft text-on-primary-soft transition-colors hover:bg-primary-soft-strong sm:aspect-auto sm:py-5"
                 >
                   <Icon className="size-6" aria-hidden />
-                  <span className="text-xs font-semibold sm:text-sm">{label}</span>
+                  <span className="text-xs font-semibold sm:text-sm">{t(label)}</span>
                 </Link>
               ))}
             </div>
@@ -199,10 +238,10 @@ async function Dashboard() {
 
           <section className="rounded-3xl bg-muted p-4 sm:p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-base font-semibold">Recent Transactions</h2>
+              <h2 className="text-base font-semibold">{t("Recent Transactions")}</h2>
               <Link
                 href="/transactions"
-                aria-label="All transactions"
+                aria-label={t("All transactions")}
                 className="flex size-10 items-center justify-center rounded-xl bg-surface text-ink shadow-sm hover:bg-line/50"
               >
                 <SlidersHorizontal className="size-5" aria-hidden />
@@ -213,31 +252,128 @@ async function Dashboard() {
             ) : (
               <EmptyState
                 icon={<Receipt className="size-6" />}
-                title="No transactions yet"
+                title={t("No transactions yet")}
                 description={readOnly ? "Nothing has been added yet." : "Add your first expense or income to see it here."}
-                action={readOnly ? undefined : <ButtonLink href="/transactions/new">Add transaction</ButtonLink>}
+                action={readOnly ? undefined : <ButtonLink href="/transactions/new">{t("Add transaction")}</ButtonLink>}
               />
             )}
           </section>
         </div>
 
         <div className="min-w-0 space-y-5 lg:col-span-2">
+          {alerts.length > 0 ? (
+            <Card>
+              <CardHeader title={t("Heads-up")} />
+              <ul className="divide-y divide-line">
+                {alerts.map((a) => (
+                  <li key={a.id}>
+                    <Link href={a.href} className="flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-muted">
+                      <span
+                        aria-hidden
+                        className={cn(
+                          "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl",
+                          a.tone === "bad" ? "bg-danger-soft text-danger" : a.tone === "warn" ? "bg-warning-soft text-ink" : "bg-primary-soft text-on-primary-soft",
+                        )}
+                      >
+                        <Bell className="size-4" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-semibold">{a.title}</span>
+                        {a.detail ? <span className="block text-xs text-ink-soft">{a.detail}</span> : null}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ) : null}
+
+          {dueRules.length > 0 ? (
+            <Card>
+              <CardHeader title={t("Due now")} action={<SeeAll href="/recurring">{t("All repeats")}</SeeAll>} />
+              <DueRecurring
+                items={dueRules.map((r) => ({
+                  id: r.id,
+                  title: r.note || r.category?.name || (r.type === "TRANSFER" ? t("Transfer") : t("Repeating transaction")),
+                  amount: formatMoney(r.amount, r.account.currency),
+                  when: dueLabel(r.nextDate, today),
+                  accountName: r.account.name,
+                  more: Math.max(0, dueCount(r.nextDate, r.frequency as Frequency, r.anchorDay, r.endDate, today) - 1),
+                }))}
+              />
+            </Card>
+          ) : null}
+
+          {budgetRows.some((r) => r.limit !== null) ? (
+            <Card>
+              <CardHeader title={t("Budgets")} action={<SeeAll href="/budgets">{t("All budgets")}</SeeAll>} />
+              <ul className="space-y-4 p-5">
+                {budgetRows
+                  .filter((r) => r.limit !== null)
+                  .slice(0, 3)
+                  .map((r) => {
+                    const status = budgetStatus(r.spent, r.limit!);
+                    return (
+                      <li key={r.category.id}>
+                        <div className="flex items-center justify-between gap-3 text-sm">
+                          <span className="min-w-0 truncate font-medium">{r.category.name}</span>
+                          <span className={cn("shrink-0 text-xs font-semibold tabular-nums", status.level === "over" ? "text-danger" : "text-ink-soft")}>
+                            {status.level === "over" ? t("Over by {amount}", { amount: formatMoney(-status.left, currency) }) : t("{amount} left", { amount: formatMoney(status.left, currency) })}
+                          </span>
+                        </div>
+                        <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-muted" aria-hidden>
+                          <div
+                            className={cn("h-full rounded-full", status.level === "over" ? "bg-danger" : status.level === "warn" ? "bg-warning" : "bg-primary")}
+                            style={{ width: `${Math.min(100, status.ratio * 100)}%` }}
+                          />
+                        </div>
+                      </li>
+                    );
+                  })}
+              </ul>
+            </Card>
+          ) : null}
+
+          {goals.length > 0 ? (
+            <Card>
+              <CardHeader title={t("Goals")} action={<SeeAll href="/goals">{t("All goals")}</SeeAll>} />
+              <ul className="space-y-4 p-5">
+                {goals.slice(0, 3).map((g) => {
+                  const p = goalProgress(g.saved, g.targetAmount, g.targetDate, today);
+                  return (
+                    <li key={g.id}>
+                      <div className="flex items-center justify-between gap-3 text-sm">
+                        <span className="min-w-0 truncate font-medium">{g.name}</span>
+                        <span className="shrink-0 text-xs font-semibold tabular-nums text-ink-soft">
+                          {formatMoney(p.saved, g.currency)} / {formatMoney(p.target, g.currency)}
+                        </span>
+                      </div>
+                      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-muted" aria-hidden>
+                        <div className={cn("h-full rounded-full", p.reached ? "bg-income" : "bg-primary")} style={{ width: `${p.ratio * 100}%` }} />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </Card>
+          ) : null}
+
           <Card>
-            <CardHeader title="Spending this month" action={<SeeAll href="/statistics">Details</SeeAll>} />
+            <CardHeader title={t("Spending this month")} action={<SeeAll href="/statistics">{t("Details")}</SeeAll>} />
             <div className="p-5">
               {breakdown.length > 0 ? (
                 <CategoryBars data={breakdown} currency={currency} limit={6} />
               ) : (
                 <p className="flex items-center gap-2 text-sm text-ink-soft">
                   <ChartBar className="size-4" aria-hidden />
-                  No {currency} spending this month yet.
+                  {t("No {currency} spending this month yet.", { currency })}
                 </p>
               )}
             </div>
           </Card>
 
           <Card>
-            <CardHeader title="Wallet" action={<SeeAll href="/accounts">See all</SeeAll>} />
+            <CardHeader title={t("Wallet")} action={<SeeAll href="/accounts">{t("See all")}</SeeAll>} />
             <ul className="space-y-1 p-3">
               {accounts
                 .filter((a) => a.type !== "SAVINGS")
@@ -250,7 +386,7 @@ async function Dashboard() {
                     <ColorDot color={a.color} className="size-3" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-semibold">{a.name}</span>
-                      <span className="block text-xs text-ink-soft">{accountTypeLabel(a.type)}</span>
+                      <span className="block text-xs text-ink-soft">{t(accountTypeLabel(a.type))}</span>
                     </span>
                     <span className="text-sm font-semibold tabular-nums">{formatMoney(a.balance, a.currency)}</span>
                   </MaybeLink>

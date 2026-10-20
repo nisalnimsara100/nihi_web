@@ -7,8 +7,9 @@ import { requireUserId } from "@/lib/auth";
 import { isValidTheme } from "@/lib/card-themes";
 import { CURRENCIES } from "@/lib/constants";
 import { flash } from "@/lib/flash";
+import { getAccounts } from "@/lib/data";
 import { db, isId, run } from "@/lib/db";
-import { parseAmount } from "@/lib/money";
+import { formatMoney, parseAmount } from "@/lib/money";
 import { Constants } from "@/lib/database.types";
 import { fromZodError, type ActionState } from "./state";
 
@@ -139,4 +140,41 @@ export async function reorderAccounts(ids: string[]): Promise<ActionState> {
   await Promise.all(ids.map((id, index) => run(db().from("Account").update({ sortOrder: index }).eq("id", id).eq("userId", userId).select("id"))));
   revalidatePath("/", "layout");
   return { ok: true };
+}
+
+const MAX_MINOR = 2_147_483_647;
+
+/**
+ * Makes the account's balance equal what the bank shows, by moving its starting balance by the
+ * difference. Reports and transaction history stay exactly as they were, so a missed fee or a
+ * typing mistake can be corrected without inventing a transaction.
+ */
+export async function adjustBalance(accountId: string, actual: string): Promise<ActionState> {
+  const userId = await requireUserId();
+  if (!isId(accountId)) {
+    return { error: "Account not found." };
+  }
+  const target = parseAmount(actual);
+  if (target === null) {
+    return { error: "Enter the balance as a number, like 15000.50 (use a minus if you owe)." };
+  }
+  const account = (await getAccounts(userId, { includeArchived: true })).find((a) => a.id === accountId);
+  if (!account) {
+    return { error: "Account not found." };
+  }
+  const difference = target - account.balance;
+  const initialBalance = account.initialBalance + difference;
+  if (Math.abs(initialBalance) > MAX_MINOR) {
+    return { error: "That balance is too large to store." };
+  }
+  if (difference === 0) {
+    return { ok: true, message: "Already matches", detail: "No change was needed." };
+  }
+  await run(db().from("Account").update({ initialBalance }).eq("id", accountId).eq("userId", userId).select("id"));
+  revalidatePath("/", "layout");
+  return {
+    ok: true,
+    message: "Balance matched",
+    detail: `Starting balance ${difference > 0 ? "raised" : "lowered"} by ${formatMoney(Math.abs(difference), account.currency)}.`,
+  };
 }

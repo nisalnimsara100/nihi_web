@@ -13,6 +13,7 @@ import {
   type CustomTheme,
 } from "@/lib/card-themes";
 import { cn } from "@/lib/cn";
+import { useT } from "@/lib/i18n/client";
 
 const swatchClass =
   "block aspect-[1.7/1] rounded-xl ring-offset-2 ring-offset-surface transition group-hover:-translate-y-0.5 peer-checked:ring-[3px] peer-checked:ring-primary peer-focus-visible:ring-[3px] peer-focus-visible:ring-primary/40";
@@ -33,6 +34,7 @@ export function CardThemePicker({
   onChange: (theme: string) => void;
   name?: string;
 }) {
+  const t = useT();
   const savedCustom = parseCustomTheme(value);
   // Remember the last mix, so switching to a preset and back keeps it.
   const [custom, setCustom] = useState<CustomTheme>(savedCustom ?? DEFAULT_CUSTOM_THEME);
@@ -46,7 +48,7 @@ export function CardThemePicker({
 
   return (
     <fieldset>
-      <legend className="mb-2 block text-sm font-semibold text-ink">Card theme</legend>
+      <legend className="mb-2 block text-sm font-semibold text-ink">{t("Card theme")}</legend>
       <input type="hidden" name={name} value={value} />
       <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">
         {CARD_THEME_IDS.map((id) => (
@@ -79,7 +81,7 @@ export function CardThemePicker({
               <Plus className="size-4" strokeWidth={2.25} />
             </span>
           </span>
-          <span className={swatchLabelClass}>Custom</span>
+          <span className={swatchLabelClass}>{t("Custom")}</span>
         </label>
       </div>
 
@@ -91,7 +93,7 @@ export function CardThemePicker({
             <ColorInput label="Glow" value={custom.glow} onChange={(glow) => updateCustom({ glow })} />
             <label className="block">
               <span className="mb-1.5 flex justify-between text-xs font-semibold text-ink-soft">
-                Angle <span className="tabular-nums">{custom.angle}°</span>
+                {t("Angle")} <span className="tabular-nums">{custom.angle}°</span>
               </span>
               <input
                 type="range"
@@ -104,8 +106,8 @@ export function CardThemePicker({
               />
             </label>
           </div>
-          <div role="radiogroup" aria-label="Effect">
-            <span className="mb-1.5 block text-xs font-semibold text-ink-soft">Effect</span>
+          <div role="radiogroup" aria-label={t("Effect")}>
+            <span className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("Effect")}</span>
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
               {CARD_EFFECTS.map((effect) => (
                 <button

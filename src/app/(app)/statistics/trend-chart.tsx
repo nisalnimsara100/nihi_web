@@ -2,6 +2,7 @@
 
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, type TooltipContentProps } from "recharts";
 import { formatCompact, formatMoney } from "@/lib/money";
+import { useT } from "@/lib/i18n/client";
 
 export type TrendPoint = { label: string; fullLabel: string; income: number; expense: number };
 
@@ -11,6 +12,7 @@ const SERIES = [
 ] as const;
 
 function TrendTooltip({ active, payload, currency }: TooltipContentProps<number, string> & { currency: string }) {
+  const t = useT();
   if (!active || !payload?.length) return null;
   const point = payload[0].payload as TrendPoint;
   return (
@@ -24,16 +26,17 @@ function TrendTooltip({ active, payload, currency }: TooltipContentProps<number,
         </p>
       ))}
       <p className="mt-1.5 border-t border-white/15 pt-1.5 text-on-primary/70 tabular-nums">
-        Net {formatMoney(point.income - point.expense, currency, { signed: true })}
+        {t("Net")} {formatMoney(point.income - point.expense, currency, { signed: true })}
       </p>
     </div>
   );
 }
 
 export function TrendChart({ data, currency }: { data: TrendPoint[]; currency: string }) {
+  const t = useT();
   return (
     <div>
-      <ul className="mb-3 flex gap-4 text-sm font-medium text-ink-soft" aria-label="Legend">
+      <ul className="mb-3 flex gap-4 text-sm font-medium text-ink-soft" aria-label={t("Legend")}>
         {SERIES.map((s) => (
           <li key={s.key} className="flex items-center gap-2">
             <span className="size-2.5 rounded-sm" style={{ background: s.color }} aria-hidden />

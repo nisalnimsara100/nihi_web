@@ -193,3 +193,79 @@ export async function getTags(userId: string) {
 export function periodRange(period: "month" | "year", key: string) {
   return period === "year" ? yearRange(Number(key)) : monthRange(key);
 }
+
+export type BudgetRow = {
+  category: { id: string; name: string; color: string; icon: string };
+  budgetId: string | null;
+  limit: number | null;
+  spent: number;
+};
+
+/**
+ * Every expense category with its monthly limit (if set) and what was spent in that month,
+ * from accounts in `currency`. Categories with a budget come first, then ones with spending only.
+ */
+export async function getBudgetRows(userId: string, currency: string, month: MonthKey): Promise<BudgetRow[]> {
+  const { start, end } = monthRange(month);
+  const [categories, budgets, breakdown] = await Promise.all([
+    run(db().from("Category").select("id, name, color, icon").eq("userId", userId).eq("type", "EXPENSE").order("name")),
+    run(db().from("Budget").select("id, categoryId, amount").eq("userId", userId).eq("currency", currency)),
+    getCategoryBreakdown(userId, "EXPENSE", currency, start, end),
+  ]);
+  const limitOf = new Map(budgets.map((b) => [b.categoryId, b]));
+  const spentOf = new Map(breakdown.map((b) => [b.id, b.total]));
+  const rows = categories.map((category) => ({
+    category,
+    budgetId: limitOf.get(category.id)?.id ?? null,
+    limit: limitOf.get(category.id)?.amount ?? null,
+    spent: spentOf.get(category.id) ?? 0,
+  }));
+  const ratio = (r: BudgetRow) => (r.limit ? r.spent / r.limit : -1);
+  return rows.sort((a, b) => Number(b.limit !== null) - Number(a.limit !== null) || ratio(b) - ratio(a) || b.spent - a.spent);
+}
+
+const recurringSelect = `*,
+  account:Account!Recurring_accountId_fkey(id, name, currency),
+  toAccount:Account!Recurring_toAccountId_fkey(id, name, currency),
+  category:Category(id, name, color, icon)`;
+
+/** All repeating transactions, the next one due first. */
+export async function getRecurring(userId: string) {
+  return run(db().from("Recurring").select(recurringSelect).eq("userId", userId).order("active", { ascending: false }).order("nextDate"));
+}
+
+export type RecurringRow = Awaited<ReturnType<typeof getRecurring>>[number];
+
+export async function getRecurringById(userId: string, id: string) {
+  if (!isId(id)) return null;
+  return run(db().from("Recurring").select("*").eq("id", id).eq("userId", userId).maybeSingle());
+}
+
+/** Active rules whose next date is today or earlier. */
+export async function getDueRecurring(userId: string, today: string) {
+  return run(
+    db().from("Recurring").select(recurringSelect).eq("userId", userId).eq("active", true).lte("nextDate", today).order("nextDate"),
+  );
+}
+
+/** Savings goals with the amount saved so far: the linked account's balance, or the hand-kept amount. */
+export async function getGoals(userId: string) {
+  const [goals, accounts] = await Promise.all([
+    run(db().from("SavingsGoal").select("*").eq("userId", userId).order("createdAt")),
+    getAccounts(userId, { includeArchived: true }),
+  ]);
+  const balanceOf = new Map(accounts.map((a) => [a.id, a]));
+  return goals.map((g) => {
+    const account = g.accountId ? balanceOf.get(g.accountId) : undefined;
+    return { ...g, accountName: account?.name ?? null, saved: account ? Math.max(0, account.balance) : g.savedAmount };
+  });
+}
+
+export type GoalRow = Awaited<ReturnType<typeof getGoals>>[number];
+
+/** Active repeats whose next date is after `after` and no later than `until`. */
+export async function getUpcomingRecurring(userId: string, after: string, until: string) {
+  return run(
+    db().from("Recurring").select(recurringSelect).eq("userId", userId).eq("active", true).gt("nextDate", after).lte("nextDate", until).order("nextDate"),
+  );
+}

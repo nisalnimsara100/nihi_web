@@ -1,13 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { deleteTransaction, saveTransaction } from "@/actions/transactions";
+import { useState, type FormEvent } from "react";
+import { notify } from "@/components/toast";
+import { useT } from "@/lib/i18n/client";
+import { enqueue } from "@/lib/offline-queue";
+import { saveTransaction } from "@/actions/transactions";
+import { SimilarWarning } from "@/components/finance/similar-warning";
+import { parseAmount } from "@/lib/money";
+import { DeleteTransactionButton } from "@/components/finance/delete-transaction-button";
 import { ScanSheet, type ScanCard, type ScanResult } from "@/components/finance/scan-sheet";
 import { CreditCard, Prohibit, Scan } from "@/components/icons";
 import { cardLabel } from "@/lib/card-networks";
 import type { HistoryRow } from "@/lib/scan/categorize";
-import { DateField, DeleteButton, SubmitButton } from "@/components/form-bits";
+import { DateField, SubmitButton } from "@/components/form-bits";
 import { useActionForm } from "@/components/use-action-form";
 import { buttonClass, Card, Field, inputClass } from "@/components/ui";
 import type { Enums } from "@/lib/database.types";
@@ -47,6 +53,7 @@ export function TransactionForm({
   tags,
   history = [],
   cards = [],
+  autoScan = false,
 }: {
   initial: TransactionFormValues;
   accounts: AccountOption[];
@@ -56,19 +63,42 @@ export function TransactionForm({
   history?: HistoryRow[];
   /** Linked cards, so a scanned card number can pick the account. */
   cards?: ScanCard[];
+  /** Open the scan sheet straight away (the home screen's Scan shortcut). */
+  autoScan?: boolean;
 }) {
+  const t = useT();
   const { state, pending, onSubmit } = useActionForm(saveTransaction);
   const [type, setType] = useState<TransactionType>(initial.type);
   const [accountId, setAccountId] = useState(initial.accountId);
   const [toAccountId, setToAccountId] = useState(initial.toAccountId);
   const [categoryId, setCategoryId] = useState(initial.categoryId);
   const [tagIds, setTagIds] = useState(initial.tagIds);
-  const [scanOpen, setScanOpen] = useState(false);
+  const [scanOpen, setScanOpen] = useState(autoScan && !initial.id);
   const [date, setDate] = useState(initial.date);
   const [cardId, setCardId] = useState(initial.cardId);
+  const [amountText, setAmountText] = useState(initial.amount);
   // The amount, date and note inputs are uncontrolled; a new key remounts them with scanned values.
   const [scanned, setScanned] = useState({ n: 0, amount: initial.amount, date: initial.date, note: initial.note });
   const errors = state.fieldErrors ?? {};
+
+  /** With no connection a new transaction is kept on the phone and added later (see OfflineSync). */
+  function submit(event: FormEvent<HTMLFormElement>) {
+    if (initial.id || navigator.onLine) {
+      onSubmit(event);
+      return;
+    }
+    event.preventDefault();
+    const entries = [...new FormData(event.currentTarget).entries()].filter((e): e is [string, string] => typeof e[1] === "string");
+    const label = `${entries.find(([k]) => k === "note")?.[1] || type.toLowerCase()} ${amountText}`.trim();
+    if (!enqueue(entries, label)) {
+      notify.error("Couldn't save it on this phone", "Your browser blocked storage. Try again when you're online.");
+      return;
+    }
+    notify.success("Saved on this phone", "It will be added when you're back online.");
+    setAmountText("");
+    setScanned((s) => ({ n: s.n + 1, amount: "", date: initial.date, note: "" }));
+    setDate(initial.date);
+  }
 
   const isTransfer = type === "TRANSFER";
   const visibleCategories = categories.filter((c) => c.type === type);
@@ -92,6 +122,7 @@ export function TransactionForm({
       setToAccountId(accounts.find((a) => a.id !== r.accountId)?.id ?? "");
     }
     setDate(r.date);
+    setAmountText(r.amount);
     setCardId(r.cardId);
     setScanned((s) => ({ n: s.n + 1, amount: r.amount, date: r.date, note: r.note }));
     setScanOpen(false);
@@ -103,7 +134,7 @@ export function TransactionForm({
 
   return (
     <Card className="p-4 sm:p-6">
-      <form onSubmit={onSubmit} className="space-y-5" noValidate>
+      <form onSubmit={submit} className="space-y-5" noValidate>
         {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
         <input type="hidden" name="type" value={type} />
         {tagIds.map((id) => (
@@ -116,11 +147,11 @@ export function TransactionForm({
             onClick={() => setScanOpen(true)}
             className={buttonClass("soft", "md", "w-full")}
           >
-            <Scan className="size-5" /> Scan screenshot or bill
+            <Scan className="size-5" /> {t("Scan screenshot or bill")}
           </button>
         ) : null}
 
-        <div role="radiogroup" aria-label="Transaction type" className="grid grid-cols-3 gap-1 rounded-2xl bg-muted p-1">
+        <div role="radiogroup" aria-label={t("Transaction type")} className="grid grid-cols-3 gap-1 rounded-2xl bg-muted p-1">
           {TYPE_TABS.map((tab) => (
             <button
               key={tab.value}
@@ -135,13 +166,13 @@ export function TransactionForm({
                   : "text-ink-soft hover:text-ink",
               )}
             >
-              {tab.label}
+              {t(tab.label)}
             </button>
           ))}
         </div>
 
 
-        <Field label={crossCurrency ? `Amount sent (${from.currency})` : "Amount"} htmlFor="amount" error={errors.amount}>
+        <Field label={crossCurrency ? t("Amount sent ({currency})", { currency: from.currency }) : "Amount"} htmlFor="amount" error={errors.amount}>
           <div className="relative">
             <input
               key={`amount-${scanned.n}`}
@@ -151,6 +182,7 @@ export function TransactionForm({
               autoComplete="off"
               placeholder="0.00"
               defaultValue={scanned.amount}
+              onChange={(e) => setAmountText(e.target.value)}
               autoFocus={!initial.id}
               aria-invalid={!!errors.amount}
               className={cn(inputClass, "h-14 pr-16 text-2xl font-semibold tabular-nums sm:text-2xl")}
@@ -160,6 +192,8 @@ export function TransactionForm({
             </span>
           </div>
         </Field>
+
+        {!initial.id ? <SimilarWarning type={type} amount={parseAmount(amountText)} accountId={accountId} day={date} /> : null}
 
         <div className={cn("grid gap-4", isTransfer && "sm:grid-cols-2")}>
           <Field label={isTransfer ? "From account" : "Account"} htmlFor="accountId" error={errors.accountId}>
@@ -192,7 +226,7 @@ export function TransactionForm({
                 aria-invalid={!!errors.toAccountId}
                 className={inputClass}
               >
-                <option value="">Choose account</option>
+                <option value="">{t("Choose account")}</option>
                 {accounts
                   .filter((a) => a.id !== accountId)
                   .map((a) => (
@@ -207,10 +241,10 @@ export function TransactionForm({
 
         {!isTransfer && accountCards.length > 0 ? (
           <fieldset>
-            <legend className="mb-2 block text-sm font-semibold text-ink">{type === "INCOME" ? "Received on card" : "Paid with card"}</legend>
+            <legend className="mb-2 block text-sm font-semibold text-ink">{type === "INCOME" ? t("Received on card") : t("Paid with card")}</legend>
             <input type="hidden" name="cardId" value={cardId} />
-            <div role="radiogroup" aria-label="Card" className="flex flex-wrap gap-2">
-              {[{ id: "", label: "No card" }, ...accountCards.map((c) => ({ id: c.id, label: cardLabel(c.network, c.last4) }))].map((o) => (
+            <div role="radiogroup" aria-label={t("Card")} className="flex flex-wrap gap-2">
+              {[{ id: "", label: t("No card") }, ...accountCards.map((c) => ({ id: c.id, label: cardLabel(c.network, c.last4) }))].map((o) => (
                 <button
                   key={o.id || "none"}
                   type="button"
@@ -233,10 +267,10 @@ export function TransactionForm({
 
         {!isTransfer ? (
           <fieldset>
-            <legend className="mb-2 block text-sm font-semibold text-ink">Category</legend>
+            <legend className="mb-2 block text-sm font-semibold text-ink">{t("Category")}</legend>
             <input type="hidden" name="categoryId" value={categoryId} />
-            <div role="radiogroup" aria-label="Category" className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-              {[...visibleCategories, { id: "", name: "None", icon: "", color: "#8a8984" }].map((c) => {
+            <div role="radiogroup" aria-label={t("Category")} className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+              {[...visibleCategories, { id: "", name: t("None"), icon: "", color: "#8a8984" }].map((c) => {
                 const selected = categoryId === c.id;
                 return (
                   <button
@@ -273,7 +307,7 @@ export function TransactionForm({
 
         {crossCurrency ? (
           <Field
-            label={`Amount received (${to.currency})`}
+            label={t("Amount received ({currency})", { currency: to.currency })}
             htmlFor="toAmount"
             error={errors.toAmount}
             hint="Leave empty to use the same number as the amount sent."
@@ -296,7 +330,7 @@ export function TransactionForm({
 
         {tags.length > 0 ? (
           <fieldset>
-            <legend className="mb-2 block text-sm font-semibold text-ink">Tags</legend>
+            <legend className="mb-2 block text-sm font-semibold text-ink">{t("Tags")}</legend>
             <div className="flex flex-wrap gap-2">
               {tags.map((tag) => {
                 const on = tagIds.includes(tag.id);
@@ -330,22 +364,22 @@ export function TransactionForm({
             rows={2}
             maxLength={500}
             defaultValue={scanned.note}
-            placeholder="Optional"
+            placeholder={t("Optional")}
             className={cn(inputClass, "h-auto py-2.5")}
           />
         </Field>
 
         <div className="flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-start sm:justify-between">
           {initial.id ? (
-            <DeleteButton action={deleteTransaction.bind(null, initial.id)} />
+            <DeleteTransactionButton id={initial.id} />
           ) : (
             <span className="hidden sm:block" />
           )}
           <div className="flex flex-col-reverse gap-2 sm:flex-row">
             <Link href="/transactions" className={buttonClass("ghost")}>
-              Cancel
+              {t("Cancel")}
             </Link>
-            <SubmitButton pending={pending}>{initial.id ? "Save changes" : "Add transaction"}</SubmitButton>
+            <SubmitButton pending={pending}>{initial.id ? t("Save changes") : t("Add transaction")}</SubmitButton>
           </div>
         </div>
       </form>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { useT } from "@/lib/i18n/client";
 
 function partOfDay() {
   const h = new Date().getHours();
@@ -14,5 +15,6 @@ export function Greeting() {
     partOfDay,
     () => "Good Day!",
   );
-  return <>{text}</>;
+  const t = useT();
+  return <>{t(text)}</>;
 }

@@ -2,16 +2,18 @@ import type { Metadata } from "next";
 import Form from "next/form";
 import Link from "next/link";
 import { Suspense } from "react";
-import { MagnifyingGlass, Plus, Receipt } from "@/components/icons";
+import { CheckmarkSquare, MagnifyingGlass, Plus, Receipt } from "@/components/icons";
 import { PeriodNav } from "@/components/finance/month-nav";
+import { BulkForm } from "@/components/finance/bulk-form";
 import { TransactionList } from "@/components/finance/transaction-list";
-import { Button, ButtonLink, Card, EmptyState, inputClass, PageHeader, PageSkeleton } from "@/components/ui";
+import { Button, ButtonLink, Card, EmptyState, IconLink, inputClass, PageHeader, PageSkeleton } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
 import { getAccounts, getCategories, getTags, getTransactions, getTotalsByCurrency } from "@/lib/data";
 import { currentMonthKey, formatMonth, isMonthKey, monthRange, shiftMonth } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { buildHref, param, type SearchParams } from "@/lib/search-params";
 import { FilterPanel } from "./filter-panel";
+import { getT } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "Transactions" };
 
@@ -30,6 +32,7 @@ export default function TransactionsPage({ searchParams }: { searchParams: Searc
 }
 
 async function Transactions({ searchParams }: { searchParams: SearchParams }) {
+  const t = await getT();
   const { owner: user, readOnly } = await getViewer();
   const sp = await searchParams;
 
@@ -60,21 +63,29 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
     getTags(user.id),
   ]);
 
+  const selecting = !readOnly && param(sp, "select") === "1";
   const activeCount = Object.values(filters).filter(Boolean).length;
-  const monthHref = (delta: number) => buildHref("/transactions", { ...filters, month: shiftMonth(month, delta) });
+  const monthHref = (delta: number) => buildHref("/transactions", { ...filters, month: shiftMonth(month, delta), select: selecting ? "1" : undefined });
+  const plainHref = buildHref("/transactions", { ...filters, month });
+  const selectHref = buildHref("/transactions", { ...filters, month, select: "1" });
 
   return (
     <>
       <PageHeader
-        title="Transactions"
+        title={t("Transactions")}
         description={`${transactions.length} in ${formatMonth(month)}`}
         actions={
           <>
             <PeriodNav label={formatMonth(month)} prevHref={monthHref(-1)} nextHref={monthHref(1)} />
+            {readOnly || transactions.length === 0 ? null : (
+              <IconLink href={selecting ? plainHref : selectHref} label={selecting ? "Stop selecting" : "Select transactions"} tone={selecting ? "soft" : "outline"}>
+                <CheckmarkSquare className="size-5" aria-hidden />
+              </IconLink>
+            )}
             {readOnly ? null : (
               <ButtonLink href="/transactions/new" size="sm" className="hidden sm:inline-flex">
                 <Plus className="size-4" aria-hidden />
-                New
+                {t("New")}
               </ButtonLink>
             )}
           </>
@@ -85,28 +96,28 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
         <Form action="/transactions" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
           <input type="hidden" name="month" value={month} />
           <label className="relative col-span-2 sm:col-span-3 lg:col-span-2">
-            <span className="sr-only">Search notes</span>
+            <span className="sr-only">{t("Search notes")}</span>
             <MagnifyingGlass className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-ink-faint" aria-hidden />
-            <input name="q" defaultValue={filters.q} placeholder="Search notes" className={`${inputClass} pl-9`} />
+            <input name="q" defaultValue={filters.q} placeholder={t("Search notes")} className={`${inputClass} pl-9`} />
           </label>
-          <select name="type" defaultValue={filters.type ?? ""} aria-label="Type" className={inputClass}>
-            <option value="">All types</option>
+          <select name="type" defaultValue={filters.type ?? ""} aria-label={t("Type")} className={inputClass}>
+            <option value="">{t("All types")}</option>
             {TYPES.map((t) => (
               <option key={t.value} value={t.value}>
                 {t.label}
               </option>
             ))}
           </select>
-          <select name="account" defaultValue={filters.account ?? ""} aria-label="Account" className={inputClass}>
-            <option value="">All accounts</option>
+          <select name="account" defaultValue={filters.account ?? ""} aria-label={t("Account")} className={inputClass}>
+            <option value="">{t("All accounts")}</option>
             {accounts.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}
               </option>
             ))}
           </select>
-          <select name="category" defaultValue={filters.category ?? ""} aria-label="Category" className={inputClass}>
-            <option value="">All categories</option>
+          <select name="category" defaultValue={filters.category ?? ""} aria-label={t("Category")} className={inputClass}>
+            <option value="">{t("All categories")}</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name} ({c.type === "INCOME" ? "income" : "expense"})
@@ -114,8 +125,8 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
             ))}
           </select>
           <div className="flex gap-2">
-            <select name="tag" defaultValue={filters.tag ?? ""} aria-label="Tag" className={inputClass}>
-              <option value="">All tags</option>
+            <select name="tag" defaultValue={filters.tag ?? ""} aria-label={t("Tag")} className={inputClass}>
+              <option value="">{t("All tags")}</option>
               {tags.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
@@ -125,11 +136,11 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
           </div>
           <div className="col-span-2 flex gap-2 sm:col-span-3 lg:col-span-6">
             <Button type="submit" size="sm">
-              Apply filters
+              {t("Apply filters")}
             </Button>
             {activeCount > 0 ? (
               <Link href={buildHref("/transactions", { month })} className="inline-flex h-9 items-center px-3 text-sm font-semibold text-ink-soft hover:underline">
-                Clear
+                {t("Clear")}
               </Link>
             ) : null}
           </div>
@@ -153,7 +164,13 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
 
       <div className="rounded-3xl bg-muted p-4 sm:p-5">
         {transactions.length > 0 ? (
-          <TransactionList transactions={transactions} readOnly={readOnly} />
+          selecting ? (
+            <BulkForm categories={categories.map((c) => ({ id: c.id, name: c.name, type: c.type }))} doneHref={plainHref}>
+              <TransactionList transactions={transactions} readOnly selectable />
+            </BulkForm>
+          ) : (
+            <TransactionList transactions={transactions} readOnly={readOnly} />
+          )
         ) : (
           <EmptyState
             icon={<Receipt className="size-6" />}
@@ -165,7 +182,7 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
                   ? "Nothing was added this month."
                   : "Add one to start tracking."
             }
-            action={readOnly ? undefined : <ButtonLink href="/transactions/new">Add transaction</ButtonLink>}
+            action={readOnly ? undefined : <ButtonLink href="/transactions/new">{t("Add transaction")}</ButtonLink>}
           />
         )}
       </div>

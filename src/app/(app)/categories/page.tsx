@@ -5,14 +5,16 @@ import { LabelManager } from "@/components/label-manager";
 import { PageHeader, PageSkeleton } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
 import { getCategories } from "@/lib/data";
+import { getT } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "Categories" };
 
-export default function CategoriesPage() {
+export default async function CategoriesPage() {
+  const t = await getT();
   return (
     <>
       <PageHeader
-        title="Categories"
+        title={t("Categories")}
         description="Group income and spending. Deleting a category keeps its transactions as uncategorized."
       />
       <Suspense fallback={<PageSkeleton />}>
@@ -23,6 +25,7 @@ export default function CategoriesPage() {
 }
 
 async function Categories() {
+  const t = await getT();
   const { owner: user, readOnly } = await getViewer();
   const categories = await getCategories(user.id);
   const toItems = (type: "INCOME" | "EXPENSE") =>
@@ -33,7 +36,7 @@ async function Categories() {
   return (
     <div className="grid items-start gap-4 *:min-w-0 lg:grid-cols-2">
       <LabelManager
-        title="Expense"
+        title={t("Expense")}
         noun="category"
         withIcon
         items={toItems("EXPENSE")}
@@ -43,7 +46,7 @@ async function Categories() {
         readOnly={readOnly}
       />
       <LabelManager
-        title="Income"
+        title={t("Income")}
         noun="category"
         withIcon
         items={toItems("INCOME")}

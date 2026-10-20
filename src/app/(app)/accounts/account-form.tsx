@@ -13,6 +13,7 @@ import { ACCOUNT_TYPES, accountTypeLabel, CURRENCIES } from "@/lib/constants";
 import { cn } from "@/lib/cn";
 import { creditFaceInfo, creditSummary } from "@/lib/credit-card";
 import { formatMoney, parseAmount } from "@/lib/money";
+import { useT } from "@/lib/i18n/client";
 
 type AccountType = Enums<"AccountType">;
 
@@ -35,6 +36,7 @@ export type AccountFormValues = {
 };
 
 export function AccountForm({ initial }: { initial: AccountFormValues }) {
+  const t = useT();
   const { state, pending, onSubmit } = useActionForm(saveAccount);
   const errors = state.fieldErrors ?? {};
 
@@ -71,7 +73,7 @@ export function AccountForm({ initial }: { initial: AccountFormValues }) {
             balance={formatMoney(previewBalance, preview.currency)}
             currency={preview.currency}
             color={preview.color}
-            label={accountTypeLabel(preview.type)}
+            label={t(accountTypeLabel(preview.type))}
             credit={previewCredit}
             className="mx-auto max-w-sm shadow-lg shadow-primary/10 transition-[background] duration-300"
           />
@@ -83,7 +85,7 @@ export function AccountForm({ initial }: { initial: AccountFormValues }) {
             name="name"
             defaultValue={initial.name}
             onChange={(e) => update({ name: e.target.value })}
-            placeholder="e.g. Main bank"
+            placeholder={t("e.g. Main bank")}
             aria-invalid={!!errors.name}
             className={inputClass}
           />
@@ -98,9 +100,9 @@ export function AccountForm({ initial }: { initial: AccountFormValues }) {
               onChange={(e) => update({ type: e.target.value as AccountType })}
               className={inputClass}
             >
-              {ACCOUNT_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
+              {ACCOUNT_TYPES.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {t(type.label)}
                 </option>
               ))}
             </select>
@@ -154,7 +156,7 @@ export function AccountForm({ initial }: { initial: AccountFormValues }) {
                 inputMode="decimal"
                 defaultValue={initial.creditLimit}
                 onChange={(e) => update({ creditLimit: e.target.value })}
-                placeholder="e.g. 200000"
+                placeholder={t("e.g. 200000")}
                 className={cn(inputClass, "tabular-nums")}
               />
             </Field>
@@ -170,7 +172,7 @@ export function AccountForm({ initial }: { initial: AccountFormValues }) {
                 inputMode="decimal"
                 defaultValue={initial.interestRate}
                 onChange={(e) => update({ interestRate: e.target.value })}
-                placeholder="e.g. 3"
+                placeholder={t("e.g. 3")}
                 className={cn(inputClass, "tabular-nums")}
               />
             </Field>
@@ -182,16 +184,16 @@ export function AccountForm({ initial }: { initial: AccountFormValues }) {
         <ColorPicker defaultValue={initial.color} onChange={(color) => update({ color })} />
 
         <Field label="Note" htmlFor="note" error={errors.note}>
-          <input id="note" name="note" defaultValue={initial.note} placeholder="Optional" className={inputClass} />
+          <input id="note" name="note" defaultValue={initial.note} placeholder={t("Optional")} className={inputClass} />
         </Field>
 
         {initial.id ? (
           <label className="flex items-start gap-3 rounded-2xl bg-muted p-4">
             <input type="checkbox" name="archived" defaultChecked={initial.archived} className="mt-0.5 size-4 accent-primary" />
             <span>
-              <span className="block text-sm font-medium">Archived</span>
+              <span className="block text-sm font-medium">{t("Archived")}</span>
               <span className="block text-sm text-ink-soft">
-                Hidden from the dashboard and new transactions. History is kept.
+                {t("Hidden from the dashboard and new transactions. History is kept.")}
               </span>
             </span>
           </label>
@@ -201,7 +203,7 @@ export function AccountForm({ initial }: { initial: AccountFormValues }) {
           {initial.id ? <DeleteButton action={deleteAccount.bind(null, initial.id)} /> : <span className="hidden sm:block" />}
           <div className="flex flex-col-reverse gap-2 sm:flex-row">
             <Link href="/accounts" className={buttonClass("ghost")}>
-              Cancel
+              {t("Cancel")}
             </Link>
             <SubmitButton pending={pending}>{initial.id ? "Save changes" : "Add account"}</SubmitButton>
           </div>

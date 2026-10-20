@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowsLeftRight, Check, Eye } from "@/components/icons";
 import { cn } from "@/lib/cn";
+import { useT } from "@/lib/i18n/client";
 
 export type DockProfile = { id: string; name: string };
 
@@ -46,6 +47,7 @@ export function ProfileDock({
   /** Server action: reads `ownerId` ("me" or an owner id) from the form and switches. */
   switchTo: (formData: FormData) => Promise<void>;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const viewing = viewingId ? shared.find((s) => s.id === viewingId) : undefined;
   const current = viewing ?? me;
@@ -65,7 +67,7 @@ export function ProfileDock({
       <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] left-4 z-30 flex flex-col items-start gap-2 lg:bottom-6 lg:left-[17.5rem]">
         <AnimatePresence>
           {open ? (
-            <form action={switchTo} onSubmit={() => setOpen(false)} className="flex flex-col items-start gap-2" aria-label="Switch profile">
+            <form action={switchTo} onSubmit={() => setOpen(false)} className="flex flex-col items-start gap-2" aria-label={t("Switch profile")}>
               {[...options].reverse().map((p, i) => {
                 const isMe = p.id === me.id;
                 const active = isMe ? !viewing : viewing?.id === p.id;

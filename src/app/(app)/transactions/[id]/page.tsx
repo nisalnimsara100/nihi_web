@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { PageHeader, Skeleton } from "@/components/ui";
@@ -7,14 +8,17 @@ import { getTransaction } from "@/lib/data";
 import { dateToDay } from "@/lib/dates";
 import { toInputAmount } from "@/lib/money";
 import { getTransactionFormOptions } from "../form-data";
+import { SplitPanel } from "@/components/finance/split-panel";
 import { TransactionForm } from "../transaction-form";
+import { getT } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "Edit transaction" };
 
-export default function EditTransactionPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditTransactionPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = await getT();
   return (
     <div className="mx-auto max-w-2xl">
-      <PageHeader title="Edit transaction" />
+      <PageHeader title={t("Edit transaction")} />
       <Suspense fallback={<Skeleton className="h-[520px]" />}>
         <EditTransaction params={params} />
       </Suspense>
@@ -23,6 +27,7 @@ export default function EditTransactionPage({ params }: { params: Promise<{ id: 
 }
 
 async function EditTransaction({ params }: { params: Promise<{ id: string }> }) {
+  const t = await getT();
   const { user } = await requireOwnView();
   const { id } = await params;
   const tx = await getTransaction(user.id, id);
@@ -35,7 +40,12 @@ async function EditTransaction({ params }: { params: Promise<{ id: string }> }) 
     [tx.accountId, tx.toAccountId].filter((v): v is string => !!v),
   );
 
+  const repeatParams = new URLSearchParams({ type: tx.type, amount: toInputAmount(tx.amount), account: tx.accountId, note: tx.note });
+  if (tx.categoryId) repeatParams.set("category", tx.categoryId);
+  if (tx.toAccountId) repeatParams.set("to", tx.toAccountId);
+
   return (
+    <>
     <TransactionForm
       {...options}
       initial={{
@@ -52,5 +62,21 @@ async function EditTransaction({ params }: { params: Promise<{ id: string }> }) 
         tagIds: tx.tags.map((t) => t.id),
       }}
     />
+    <p className="mt-4 text-center text-sm">
+      <Link href={`/recurring/new?${repeatParams}`} className="font-semibold text-primary hover:underline">
+        {t("Make this repeat")}
+      </Link>
+    </p>
+    {tx.type !== "TRANSFER" ? (
+      <SplitPanel
+        id={tx.id}
+        total={tx.amount}
+        currency={tx.account.currency}
+        categories={options.categories.filter((c) => c.type === tx.type).map((c) => ({ id: c.id, name: c.name }))}
+        note={tx.note}
+        categoryId={tx.categoryId ?? ""}
+      />
+    ) : null}
+    </>
   );
 }

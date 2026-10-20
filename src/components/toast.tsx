@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { GooeyToaster, gooeyToast } from "goey-toast";
+import { tr } from "@/lib/i18n/client";
 import type { Flash } from "@/lib/flash";
 
 /**
@@ -22,10 +23,22 @@ const OPTIONS = {
 
 function show(type: ToastType, title: string, description?: string) {
   const { preset, duration } = OPTIONS[type];
-  gooeyToast[type](title, { description, preset, duration, showProgress: true });
+  gooeyToast[type](tr(title)!, { description: tr(description), preset, duration, showProgress: true });
+}
+
+/** A success message with an Undo button that stays a little longer than usual. */
+function undo(title: string, description: string | undefined, onUndo: () => void) {
+  gooeyToast.success(tr(title)!, {
+    description: tr(description),
+    preset: "smooth",
+    duration: 9000,
+    showProgress: true,
+    action: { label: tr("Undo")!, onClick: onUndo },
+  });
 }
 
 export const notify = {
+  undo,
   success: (title: string, description?: string) => show("success", title, description),
   info: (title: string, description?: string) => show("info", title, description),
   warning: (title: string, description?: string) => show("warning", title, description),

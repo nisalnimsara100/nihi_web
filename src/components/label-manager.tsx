@@ -9,6 +9,7 @@ import { Button, Card, ColorDot, Field, inputClass } from "@/components/ui";
 import { CategoryIcon } from "@/lib/category-icons";
 import { cn } from "@/lib/cn";
 import { COLORS } from "@/lib/constants";
+import { useT } from "@/lib/i18n/client";
 
 /** `icon` is set for categories; tags have none and show a color dot. */
 type Item = { id: string; name: string; color: string; count: number; icon?: string };
@@ -29,6 +30,7 @@ function LabelForm({
   onDone?: () => void;
   withIcon?: boolean;
 }) {
+  const t = useT();
   const { state, pending, formRef, onSubmit } = useActionForm(save, { resetOnSuccess: !item, onSuccess: onDone });
   const errors = state.fieldErrors ?? {};
   const nameId = `name-${item?.id ?? hidden?.type ?? "new"}`;
@@ -48,7 +50,7 @@ function LabelForm({
         <SubmitButton pending={pending}>{submitLabel}</SubmitButton>
         {onDone && item ? (
           <Button type="button" variant="ghost" onClick={onDone}>
-            Cancel
+            {t("Cancel")}
           </Button>
         ) : null}
       </div>
@@ -76,6 +78,7 @@ export function LabelManager({
   /** Shows the list without add, edit or delete controls. */
   readOnly?: boolean;
 }) {
+  const t = useT();
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
 
@@ -90,7 +93,7 @@ export function LabelManager({
             {adding ? "Close" : (
               <>
                 <Plus className="size-4" aria-hidden />
-                Add {noun}
+                {t("Add")} {noun}
               </>
             )}
           </Button>
@@ -104,7 +107,7 @@ export function LabelManager({
       ) : null}
 
       {items.length === 0 ? (
-        <p className="px-4 py-8 text-center text-sm text-ink-soft sm:px-5">No {noun}s yet.</p>
+        <p className="px-4 py-8 text-center text-sm text-ink-soft sm:px-5">{t("No {noun}s yet.", { noun: t(noun) })}</p>
       ) : (
         <ul className="mt-3 space-y-1 px-2 pb-3">
           {items.map((item) =>
@@ -134,7 +137,7 @@ export function LabelManager({
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold">{item.name}</span>
                   <span className="block text-xs text-ink-soft">
-                    {item.count} transaction{item.count === 1 ? "" : "s"}
+                    {item.count === 1 ? t("1 transaction") : t("{count} transactions", { count: item.count })}
                   </span>
                 </span>
                 {readOnly ? null : (

@@ -91,6 +91,48 @@ export type Database = {
           },
         ]
       }
+      Budget: {
+        Row: {
+          amount: number
+          categoryId: string
+          createdAt: string
+          currency: string
+          id: string
+          userId: string
+        }
+        Insert: {
+          amount: number
+          categoryId: string
+          createdAt?: string
+          currency: string
+          id?: string
+          userId: string
+        }
+        Update: {
+          amount?: number
+          categoryId?: string
+          createdAt?: string
+          currency?: string
+          id?: string
+          userId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Budget_categoryId_fkey"
+            columns: ["categoryId"]
+            isOneToOne: false
+            referencedRelation: "Category"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Budget_userId_fkey"
+            columns: ["userId"]
+            isOneToOne: false
+            referencedRelation: "User"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       Card: {
         Row: {
           accountId: string
@@ -179,6 +221,7 @@ export type Database = {
           acceptedAt: string | null
           createdAt: string
           email: string
+          expiresAt: string
           id: string
           ownerId: string
           partnerId: string | null
@@ -188,6 +231,7 @@ export type Database = {
           acceptedAt?: string | null
           createdAt?: string
           email: string
+          expiresAt?: string
           id?: string
           ownerId: string
           partnerId?: string | null
@@ -197,6 +241,7 @@ export type Database = {
           acceptedAt?: string | null
           createdAt?: string
           email?: string
+          expiresAt?: string
           id?: string
           ownerId?: string
           partnerId?: string | null
@@ -213,6 +258,140 @@ export type Database = {
           {
             foreignKeyName: "PartnerShare_partnerId_fkey"
             columns: ["partnerId"]
+            isOneToOne: false
+            referencedRelation: "User"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      Recurring: {
+        Row: {
+          accountId: string
+          active: boolean
+          amount: number
+          anchorDay: number
+          categoryId: string | null
+          createdAt: string
+          endDate: string | null
+          frequency: string
+          id: string
+          nextDate: string
+          note: string
+          toAccountId: string | null
+          toAmount: number | null
+          type: Database["public"]["Enums"]["TransactionType"]
+          userId: string
+        }
+        Insert: {
+          accountId: string
+          active?: boolean
+          amount: number
+          anchorDay: number
+          categoryId?: string | null
+          createdAt?: string
+          endDate?: string | null
+          frequency: string
+          id?: string
+          nextDate: string
+          note?: string
+          toAccountId?: string | null
+          toAmount?: number | null
+          type: Database["public"]["Enums"]["TransactionType"]
+          userId: string
+        }
+        Update: {
+          accountId?: string
+          active?: boolean
+          amount?: number
+          anchorDay?: number
+          categoryId?: string | null
+          createdAt?: string
+          endDate?: string | null
+          frequency?: string
+          id?: string
+          nextDate?: string
+          note?: string
+          toAccountId?: string | null
+          toAmount?: number | null
+          type?: Database["public"]["Enums"]["TransactionType"]
+          userId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Recurring_accountId_fkey"
+            columns: ["accountId"]
+            isOneToOne: false
+            referencedRelation: "Account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Recurring_toAccountId_fkey"
+            columns: ["toAccountId"]
+            isOneToOne: false
+            referencedRelation: "Account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Recurring_categoryId_fkey"
+            columns: ["categoryId"]
+            isOneToOne: false
+            referencedRelation: "Category"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Recurring_userId_fkey"
+            columns: ["userId"]
+            isOneToOne: false
+            referencedRelation: "User"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      SavingsGoal: {
+        Row: {
+          accountId: string | null
+          createdAt: string
+          currency: string
+          id: string
+          name: string
+          savedAmount: number
+          targetAmount: number
+          targetDate: string | null
+          userId: string
+        }
+        Insert: {
+          accountId?: string | null
+          createdAt?: string
+          currency: string
+          id?: string
+          name: string
+          savedAmount?: number
+          targetAmount: number
+          targetDate?: string | null
+          userId: string
+        }
+        Update: {
+          accountId?: string | null
+          createdAt?: string
+          currency?: string
+          id?: string
+          name?: string
+          savedAmount?: number
+          targetAmount?: number
+          targetDate?: string | null
+          userId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "SavingsGoal_accountId_fkey"
+            columns: ["accountId"]
+            isOneToOne: false
+            referencedRelation: "Account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "SavingsGoal_userId_fkey"
+            columns: ["userId"]
             isOneToOne: false
             referencedRelation: "User"
             referencedColumns: ["id"]
@@ -438,6 +617,7 @@ export type Database = {
         Args: {
           p_account_id: string
           p_amount: number
+          p_card_id: string
           p_category_id: string
           p_date: string
           p_id: string
@@ -449,6 +629,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      split_transaction: {
+        Args: { p_id: string; p_parts: Json; p_user_id: string }
+        Returns: string[]
       }
       totals_by_currency: {
         Args: { p_end: string; p_start: string; p_user_id: string }

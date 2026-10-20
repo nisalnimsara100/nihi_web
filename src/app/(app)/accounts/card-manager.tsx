@@ -8,6 +8,7 @@ import { useActionForm } from "@/components/use-action-form";
 import { Card, Field, inputClass } from "@/components/ui";
 import { CARD_NETWORKS, networkLabel, type CardNetwork } from "@/lib/card-networks";
 import { cn } from "@/lib/cn";
+import { useT } from "@/lib/i18n/client";
 
 export type LinkedCard = { id: string; last4: string; name: string; network: string };
 
@@ -16,16 +17,16 @@ export type LinkedCard = { id: string; last4: string; name: string; network: str
  * card numbers, the transaction is filled in against this account.
  */
 export function CardManager({ accountId, cards }: { accountId: string; cards: LinkedCard[] }) {
+  const t = useT();
   const { state, pending, formRef, onSubmit } = useActionForm(addCard, { resetOnSuccess: true });
   const errors = state.fieldErrors ?? {};
   const [network, setNetwork] = useState<CardNetwork>("VISA");
 
   return (
     <Card className="mt-4 p-4 sm:p-6">
-      <h2 className="text-base font-bold text-ink">Linked cards</h2>
+      <h2 className="text-base font-bold text-ink">{t("Linked cards")}</h2>
       <p className="mt-1 text-sm text-ink-soft">
-        Link the debit or credit cards that pay from this account. Paying with a card takes the money out of this account.
-        Only the last 4 digits are stored.
+        {t("Link the debit or credit cards that pay from this account. Paying with a card takes the money out of this account. Only the last 4 digits are stored.")}
       </p>
 
       {cards.length > 0 ? (
@@ -51,8 +52,8 @@ export function CardManager({ accountId, cards }: { accountId: string; cards: Li
         <input type="hidden" name="accountId" value={accountId} />
         <input type="hidden" name="network" value={network} />
         <fieldset>
-          <legend className="mb-1.5 block text-sm font-semibold text-ink">Card type</legend>
-          <div role="radiogroup" aria-label="Card type" className="flex flex-wrap gap-2">
+          <legend className="mb-1.5 block text-sm font-semibold text-ink">{t("Card type")}</legend>
+          <div role="radiogroup" aria-label={t("Card type")} className="flex flex-wrap gap-2">
             {CARD_NETWORKS.map((n) => (
               <button
                 key={n.value}
@@ -85,10 +86,10 @@ export function CardManager({ accountId, cards }: { accountId: string; cards: Li
             />
           </Field>
           <Field label="Name (optional)" htmlFor="card-name" error={errors.name}>
-            <input id="card-name" name="name" maxLength={40} placeholder="Visa debit" className={inputClass} />
+            <input id="card-name" name="name" maxLength={40} placeholder={t("Visa debit")} className={inputClass} />
           </Field>
         </div>
-        <SubmitButton pending={pending}>Link card</SubmitButton>
+        <SubmitButton pending={pending}>{t("Link card")}</SubmitButton>
       </form>
     </Card>
   );

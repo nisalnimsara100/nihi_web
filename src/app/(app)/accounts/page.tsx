@@ -9,6 +9,8 @@ import { getAccounts, getCards, type AccountWithBalance } from "@/lib/data";
 import { creditFaceInfo, creditSummary } from "@/lib/credit-card";
 import { formatMoney } from "@/lib/money";
 import { AccountTile, WalletList, type WalletItem } from "./wallet-list";
+import { getT } from "@/lib/i18n/server";
+import type { TFunction } from "@/lib/i18n/translate";
 
 export const metadata: Metadata = { title: "Wallet" };
 
@@ -23,6 +25,7 @@ export default function AccountsPage({ searchParams }: { searchParams: SearchPar
 function toItem(
   account: AccountWithBalance,
   cards: { last4: string; network: string }[],
+  t: TFunction,
 ): WalletItem {
   return {
     id: account.id,
@@ -33,7 +36,7 @@ function toItem(
       balance: formatMoney(account.balance, account.currency),
       currency: account.currency,
       color: account.color,
-      label: `${accountTypeLabel(account.type)}${account.archived ? " · Archived" : ""}`,
+      label: `${t(accountTypeLabel(account.type))}${account.archived ? ` · ${t("Archived")}` : ""}`,
       cards,
       credit:
         account.type === "CREDIT_CARD"
@@ -45,6 +48,7 @@ function toItem(
 }
 
 async function Accounts({ searchParams }: { searchParams: SearchParams }) {
+  const t = await getT();
   const { owner: user, readOnly } = await getViewer();
   const sp = await searchParams;
   const [accounts, allCards] = await Promise.all([getAccounts(user.id, { includeArchived: true }), getCards(user.id)]);
@@ -70,7 +74,7 @@ async function Accounts({ searchParams }: { searchParams: SearchParams }) {
   return (
     <>
       <PageHeader
-        title="Wallet"
+        title={t("Wallet")}
         description={
           totals.size > 0 || cardsOwed.size > 0
             ? [
@@ -105,28 +109,28 @@ async function Accounts({ searchParams }: { searchParams: SearchParams }) {
         <Card>
           <EmptyState
             icon={<Wallet className="size-6" />}
-            title="No accounts yet"
+            title={t("No accounts yet")}
             description={readOnly ? "No accounts have been added yet." : "Add your wallet, bank account or card to start tracking."}
-            action={readOnly ? undefined : <ButtonLink href="/accounts/new">Add account</ButtonLink>}
+            action={readOnly ? undefined : <ButtonLink href="/accounts/new">{t("Add account")}</ButtonLink>}
           />
         </Card>
       ) : null}
 
       {everyday.length > 0 ? (
-        <WalletList items={everyday.map((a) => toItem(a, cardsOf(a.id)))} readOnly={readOnly} editing={reordering} />
+        <WalletList items={everyday.map((a) => toItem(a, cardsOf(a.id), t))} readOnly={readOnly} editing={reordering} />
       ) : null}
 
       {savings.length > 0 ? (
         <section className={everyday.length > 0 ? "mt-10" : ""}>
           <div className="mb-3 flex items-baseline justify-between gap-3">
-            <h2 className="text-base font-semibold">Savings</h2>
+            <h2 className="text-base font-semibold">{t("Savings")}</h2>
             <span className="text-sm font-semibold tabular-nums text-ink-soft">
               {[...savingsTotals].map(([c, v]) => formatMoney(v, c)).join(" · ")}
             </span>
           </div>
           <div className="mx-auto grid max-w-md gap-4 sm:mx-0 sm:max-w-none sm:grid-cols-2 lg:grid-cols-3">
             {savings.map((a, i) => (
-              <AccountTile key={a.id} item={toItem(a, cardsOf(a.id))} index={i} stacked={false} readOnly={readOnly} />
+              <AccountTile key={a.id} item={toItem(a, cardsOf(a.id), t)} index={i} stacked={false} readOnly={readOnly} />
             ))}
           </div>
         </section>
@@ -134,10 +138,10 @@ async function Accounts({ searchParams }: { searchParams: SearchParams }) {
 
       {archived.length > 0 ? (
         <section className="mt-10">
-          <h2 className="mb-3 text-base font-semibold">Archived</h2>
+          <h2 className="mb-3 text-base font-semibold">{t("Archived")}</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {archived.map((a, i) => (
-              <AccountTile key={a.id} item={toItem(a, cardsOf(a.id))} index={i} stacked={false} readOnly={readOnly} />
+              <AccountTile key={a.id} item={toItem(a, cardsOf(a.id), t)} index={i} stacked={false} readOnly={readOnly} />
             ))}
           </div>
         </section>

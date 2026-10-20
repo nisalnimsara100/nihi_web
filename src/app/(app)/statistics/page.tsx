@@ -13,6 +13,7 @@ import { formatMoney } from "@/lib/money";
 import { buildHref, param, type SearchParams } from "@/lib/search-params";
 import { cn } from "@/lib/cn";
 import { TrendChart } from "./trend-chart";
+import { getT } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "Statistics" };
 
@@ -25,6 +26,7 @@ export default function StatisticsPage({ searchParams }: { searchParams: SearchP
 }
 
 async function Statistics({ searchParams }: { searchParams: SearchParams }) {
+  const t = await getT();
   const { owner: user } = await getViewer();
   const sp = await searchParams;
 
@@ -72,13 +74,13 @@ async function Statistics({ searchParams }: { searchParams: SearchParams }) {
   return (
     <>
       <PageHeader
-        title="Statistics"
-        description={`${currency} accounts only`}
+        title={t("Statistics")}
+        description={t("{currency} accounts only", { currency })}
         actions={<PeriodNav label={label} prevHref={href({ date: shift(-1) })} nextHref={href({ date: shift(1) })} />}
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="inline-flex rounded-2xl bg-surface p-1 ring-1 ring-line/70" role="group" aria-label="Period">
+        <div className="inline-flex rounded-2xl bg-surface p-1 ring-1 ring-line/70" role="group" aria-label={t("Period")}>
           {(["month", "year"] as const).map((p) => (
             <Link
               key={p}
@@ -96,7 +98,7 @@ async function Statistics({ searchParams }: { searchParams: SearchParams }) {
           ))}
         </div>
         {currencies.length > 1 ? (
-          <div className="flex flex-wrap gap-1" role="group" aria-label="Currency">
+          <div className="flex flex-wrap gap-1" role="group" aria-label={t("Currency")}>
             {currencies.map((c) => (
               <Link
                 key={c}
@@ -124,21 +126,21 @@ async function Statistics({ searchParams }: { searchParams: SearchParams }) {
       </div>
 
       <Card className="mt-4">
-        <CardHeader title={period === "year" ? `Monthly trend in ${key}` : "Last 12 months"} />
+        <CardHeader title={period === "year" ? t("Monthly trend in {year}", { year: key }) : t("Last 12 months")} />
         <div className="p-4 sm:p-5">
           <TrendChart data={trendData} currency={currency} />
           <details className="mt-4 text-sm">
             <summary className="cursor-pointer font-semibold text-ink-soft hover:text-ink">
-              Show as table
+              {t("Show as table")}
             </summary>
             <div className="mt-3 overflow-x-auto">
               <table className="w-full min-w-[420px] text-left tabular-nums">
                 <thead className="text-xs text-ink-soft">
                   <tr>
-                    <th className="py-2 font-medium">Month</th>
-                    <th className="py-2 text-right font-medium">Income</th>
-                    <th className="py-2 text-right font-medium">Expenses</th>
-                    <th className="py-2 text-right font-medium">Net</th>
+                    <th className="py-2 font-medium">{t("Month")}</th>
+                    <th className="py-2 text-right font-medium">{t("Income")}</th>
+                    <th className="py-2 text-right font-medium">{t("Expenses")}</th>
+                    <th className="py-2 text-right font-medium">{t("Net")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
@@ -159,22 +161,22 @@ async function Statistics({ searchParams }: { searchParams: SearchParams }) {
 
       <div className="mt-4 grid items-start gap-4 *:min-w-0 lg:grid-cols-2">
         <Card>
-          <CardHeader title="Expenses by category" />
+          <CardHeader title={t("Expenses by category")} />
           <div className="p-4 sm:p-5">
             {expenses.length > 0 ? (
               <CategoryBars data={expenses} currency={currency} />
             ) : (
-              <p className="text-sm text-ink-soft">No expenses in {label}.</p>
+              <p className="text-sm text-ink-soft">{t("No expenses in {period}.", { period: label })}</p>
             )}
           </div>
         </Card>
         <Card>
-          <CardHeader title="Income by category" />
+          <CardHeader title={t("Income by category")} />
           <div className="p-4 sm:p-5">
             {income.length > 0 ? (
               <CategoryBars data={income} currency={currency} />
             ) : (
-              <p className="text-sm text-ink-soft">No income in {label}.</p>
+              <p className="text-sm text-ink-soft">{t("No income in {period}.", { period: label })}</p>
             )}
           </div>
         </Card>

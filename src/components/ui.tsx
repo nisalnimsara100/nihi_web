@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import type { ComponentProps, CSSProperties, ReactNode } from "react";
 import { CaretLeft } from "@/components/icons";
 import { cn } from "@/lib/cn";
+import { useT } from "@/lib/i18n/client";
 import { formatMoney } from "@/lib/money";
 
 type Variant = "primary" | "soft" | "secondary" | "ghost" | "danger";
@@ -58,9 +61,10 @@ export function IconLink({
   children,
   ...props
 }: ComponentProps<typeof Link> & { label: string; tone?: "outline" | "primary" | "soft" }) {
+  const t = useT();
   return (
     <Link
-      aria-label={label}
+      aria-label={t(label)}
       className={cn(
         "inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-colors",
         tone === "outline" && "border border-line bg-surface text-ink hover:bg-muted",
@@ -96,16 +100,17 @@ export function Field({
   children: ReactNode;
   className?: string;
 }) {
+  const t = useT();
   return (
     <div className={cn("space-y-1.5", className)}>
       <label htmlFor={htmlFor} className="block text-sm font-semibold text-ink">
-        {label}
+        {t(label)}
       </label>
       {children}
       {error?.length ? (
-        <p className="text-sm text-danger">{error[0]}</p>
+        <p className="text-sm text-danger">{t(error[0])}</p>
       ) : hint ? (
-        <p className="text-sm text-ink-soft">{hint}</p>
+        <p className="text-sm text-ink-soft">{t(hint)}</p>
       ) : null}
     </div>
   );
@@ -121,18 +126,20 @@ export function Card({ className, ...props }: ComponentProps<"div">) {
 }
 
 export function CardHeader({ title, action }: { title: string; action?: ReactNode }) {
+  const t = useT();
   return (
     <div className="flex items-center justify-between gap-3 px-5 pt-5">
-      <h2 className="text-base font-semibold">{title}</h2>
+      <h2 className="text-base font-semibold">{t(title)}</h2>
       {action}
     </div>
   );
 }
 
 export function SeeAll({ href, children = "See All" }: { href: string; children?: ReactNode }) {
+  const t = useT();
   return (
     <Link href={href} className="text-sm font-semibold text-primary hover:underline">
-      {children}
+      {typeof children === "string" ? t(children) : children}
     </Link>
   );
 }
@@ -148,6 +155,7 @@ export function PageHeader({
   actions?: ReactNode;
   backHref?: string;
 }) {
+  const t = useT();
   return (
     <div className="mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
       <div className="flex min-w-0 items-center gap-3">
@@ -157,8 +165,8 @@ export function PageHeader({
           </IconLink>
         ) : null}
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h1>
-          {description ? <p className="mt-0.5 text-sm text-ink-soft">{description}</p> : null}
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t(title)}</h1>
+          {description ? <p className="mt-0.5 text-sm text-ink-soft">{typeof description === "string" ? t(description) : description}</p> : null}
         </div>
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
@@ -191,13 +199,14 @@ export function EmptyState({
   description?: string;
   action?: ReactNode;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col items-center px-6 py-12 text-center">
       {icon ? (
         <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary-soft text-on-primary-soft">{icon}</div>
       ) : null}
-      <p className="text-base font-semibold">{title}</p>
-      {description ? <p className="mt-1 max-w-sm text-sm text-ink-soft">{description}</p> : null}
+      <p className="text-base font-semibold">{t(title)}</p>
+      {description ? <p className="mt-1 max-w-sm text-sm text-ink-soft">{t(description)}</p> : null}
       {action ? <div className="mt-5">{action}</div> : null}
     </div>
   );

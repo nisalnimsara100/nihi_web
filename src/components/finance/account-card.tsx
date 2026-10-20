@@ -1,3 +1,5 @@
+"use client";
+
 import { Bank, PiggyBank, TrendUp, type AppIcon } from "@/components/icons";
 import { ColorDot } from "@/components/ui";
 import { getCardTheme } from "@/lib/card-themes";
@@ -5,6 +7,7 @@ import { networkShort } from "@/lib/card-networks";
 import type { CreditFaceInfo } from "@/lib/credit-card";
 import { cn } from "@/lib/cn";
 import type { Enums } from "@/lib/database.types";
+import { useT } from "@/lib/i18n/client";
 
 type AccountType = Enums<"AccountType">;
 
@@ -44,6 +47,7 @@ export function AccountCardFace({
   dimmed?: boolean;
   className?: string;
 }) {
+  const t = useT();
   const { background, ink } = getCardTheme(theme);
   const isCash = type === "CASH";
 
@@ -101,7 +105,7 @@ export function AccountCardFace({
             </p>
           ) : type === "BANK" ? (
             <p className="mb-1 font-mono text-xs tracking-[0.2em]" style={{ color: fade(ink, 60) }}>
-              A/C ••••••
+              {t("A/C ••••••")}
             </p>
           ) : null}
           <p className="truncate text-xs font-semibold" style={{ color: fade(ink, 75) }}>
@@ -122,6 +126,7 @@ export function AccountCardFace({
 
 /** The account's linked cards as frosted badges ("VISA ••8663"), at most two plus a count. */
 function CardBadges({ cards, ink }: { cards: { last4: string; network: string }[]; ink: string }) {
+  const t = useT();
   if (cards.length === 0) return null;
   const shown = cards.slice(0, 2);
   return (
@@ -138,7 +143,7 @@ function CardBadges({ cards, ink }: { cards: { last4: string; network: string }[
       ))}
       {cards.length > shown.length ? (
         <span className="text-[10px] font-semibold" style={{ color: fade(ink, 70) }}>
-          +{cards.length - shown.length} more
+          {t("+{count} more", { count: cards.length - shown.length })}
         </span>
       ) : null}
     </span>
@@ -147,6 +152,7 @@ function CardBadges({ cards, ink }: { cards: { last4: string; network: string }[
 
 /** Background artwork behind the text, different for each account type. */
 function CardArt({ type, ink, currency }: { type: AccountType; ink: string; currency: string }) {
+  const t = useT();
   switch (type) {
     case "BANK":
       // Two broad curved bands sweeping up from the bottom left.
@@ -223,7 +229,7 @@ function CardArt({ type, ink, currency }: { type: AccountType; ink: string; curr
           className="pointer-events-none absolute -right-4 -bottom-8 text-[7rem] leading-none font-black tracking-tighter uppercase italic select-none"
           style={{ color: fade(ink, 10) }}
         >
-          NiHi
+          {t("NiHi")}
         </span>
       );
   }

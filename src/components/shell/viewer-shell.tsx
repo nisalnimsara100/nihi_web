@@ -5,18 +5,20 @@ import { getViewer } from "@/lib/auth";
 import { db, run } from "@/lib/db";
 import { BottomNav } from "./bottom-nav";
 import { ProfileDock } from "./profile-dock";
+import { getT } from "@/lib/i18n/server";
 
 // App shell pieces that depend on whose data is on screen. They are async server
 // components, so the layout wraps each one in <Suspense>.
 
 /** The "New transaction" button. Partners viewing someone else can't add anything. */
 export async function NewTransactionButton() {
+  const t = await getT();
   const { readOnly } = await getViewer();
   if (readOnly) return null;
   return (
     <ButtonLink href="/transactions/new" className="w-full">
       <Plus className="size-4" aria-hidden />
-      New transaction
+      {t("New transaction")}
     </ButtonLink>
   );
 }

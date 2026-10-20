@@ -1,5 +1,7 @@
-/** Checks the screenshot parser against typical OCR output. Run: npx tsx scripts/check-scan.ts */
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
 import { parseScan } from "../src/lib/scan/parse";
+import { suggestCategory } from "../src/lib/scan/categorize";
 
 const TODAY = "2026-10-20"; // a Tuesday
 type Case = { name: string; text: string; amount: number | null; type: string; day: string; merchant?: RegExp; last4?: string; hint?: string; high?: boolean };
@@ -38,34 +40,66 @@ const cases: Case[] = [
   { name: "Uber Eats receipt (real)", text: "17:34 it 4G EB | X | Here's your receipt for Feek Health | Mart . | Total LKR 330.33 | Panadol 500mg (12 | 2 Tablets) LKR 120.00 | Item Subtotal LKR 120.00 | Tax LKR 61.33 | Delivery Fee LKR 99.00 | Service Fee LKR 50.00 | Payments | Visa ++++8663 (Nisal - | visa Sampath Bank) LKR S20.55 | 10/4/26 8:10 AM | Tax includes the applicable tax on meal fare | collected on behalf of merchant partners and".replaceAll(" | ", "\n"), amount: 33033, type: "EXPENSE", day: "2026-10-04", merchant: /Feek Health Mart/i, last4: "8663", hint: "Sampath" },
 ];
 
-let failed = 0;
-for (const c of cases) {
-  const r = parseScan(c.text, TODAY)[0];
-  const problems: string[] = [];
-  if (r.amount.minor !== c.amount) problems.push(`amount ${r.amount.minor} != ${c.amount}`);
-  if (r.type.value !== c.type) problems.push(`type ${r.type.value} != ${c.type}`);
-  if (r.date.day !== c.day) problems.push(`day ${r.date.day} != ${c.day}`);
-  if (c.merchant && !c.merchant.test(r.merchant.text)) problems.push(`merchant "${r.merchant.text}"`);
-  if (c.last4 && r.account.last4 !== c.last4) problems.push(`last4 ${r.account.last4} != ${c.last4}`);
-  if (c.hint && r.account.hint !== c.hint) problems.push(`hint "${r.account.hint}" != ${c.hint}`);
-  if (c.high && r.amount.confidence !== "high") problems.push("amount not high");
-  if (problems.length) failed++;
-  console.log(`${problems.length ? "FAIL" : "ok  "} ${c.name}${problems.length ? ": " + problems.join("; ") : ""}`);
-}
 
-const net = parseScan("Visa ++++8663 (Nisal - Sampath Bank) LKR 330.33", TODAY)[0].account;
-if (net.network !== "VISA" || net.last4 !== "8663") { failed++; console.log("FAIL card network", net); } else console.log("ok   card network");
+describe("scan parser on typical bank SMS, emails and receipts", () => {
+  for (const c of cases) {
+    it(c.name, () => {
+      const r = parseScan(c.text, TODAY)[0];
+      assert.equal(r.amount.minor, c.amount, "amount");
+      assert.equal(r.type.value, c.type, "type");
+      assert.equal(r.date.day, c.day, "date");
+      if (c.merchant) assert.match(r.merchant.text, c.merchant, "merchant");
+      if (c.last4) assert.equal(r.account.last4, c.last4, "card digits");
+      if (c.hint) assert.equal(r.account.hint, c.hint, "account hint");
+      if (c.high) assert.equal(r.amount.confidence, "high", "amount confidence");
+    });
+  }
 
-// The date line inside one SMS must not split it.
-const one = parseScan("LKR .56 debited from AC\n**8462 for\nCEFTLV-01-98841328778478\n8-02-6289-03-000\n20/10/2026 11:25:31\nTo Inq Call\nGet protected -Do not Share\nOTP", TODAY);
-if (one.length !== 1 || one[0].date.day !== "2026-10-20" || one[0].date.confidence === "missing") { failed++; console.log("FAIL date line inside one SMS"); } else console.log("ok   date line inside one SMS");
+  it("splits a chat screenshot with three SMS into three transactions with their own dates", () => {
+    const chat = "Saturday 13:00\nCEFT Transfer Debit Rs\n7025.00 From A/C No\nXXXXXXXXXX570. Balance\navailable Rs 3158.74 - Thank\nyou for banking with BOC\nSunday 15:28\nCEFT Transfer Debit Rs\n2025.00 From A/C No\nXXXXXXXXXX570. Balance\navailable Rs 1133.74 - Thank\nyou for banking with BOC\nYesterday 16:39\nPOS/ATM Transaction Rs\n171.26 From A/C No\nXXXXXXXXXX570. Balance\navailable Rs 962.48 - Thank\nyou for banking with BOC";
+    const got = parseScan(chat, TODAY).map((r) => `${r.amount.minor}@${r.date.day}`);
+    assert.deepEqual(got, ["702500@2026-10-17", "202500@2026-10-18", "17126@2026-10-19"]);
+  });
 
-// A chat screenshot holding three SMS must give three transactions.
-const chat = "Saturday 13:00\nCEFT Transfer Debit Rs\n7025.00 From A/C No\nXXXXXXXXXX570. Balance\navailable Rs 3158.74 - Thank\nyou for banking with BOC\nSunday 15:28\nCEFT Transfer Debit Rs\n2025.00 From A/C No\nXXXXXXXXXX570. Balance\navailable Rs 1133.74 - Thank\nyou for banking with BOC\nYesterday 16:39\nPOS/ATM Transaction Rs\n171.26 From A/C No\nXXXXXXXXXX570. Balance\navailable Rs 962.48 - Thank\nyou for banking with BOC";
-const multi = parseScan(chat, TODAY);
-const got = multi.map((r) => `${r.amount.minor}@${r.date.day}`).join(",");
-const want = "702500@2026-10-17,202500@2026-10-18,17126@2026-10-19";
-if (got !== want) { failed++; console.log(`FAIL Chat with 3 SMS: ${got} != ${want}`); } else console.log("ok   Chat with 3 SMS");
+  it("does not split one SMS at the date line inside it", () => {
+    const one = parseScan("LKR .56 debited from AC\n**8462 for\nCEFTLV-01-98841328778478\n8-02-6289-03-000\n20/10/2026 11:25:31\nTo Inq Call\nGet protected -Do not Share\nOTP", TODAY);
+    assert.equal(one.length, 1);
+    assert.equal(one[0].date.day, "2026-10-20");
+    assert.notEqual(one[0].date.confidence, "missing");
+  });
 
-console.log(`\n${failed === 0 ? "all passed" : failed + " failed"}`);
-process.exit(failed ? 1 : 0);
+  it("reads the card network from a receipt", () => {
+    const account = parseScan("Visa ++++8663 (Nisal - Sampath Bank) LKR 330.33", TODAY)[0].account;
+    assert.equal(account.network, "VISA");
+    assert.equal(account.last4, "8663");
+  });
+});
+
+describe("category suggestions", () => {
+  const categories = [
+    { id: "food", name: "Food & Dining", type: "EXPENSE" as const },
+    { id: "groc", name: "Groceries", type: "EXPENSE" as const },
+    { id: "trans", name: "Transport", type: "EXPENSE" as const },
+    { id: "health", name: "Health", type: "EXPENSE" as const },
+    { id: "salary", name: "Salary", type: "INCOME" as const },
+  ];
+  const pick = (merchant: string, type: "EXPENSE" | "INCOME" | "TRANSFER" = "EXPENSE", history: { note: string; categoryId: string | null }[] = [], context = "") =>
+    suggestCategory(merchant, history, categories, type, context)?.categoryId ?? null;
+
+  it("uses keywords, preferring the more specific category over the first one in the list", () => {
+    assert.equal(pick("KEELLS SUPER"), "groc");
+    assert.equal(pick("Uber ride"), "trans");
+    assert.equal(pick("Feek Health Mart", "EXPENSE", [], "Panadol 500mg"), "health");
+    assert.equal(pick("EW PERERA AND SON BAKERS"), "food");
+  });
+
+  it("prefers what the user already chose for the same merchant", () => {
+    assert.equal(pick("SASHA FOOD", "EXPENSE", [{ note: "SASHA FOOD COURT", categoryId: "groc" }]), "groc");
+  });
+
+  it("only suggests categories of the right type, and none for transfers", () => {
+    assert.equal(pick("", "INCOME", [], "Salary credit"), "salary");
+    assert.equal(pick("Salary", "EXPENSE"), null);
+    assert.equal(pick("KEELLS", "TRANSFER"), null);
+  });
+});
