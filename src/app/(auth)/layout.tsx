@@ -5,7 +5,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="grid min-h-dvh lg:grid-cols-2">
       <aside className="m-3 hidden flex-col items-center justify-center gap-10 overflow-hidden rounded-[36px] bg-primary-soft p-10 lg:flex">
-        <PhoneMock />
+        <PhoneMock className="max-w-64" />
         <div className="max-w-sm text-center">
           <p className="text-3xl font-semibold tracking-tight">Manage and organize your finance</p>
           <p className="mt-3 text-ink-soft">Track every rupee across your accounts, then plan the month ahead.</p>

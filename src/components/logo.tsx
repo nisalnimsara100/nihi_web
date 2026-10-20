@@ -2,21 +2,22 @@ import Link from "next/link";
 import { cn } from "@/lib/cn";
 
 /**
- * NiHi monogram: a rounded N and H sharing the middle stem. `primary` sits
- * on light backgrounds (white N, lavender H); `white` sits on the blue hero.
+ * NiHi mark: a lowercase n drawn as a vault door, with an amber coin kept safe
+ * inside. `primary` sits on light backgrounds (white vault on indigo); `white`
+ * sits on the blue hero.
  */
 export function LogoMark({ className, tone = "primary" }: { className?: string; tone?: "primary" | "white" }) {
   const onPrimary = tone === "primary";
   return (
     <svg viewBox="0 0 32 32" aria-hidden className={cn("size-9", className)}>
       <rect width="32" height="32" rx="9" className={onPrimary ? "fill-primary" : "fill-white"} />
-      <g fill="none" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M7.5 23V9l9 14V9" className={onPrimary ? "stroke-white" : "stroke-primary"} />
-        <path
-          d="M16.5 16h8M24.5 9v14"
-          className={onPrimary ? "stroke-[#c7cbff]" : "stroke-primary/55"}
-        />
-      </g>
+      <path
+        d="M8 25.5V15a8 8 0 0 1 16 0v10.5"
+        fill="none"
+        strokeWidth="5"
+        className={onPrimary ? "stroke-white" : "stroke-primary"}
+      />
+      <circle cx="16" cy="20.2" r="3.1" className="fill-warning" />
     </svg>
   );
 }

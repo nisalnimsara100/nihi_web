@@ -4,6 +4,7 @@
    so light and dark mode swap in one place. */
 @theme inline {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
 
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
@@ -67,6 +68,25 @@
 
 body {
   @apply bg-canvas text-ink;
+}
+
+/* Fade sections up as they scroll into view, where the browser supports
+   scroll-driven animations. Elsewhere they simply show. */
+@keyframes reveal {
+  from {
+    opacity: 0;
+    translate: 0 32px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+  }
 }
 
 /* Remove the number spinners on amount inputs. */
