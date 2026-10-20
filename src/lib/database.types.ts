@@ -32,6 +32,7 @@ export type Database = {
           initialBalance: number
           name: string
           note: string
+          sortOrder: number
           theme: string
           type: Database["public"]["Enums"]["AccountType"]
           userId: string
@@ -53,6 +54,7 @@ export type Database = {
           initialBalance?: number
           name: string
           note?: string
+          sortOrder?: number
           theme?: string
           type?: Database["public"]["Enums"]["AccountType"]
           userId: string
@@ -74,6 +76,7 @@ export type Database = {
           initialBalance?: number
           name?: string
           note?: string
+          sortOrder?: number
           theme?: string
           type?: Database["public"]["Enums"]["AccountType"]
           userId?: string

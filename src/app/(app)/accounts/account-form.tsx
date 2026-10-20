@@ -161,8 +161,10 @@ export function AccountForm({ initial }: { initial: AccountFormValues }) {
         </Field>
 
         {isCredit ? (
-          <fieldset className="space-y-4 rounded-3xl bg-muted p-4 sm:p-5">
-            <legend className="px-1 text-sm font-bold text-ink">Credit card terms</legend>
+          // A div instead of a fieldset: a legend sits on the border and overlapped the text below it.
+          // The inputs are grey, so the box is white with an outline to keep them visible.
+          <div role="group" aria-labelledby="credit-terms-title" className="space-y-4 rounded-3xl border border-line p-4 sm:p-5">
+            <h3 id="credit-terms-title" className="text-base font-bold text-ink">Credit card terms</h3>
             <p className="text-sm text-ink-soft">
               Copy these from your card statement or your bank&apos;s fee schedule. NiHi uses them to show your available credit and
               payment due date. They are estimates; your statement is always the final word.
@@ -210,7 +212,7 @@ export function AccountForm({ initial }: { initial: AccountFormValues }) {
                 <input id="lateFee" name="lateFee" inputMode="decimal" defaultValue={initial.lateFee} placeholder="optional" className={cn(inputClass, "tabular-nums")} />
               </Field>
             </div>
-          </fieldset>
+          </div>
         ) : null}
 
         <CardThemePicker value={preview.theme} onChange={(theme) => update({ theme })} />

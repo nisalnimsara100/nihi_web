@@ -258,3 +258,18 @@ input.date-field::-webkit-calendar-picker-indicator {
   opacity: 0;
   cursor: pointer;
 }
+
+/* Wallet reorder mode: cards tremble slightly, like icons on a phone's home screen. */
+@keyframes wiggle {
+  0%, 100% { rotate: -0.7deg; }
+  50% { rotate: 0.7deg; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wiggle > * {
+    animation: wiggle 0.28s ease-in-out infinite;
+  }
+  .wiggle:nth-child(even) > * {
+    animation-delay: -0.14s;
+  }
+}
