@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { invitePartner, leaveShare, removeShare, resendInvite, viewAs } from "@/actions/sharing";
 import { DeleteButton, SubmitButton } from "@/components/form-bits";
 import { notify } from "@/components/toast";
@@ -108,9 +108,12 @@ export function PartnerSharing({
 function InviteActions({ share, mailReady, ownerName }: { share: SentShare; mailReady: boolean; ownerName: string }) {
   const [copied, setCopied] = useState(false);
   const [sending, setSending] = useState(false);
-  // Set after mount so the server and browser render the same thing first.
-  const [canShare, setCanShare] = useState(false);
-  useEffect(() => setCanShare(typeof navigator.share === "function"), []);
+  // The server renders "no share sheet"; the browser then reports whether it has one.
+  const canShare = useSyncExternalStore(
+    () => () => {},
+    () => typeof navigator.share === "function",
+    () => false,
+  );
 
   const link = () => `${window.location.origin}/invite/${share.token}`;
   const message = () => `${ownerName} invited you to view their finances on NiHi. Open this link, sign in or sign up, and confirm to connect: ${link()}`;
