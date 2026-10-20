@@ -91,6 +91,48 @@ export type Database = {
           },
         ]
       }
+      Budget: {
+        Row: {
+          amount: number
+          categoryId: string
+          createdAt: string
+          currency: string
+          id: string
+          userId: string
+        }
+        Insert: {
+          amount: number
+          categoryId: string
+          createdAt?: string
+          currency: string
+          id?: string
+          userId: string
+        }
+        Update: {
+          amount?: number
+          categoryId?: string
+          createdAt?: string
+          currency?: string
+          id?: string
+          userId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Budget_categoryId_fkey"
+            columns: ["categoryId"]
+            isOneToOne: false
+            referencedRelation: "Category"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Budget_userId_fkey"
+            columns: ["userId"]
+            isOneToOne: false
+            referencedRelation: "User"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       Card: {
         Row: {
           accountId: string

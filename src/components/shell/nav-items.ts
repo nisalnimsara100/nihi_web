@@ -6,6 +6,7 @@ import {
   House,
   Shapes,
   Tag,
+  Target,
   Wallet,
 } from "@/components/icons";
 
@@ -15,6 +16,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Home", icon: House },
   { href: "/transactions", label: "Transactions", icon: ArrowsLeftRight },
   { href: "/statistics", label: "Statistics", icon: ChartBar },
+  { href: "/budgets", label: "Budgets", icon: Target },
   { href: "/accounts", label: "Wallet", icon: Wallet },
   { href: "/categories", label: "Categories", icon: Shapes },
   { href: "/tags", label: "Tags", icon: Tag },
@@ -23,7 +25,7 @@ export const NAV_ITEMS: NavItem[] = [
 
 /** Pages reachable from the mobile "Profile" tab. */
 export const MORE_ITEMS = NAV_ITEMS.filter((item) =>
-  ["/transactions", "/categories", "/tags", "/settings"].includes(item.href),
+  ["/transactions", "/budgets", "/categories", "/tags", "/settings"].includes(item.href),
 );
 
 export function isActive(pathname: string, href: string) {

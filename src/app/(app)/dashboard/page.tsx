@@ -25,7 +25,8 @@ import { Avatar } from "@/components/shell/user-menu";
 import { ButtonLink, Card, CardHeader, ColorDot, EmptyState, MaybeLink, PageSkeleton, SeeAll } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
 import { accountTypeLabel } from "@/lib/constants";
-import { getAccounts, getCategoryBreakdown, getRecentTransactions, getTotalsByCurrency } from "@/lib/data";
+import { budgetStatus } from "@/lib/budgets";
+import { getAccounts, getBudgetRows, getCategoryBreakdown, getRecentTransactions, getTotalsByCurrency } from "@/lib/data";
 import { currentMonthKey, formatMonth, monthRange } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/cn";
@@ -60,11 +61,12 @@ async function Dashboard() {
   const { start, end } = monthRange(month);
   const currency = user.defaultCurrency;
 
-  const [accounts, totals, breakdown, recent] = await Promise.all([
+  const [accounts, totals, breakdown, recent, budgetRows] = await Promise.all([
     getAccounts(user.id),
     getTotalsByCurrency(user.id, start, end),
     getCategoryBreakdown(user.id, "EXPENSE", currency, start, end),
     getRecentTransactions(user.id, 6),
+    getBudgetRows(user.id, currency, month),
   ]);
 
   // The total balance is money you have. Credit cards are debt to a bank, so they stay out of it
@@ -222,6 +224,36 @@ async function Dashboard() {
         </div>
 
         <div className="min-w-0 space-y-5 lg:col-span-2">
+          {budgetRows.some((r) => r.limit !== null) ? (
+            <Card>
+              <CardHeader title="Budgets" action={<SeeAll href="/budgets">All budgets</SeeAll>} />
+              <ul className="space-y-4 p-5">
+                {budgetRows
+                  .filter((r) => r.limit !== null)
+                  .slice(0, 3)
+                  .map((r) => {
+                    const status = budgetStatus(r.spent, r.limit!);
+                    return (
+                      <li key={r.category.id}>
+                        <div className="flex items-center justify-between gap-3 text-sm">
+                          <span className="min-w-0 truncate font-medium">{r.category.name}</span>
+                          <span className={cn("shrink-0 text-xs font-semibold tabular-nums", status.level === "over" ? "text-danger" : "text-ink-soft")}>
+                            {status.level === "over" ? `Over by ${formatMoney(-status.left, currency)}` : `${formatMoney(status.left, currency)} left`}
+                          </span>
+                        </div>
+                        <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-muted" aria-hidden>
+                          <div
+                            className={cn("h-full rounded-full", status.level === "over" ? "bg-danger" : status.level === "warn" ? "bg-warning" : "bg-primary")}
+                            style={{ width: `${Math.min(100, status.ratio * 100)}%` }}
+                          />
+                        </div>
+                      </li>
+                    );
+                  })}
+              </ul>
+            </Card>
+          ) : null}
+
           <Card>
             <CardHeader title="Spending this month" action={<SeeAll href="/statistics">Details</SeeAll>} />
             <div className="p-5">

@@ -193,3 +193,33 @@ export async function getTags(userId: string) {
 export function periodRange(period: "month" | "year", key: string) {
   return period === "year" ? yearRange(Number(key)) : monthRange(key);
 }
+
+export type BudgetRow = {
+  category: { id: string; name: string; color: string; icon: string };
+  budgetId: string | null;
+  limit: number | null;
+  spent: number;
+};
+
+/**
+ * Every expense category with its monthly limit (if set) and what was spent in that month,
+ * from accounts in `currency`. Categories with a budget come first, then ones with spending only.
+ */
+export async function getBudgetRows(userId: string, currency: string, month: MonthKey): Promise<BudgetRow[]> {
+  const { start, end } = monthRange(month);
+  const [categories, budgets, breakdown] = await Promise.all([
+    run(db().from("Category").select("id, name, color, icon").eq("userId", userId).eq("type", "EXPENSE").order("name")),
+    run(db().from("Budget").select("id, categoryId, amount").eq("userId", userId).eq("currency", currency)),
+    getCategoryBreakdown(userId, "EXPENSE", currency, start, end),
+  ]);
+  const limitOf = new Map(budgets.map((b) => [b.categoryId, b]));
+  const spentOf = new Map(breakdown.map((b) => [b.id, b.total]));
+  const rows = categories.map((category) => ({
+    category,
+    budgetId: limitOf.get(category.id)?.id ?? null,
+    limit: limitOf.get(category.id)?.amount ?? null,
+    spent: spentOf.get(category.id) ?? 0,
+  }));
+  const ratio = (r: BudgetRow) => (r.limit ? r.spent / r.limit : -1);
+  return rows.sort((a, b) => Number(b.limit !== null) - Number(a.limit !== null) || ratio(b) - ratio(a) || b.spent - a.spent);
+}

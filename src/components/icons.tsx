@@ -68,6 +68,7 @@ import {
   TShirtIcon,
   Tag01Icon,
   Tick02Icon,
+  Target01Icon,
   DragDropVerticalIcon,
   UnavailableIcon,
   Calendar03Icon,
@@ -163,6 +164,7 @@ export const Palette = icon(PaintBoardIcon, "Palette");
 export const PencilSimple = icon(PencilEdit02Icon, "PencilSimple");
 export const PiggyBank = icon(PiggyBankIcon, "PiggyBank");
 export const Prohibit = icon(UnavailableIcon, "Prohibit");
+export const Target = icon(Target01Icon, "Target");
 export const Pill = icon(Medicine02Icon, "Pill");
 export const Plus = icon(Add01Icon, "Plus");
 export const Receipt = icon(Invoice03Icon, "Receipt");
