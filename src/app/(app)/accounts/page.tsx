@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Plus, Wallet } from "@/components/icons";
-import { ButtonLink, Card, ColorDot, EmptyState, IconLink, PageHeader, PageSkeleton } from "@/components/ui";
+import { AccountCardFace } from "@/components/finance/account-card";
+import { ButtonLink, Card, EmptyState, IconLink, PageHeader, PageSkeleton } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { accountTypeLabel } from "@/lib/constants";
 import { getAccounts, type AccountWithBalance } from "@/lib/data";
@@ -19,15 +20,7 @@ export default function AccountsPage() {
   );
 }
 
-// Card faces cycle through blue, lavender and ink, like a stack of payment cards.
-const FACES = [
-  { card: "bg-hero text-white", soft: "text-white/75", mark: "text-white/10" },
-  { card: "bg-primary-soft text-on-primary-soft", soft: "text-on-primary-soft/75", mark: "text-on-primary-soft/10" },
-  { card: "bg-[#1d1f2e] text-white", soft: "text-white/65", mark: "text-white/[0.06]" },
-];
-
 function AccountCard({ account, index, stacked }: { account: AccountWithBalance; index: number; stacked: boolean }) {
-  const face = FACES[index % FACES.length];
   return (
     <Link
       href={`/accounts/${account.id}`}
@@ -38,39 +31,17 @@ function AccountCard({ account, index, stacked }: { account: AccountWithBalance;
       )}
       style={{ zIndex: index }}
     >
-      <div
-        className={cn(
-          "relative flex aspect-[1.7/1] flex-col justify-between overflow-hidden rounded-3xl p-5 shadow-[0_-6px_24px_rgb(20_21_28/0.14)] sm:shadow-lg sm:shadow-primary/10",
-          face.card,
-          account.archived && "opacity-60",
-        )}
-      >
-        <span
-          aria-hidden
-          className={cn(
-            "pointer-events-none absolute -right-4 -bottom-8 text-[7rem] leading-none font-black tracking-tighter uppercase italic select-none",
-            face.mark,
-          )}
-        >
-          NiHi
-        </span>
-        <div className="relative">
-          <div className="flex items-start justify-between gap-3">
-            <p className={cn("truncate text-sm font-semibold", face.soft)}>{account.name}</p>
-            <span className="flex shrink-0 items-center gap-1.5 text-xs font-semibold">
-              <ColorDot color={account.color} />
-              {account.currency}
-            </span>
-          </div>
-          <p className="mt-1 text-2xl font-extrabold tracking-tight tabular-nums sm:text-3xl">
-            {formatMoney(account.balance, account.currency)}
-          </p>
-        </div>
-        <p className={cn("relative text-xs font-semibold", face.soft)}>
-          {accountTypeLabel(account.type)}
-          {account.archived ? " · Archived" : ""}
-        </p>
-      </div>
+      <AccountCardFace
+        theme={account.theme}
+        type={account.type}
+        name={account.name}
+        balance={formatMoney(account.balance, account.currency)}
+        currency={account.currency}
+        color={account.color}
+        label={`${accountTypeLabel(account.type)}${account.archived ? " · Archived" : ""}`}
+        dimmed={account.archived}
+        className="shadow-[0_-6px_24px_rgb(20_21_28/0.14)] sm:shadow-lg sm:shadow-primary/10"
+      />
     </Link>
   );
 }

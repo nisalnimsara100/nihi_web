@@ -1,173 +1,174 @@
 import type { ComponentType } from "react";
-import type { Icon, IconProps } from "@phosphor-icons/react";
+import { HugeiconsIcon, type HugeiconsIconProps, type IconSvgElement } from "@hugeicons/react";
 import {
-  AirplaneIcon,
-  ArrowDownLeftIcon,
-  ArrowRightIcon,
-  ArrowUpRightIcon,
-  ArrowsLeftRightIcon,
-  BabyIcon,
+  Add01Icon,
+  Airplane01Icon,
+  Alert02Icon,
+  ArrowDataTransferHorizontalIcon,
+  ArrowDown01Icon,
+  ArrowDownLeft01Icon,
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  ArrowRight02Icon,
+  ArrowUpRight01Icon,
+  Baby01Icon,
   BankIcon,
-  BarbellIcon,
-  BasketIcon,
-  BeerSteinIcon,
-  BookOpenIcon,
-  BriefcaseIcon,
-  BuildingsIcon,
-  BusIcon,
-  CarIcon,
-  CaretDownIcon,
-  CaretLeftIcon,
-  CaretRightIcon,
-  ChartBarIcon,
-  ChartLineIcon,
-  CheckIcon,
-  CircleNotchIcon,
-  CoffeeIcon,
-  ConfettiIcon,
+  BeerIcon,
+  BookOpen01Icon,
+  Briefcase01Icon,
+  Building03Icon,
+  Bus01Icon,
+  Car01Icon,
+  Cash01Icon,
+  ChartColumnIcon,
+  ChartIncreaseIcon,
+  ChartLineData01Icon,
+  Coffee01Icon,
   CreditCardIcon,
-  DeviceMobileIcon,
-  DogIcon,
-  DotsThreeIcon,
-  DropIcon,
-  EyeIcon,
-  EyeSlashIcon,
-  FilmSlateIcon,
-  ForkKnifeIcon,
-  GameControllerIcon,
-  GasPumpIcon,
-  GearSixIcon,
+  Delete02Icon,
+  DropletIcon,
+  Dumbbell01Icon,
+  Film01Icon,
+  FilterHorizontalIcon,
+  FlashIcon,
+  FuelStationIcon,
+  GameController01Icon,
   GiftIcon,
   GitBranchIcon,
-  GlobeIcon,
-  GraduationCapIcon,
+  Globe02Icon,
   HandCoinsIcon,
-  HeartbeatIcon,
-  HouseIcon,
-  InvoiceIcon,
+  Home01Icon,
+  Invoice01Icon,
+  Invoice03Icon,
   LaptopIcon,
-  LightningIcon,
+  Loading03Icon,
   LockIcon,
-  MagnifyingGlassIcon,
-  MoneyIcon,
-  MusicNotesIcon,
-  PaletteIcon,
-  PencilSimpleIcon,
+  Logout03Icon,
+  Medicine02Icon,
+  MoreHorizontalIcon,
+  Mortarboard01Icon,
+  MusicNote03Icon,
+  PaintBoardIcon,
+  PartyIcon,
+  PawPrintIcon,
+  PencilEdit02Icon,
   PiggyBankIcon,
-  PillIcon,
-  PlusIcon,
-  ReceiptIcon,
-  ScissorsIcon,
+  Pulse01Icon,
+  Restaurant01Icon,
+  Scissor01Icon,
+  Search01Icon,
+  Settings02Icon,
   ShapesIcon,
   ShieldCheckIcon,
-  ShoppingBagIcon,
-  ShoppingCartIcon,
-  SignOutIcon,
-  SlidersHorizontalIcon,
-  StethoscopeIcon,
+  ShoppingBag01Icon,
+  ShoppingBasket01Icon,
+  ShoppingCart01Icon,
+  SmartPhone01Icon,
+  Stethoscope02Icon,
   TShirtIcon,
-  TagIcon,
-  TicketIcon,
-  TrainIcon,
-  TrashIcon,
+  Tag01Icon,
+  Tick02Icon,
+  Ticket01Icon,
+  Train01Icon,
   TreePalmIcon,
-  TrendUpIcon,
   UserCircleIcon,
-  WalletIcon,
-  WarningIcon,
-  WifiHighIcon,
-  WrenchIcon,
-} from "@phosphor-icons/react/ssr";
+  ViewIcon,
+  ViewOffSlashIcon,
+  Wallet01Icon,
+  Wifi01Icon,
+  Wrench01Icon,
+} from "@hugeicons/core-free-icons";
 
-export type { IconProps };
+export type IconProps = Omit<HugeiconsIconProps, "icon">;
 export type AppIcon = ComponentType<IconProps>;
 
 /**
- * Every icon in the app comes from here: Phosphor icons in the duotone weight
- * at 24px, unless a caller passes its own `weight` or `size`. The SSR builds
- * work in both server and client components.
+ * Every icon in the app comes from here: Hugeicons' free stroke-rounded set,
+ * soft line icons with rounded ends. They render at 24px with a 1.75 stroke
+ * unless a caller passes its own `size` or `strokeWidth`. The component uses
+ * no hooks, so it works in both server and client components.
  */
-function duotone(Base: Icon): AppIcon {
-  function DuotoneIcon(props: IconProps) {
-    return <Base weight="duotone" size={24} {...props} />;
+function icon(svg: IconSvgElement, name: string): AppIcon {
+  function AppIconComponent(props: IconProps) {
+    return <HugeiconsIcon icon={svg} size={24} strokeWidth={1.75} {...props} />;
   }
-  DuotoneIcon.displayName = Base.displayName;
-  return DuotoneIcon;
+  AppIconComponent.displayName = name;
+  return AppIconComponent;
 }
 
-export const Airplane = duotone(AirplaneIcon);
-export const ArrowDownLeft = duotone(ArrowDownLeftIcon);
-export const ArrowRight = duotone(ArrowRightIcon);
-export const ArrowUpRight = duotone(ArrowUpRightIcon);
-export const ArrowsLeftRight = duotone(ArrowsLeftRightIcon);
-export const Baby = duotone(BabyIcon);
-export const Bank = duotone(BankIcon);
-export const Barbell = duotone(BarbellIcon);
-export const Basket = duotone(BasketIcon);
-export const BeerStein = duotone(BeerSteinIcon);
-export const BookOpen = duotone(BookOpenIcon);
-export const Briefcase = duotone(BriefcaseIcon);
-export const Buildings = duotone(BuildingsIcon);
-export const Bus = duotone(BusIcon);
-export const Car = duotone(CarIcon);
-export const CaretDown = duotone(CaretDownIcon);
-export const CaretLeft = duotone(CaretLeftIcon);
-export const CaretRight = duotone(CaretRightIcon);
-export const ChartBar = duotone(ChartBarIcon);
-export const ChartLine = duotone(ChartLineIcon);
-export const Check = duotone(CheckIcon);
-export const CircleNotch = duotone(CircleNotchIcon);
-export const Coffee = duotone(CoffeeIcon);
-export const Confetti = duotone(ConfettiIcon);
-export const CreditCard = duotone(CreditCardIcon);
-export const DeviceMobile = duotone(DeviceMobileIcon);
-export const Dog = duotone(DogIcon);
-export const DotsThree = duotone(DotsThreeIcon);
-export const Drop = duotone(DropIcon);
-export const Eye = duotone(EyeIcon);
-export const EyeSlash = duotone(EyeSlashIcon);
-export const FilmSlate = duotone(FilmSlateIcon);
-export const ForkKnife = duotone(ForkKnifeIcon);
-export const GameController = duotone(GameControllerIcon);
-export const GasPump = duotone(GasPumpIcon);
-export const GearSix = duotone(GearSixIcon);
-export const Gift = duotone(GiftIcon);
-export const GitBranch = duotone(GitBranchIcon);
-export const Globe = duotone(GlobeIcon);
-export const GraduationCap = duotone(GraduationCapIcon);
-export const HandCoins = duotone(HandCoinsIcon);
-export const Heartbeat = duotone(HeartbeatIcon);
-export const House = duotone(HouseIcon);
-export const Invoice = duotone(InvoiceIcon);
-export const Laptop = duotone(LaptopIcon);
-export const Lightning = duotone(LightningIcon);
-export const Lock = duotone(LockIcon);
-export const MagnifyingGlass = duotone(MagnifyingGlassIcon);
-export const Money = duotone(MoneyIcon);
-export const MusicNotes = duotone(MusicNotesIcon);
-export const Palette = duotone(PaletteIcon);
-export const PencilSimple = duotone(PencilSimpleIcon);
-export const PiggyBank = duotone(PiggyBankIcon);
-export const Pill = duotone(PillIcon);
-export const Plus = duotone(PlusIcon);
-export const Receipt = duotone(ReceiptIcon);
-export const Scissors = duotone(ScissorsIcon);
-export const Shapes = duotone(ShapesIcon);
-export const ShieldCheck = duotone(ShieldCheckIcon);
-export const ShoppingBag = duotone(ShoppingBagIcon);
-export const ShoppingCart = duotone(ShoppingCartIcon);
-export const SignOut = duotone(SignOutIcon);
-export const SlidersHorizontal = duotone(SlidersHorizontalIcon);
-export const Stethoscope = duotone(StethoscopeIcon);
-export const TShirt = duotone(TShirtIcon);
-export const Tag = duotone(TagIcon);
-export const Ticket = duotone(TicketIcon);
-export const Train = duotone(TrainIcon);
-export const Trash = duotone(TrashIcon);
-export const TreePalm = duotone(TreePalmIcon);
-export const TrendUp = duotone(TrendUpIcon);
-export const UserCircle = duotone(UserCircleIcon);
-export const Wallet = duotone(WalletIcon);
-export const Warning = duotone(WarningIcon);
-export const WifiHigh = duotone(WifiHighIcon);
-export const Wrench = duotone(WrenchIcon);
+export const Airplane = icon(Airplane01Icon, "Airplane");
+export const ArrowDownLeft = icon(ArrowDownLeft01Icon, "ArrowDownLeft");
+export const ArrowRight = icon(ArrowRight02Icon, "ArrowRight");
+export const ArrowUpRight = icon(ArrowUpRight01Icon, "ArrowUpRight");
+export const ArrowsLeftRight = icon(ArrowDataTransferHorizontalIcon, "ArrowsLeftRight");
+export const Baby = icon(Baby01Icon, "Baby");
+export const Bank = icon(BankIcon, "Bank");
+export const Barbell = icon(Dumbbell01Icon, "Barbell");
+export const Basket = icon(ShoppingBasket01Icon, "Basket");
+export const BeerStein = icon(BeerIcon, "BeerStein");
+export const BookOpen = icon(BookOpen01Icon, "BookOpen");
+export const Briefcase = icon(Briefcase01Icon, "Briefcase");
+export const Buildings = icon(Building03Icon, "Buildings");
+export const Bus = icon(Bus01Icon, "Bus");
+export const Car = icon(Car01Icon, "Car");
+export const CaretDown = icon(ArrowDown01Icon, "CaretDown");
+export const CaretLeft = icon(ArrowLeft01Icon, "CaretLeft");
+export const CaretRight = icon(ArrowRight01Icon, "CaretRight");
+export const ChartBar = icon(ChartColumnIcon, "ChartBar");
+export const ChartLine = icon(ChartLineData01Icon, "ChartLine");
+export const Check = icon(Tick02Icon, "Check");
+export const CircleNotch = icon(Loading03Icon, "CircleNotch");
+export const Coffee = icon(Coffee01Icon, "Coffee");
+export const Confetti = icon(PartyIcon, "Confetti");
+export const CreditCard = icon(CreditCardIcon, "CreditCard");
+export const DeviceMobile = icon(SmartPhone01Icon, "DeviceMobile");
+export const Dog = icon(PawPrintIcon, "Dog");
+export const DotsThree = icon(MoreHorizontalIcon, "DotsThree");
+export const Drop = icon(DropletIcon, "Drop");
+export const Eye = icon(ViewIcon, "Eye");
+export const EyeSlash = icon(ViewOffSlashIcon, "EyeSlash");
+export const FilmSlate = icon(Film01Icon, "FilmSlate");
+export const ForkKnife = icon(Restaurant01Icon, "ForkKnife");
+export const GameController = icon(GameController01Icon, "GameController");
+export const GasPump = icon(FuelStationIcon, "GasPump");
+export const GearSix = icon(Settings02Icon, "GearSix");
+export const Gift = icon(GiftIcon, "Gift");
+export const GitBranch = icon(GitBranchIcon, "GitBranch");
+export const Globe = icon(Globe02Icon, "Globe");
+export const GraduationCap = icon(Mortarboard01Icon, "GraduationCap");
+export const HandCoins = icon(HandCoinsIcon, "HandCoins");
+export const Heartbeat = icon(Pulse01Icon, "Heartbeat");
+export const House = icon(Home01Icon, "House");
+export const Invoice = icon(Invoice01Icon, "Invoice");
+export const Laptop = icon(LaptopIcon, "Laptop");
+export const Lightning = icon(FlashIcon, "Lightning");
+export const Lock = icon(LockIcon, "Lock");
+export const MagnifyingGlass = icon(Search01Icon, "MagnifyingGlass");
+export const Money = icon(Cash01Icon, "Money");
+export const MusicNotes = icon(MusicNote03Icon, "MusicNotes");
+export const Palette = icon(PaintBoardIcon, "Palette");
+export const PencilSimple = icon(PencilEdit02Icon, "PencilSimple");
+export const PiggyBank = icon(PiggyBankIcon, "PiggyBank");
+export const Pill = icon(Medicine02Icon, "Pill");
+export const Plus = icon(Add01Icon, "Plus");
+export const Receipt = icon(Invoice03Icon, "Receipt");
+export const Scissors = icon(Scissor01Icon, "Scissors");
+export const Shapes = icon(ShapesIcon, "Shapes");
+export const ShieldCheck = icon(ShieldCheckIcon, "ShieldCheck");
+export const ShoppingBag = icon(ShoppingBag01Icon, "ShoppingBag");
+export const ShoppingCart = icon(ShoppingCart01Icon, "ShoppingCart");
+export const SignOut = icon(Logout03Icon, "SignOut");
+export const SlidersHorizontal = icon(FilterHorizontalIcon, "SlidersHorizontal");
+export const Stethoscope = icon(Stethoscope02Icon, "Stethoscope");
+export const TShirt = icon(TShirtIcon, "TShirt");
+export const Tag = icon(Tag01Icon, "Tag");
+export const Ticket = icon(Ticket01Icon, "Ticket");
+export const Train = icon(Train01Icon, "Train");
+export const Trash = icon(Delete02Icon, "Trash");
+export const TreePalm = icon(TreePalmIcon, "TreePalm");
+export const TrendUp = icon(ChartIncreaseIcon, "TrendUp");
+export const UserCircle = icon(UserCircleIcon, "UserCircle");
+export const Wallet = icon(Wallet01Icon, "Wallet");
+export const Warning = icon(Alert02Icon, "Warning");
+export const WifiHigh = icon(Wifi01Icon, "WifiHigh");
+export const Wrench = icon(Wrench01Icon, "Wrench");

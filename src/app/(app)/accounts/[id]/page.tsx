@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { PageHeader, Skeleton } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
-import { db, run } from "@/lib/db";
+import { getAccounts } from "@/lib/data";
 import { toInputAmount } from "@/lib/money";
 import { AccountForm } from "../account-form";
 
@@ -23,7 +23,7 @@ export default function EditAccountPage({ params }: { params: Promise<{ id: stri
 async function EditAccount({ params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
   const { id } = await params;
-  const account = await run(db().from("Account").select("*").eq("id", id).eq("userId", user.id).maybeSingle());
+  const account = (await getAccounts(user.id, { includeArchived: true })).find((a) => a.id === id);
   if (!account) {
     notFound();
   }
@@ -36,8 +36,10 @@ async function EditAccount({ params }: { params: Promise<{ id: string }> }) {
         currency: account.currency,
         initialBalance: toInputAmount(account.initialBalance),
         color: account.color,
+        theme: account.theme,
         note: account.note,
         archived: account.archived,
+        balanceOffset: account.balance - account.initialBalance,
       }}
     />
   );

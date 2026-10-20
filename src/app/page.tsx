@@ -304,7 +304,7 @@ export default function LandingPage() {
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-3 text-sm font-medium">
                     <span className="flex size-5 items-center justify-center rounded-full bg-primary text-on-primary">
-                      <Check className="size-3" weight="bold" aria-hidden />
+                      <Check className="size-3" strokeWidth={2.5} aria-hidden />
                     </span>
                     {item}
                   </li>

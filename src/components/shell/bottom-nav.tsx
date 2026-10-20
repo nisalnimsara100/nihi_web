@@ -45,10 +45,10 @@ export function BottomNavLinks({ pathname }: { pathname: string }) {
             >
               {isAdd ? (
                 <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-on-primary shadow-md shadow-primary/30">
-                  <Icon className="size-5" weight="bold" aria-hidden />
+                  <Icon className="size-5" strokeWidth={2.25} aria-hidden />
                 </span>
               ) : (
-                <Icon className="size-6" weight={active ? "fill" : "duotone"} aria-hidden />
+                <Icon className="size-6" strokeWidth={active ? 2.25 : 1.75} aria-hidden />
               )}
               {isAdd ? <span className="sr-only">{label}</span> : label}
             </Link>

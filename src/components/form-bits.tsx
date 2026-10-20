@@ -33,7 +33,15 @@ export function FormError({ state }: { state: ActionState }) {
   return <Alert>{state.error}</Alert>;
 }
 
-export function ColorPicker({ name = "color", defaultValue }: { name?: string; defaultValue?: string }) {
+export function ColorPicker({
+  name = "color",
+  defaultValue,
+  onChange,
+}: {
+  name?: string;
+  defaultValue?: string;
+  onChange?: (color: string) => void;
+}) {
   const initial = defaultValue ?? COLORS[0];
   return (
     <fieldset>
@@ -46,6 +54,7 @@ export function ColorPicker({ name = "color", defaultValue }: { name?: string; d
               name={name}
               value={color}
               defaultChecked={color.toLowerCase() === initial.toLowerCase()}
+              onChange={() => onChange?.(color)}
               className="peer sr-only"
             />
             <span className="sr-only">{color}</span>

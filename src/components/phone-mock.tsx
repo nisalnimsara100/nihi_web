@@ -137,7 +137,7 @@ export function PhoneMock({ className, insights = true }: { className?: string; 
                   label === "Add" ? (
                     <span key={label} className="flex items-center justify-center">
                       <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-on-primary shadow-md shadow-primary/30">
-                        <Icon className="size-4" weight="bold" />
+                        <Icon className="size-4" strokeWidth={2.25} />
                       </span>
                     </span>
                   ) : (
@@ -148,7 +148,7 @@ export function PhoneMock({ className, insights = true }: { className?: string; 
                         i === 0 ? "text-primary" : "text-ink-faint",
                       )}
                     >
-                      <Icon className="size-4" weight={i === 0 ? "fill" : "duotone"} />
+                      <Icon className="size-4" strokeWidth={i === 0 ? 2.25 : 1.75} />
                       {label}
                     </span>
                   ),

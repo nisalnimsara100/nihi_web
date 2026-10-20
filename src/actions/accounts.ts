@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireUserId } from "@/lib/auth";
+import { isValidTheme } from "@/lib/card-themes";
 import { CURRENCIES } from "@/lib/constants";
 import { db, isId, run } from "@/lib/db";
 import { parseAmount } from "@/lib/money";
@@ -26,6 +27,7 @@ const accountSchema = z.object({
       return amount;
     }),
   color: z.string().regex(/^#[0-9a-f]{6}$/i, "Pick a color"),
+  theme: z.string().refine(isValidTheme, "Pick a card theme"),
   note: z.string().trim().max(200).default(""),
   archived: z.literal("on").optional(),
 });

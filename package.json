@@ -12,7 +12,8 @@
     "db:types": "npx supabase gen types typescript --linked --schema public > src/lib/database.types.ts"
   },
   "dependencies": {
-    "@phosphor-icons/react": "^2.1.10",
+    "@hugeicons/core-free-icons": "^4.3.5",
+    "@hugeicons/react": "^1.1.10",
     "@supabase/supabase-js": "^2.118.0",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
