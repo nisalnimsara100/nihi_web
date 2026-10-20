@@ -7,8 +7,17 @@ import { useActionForm } from "@/components/use-action-form";
 import { ButtonLink, Card, Field, inputClass } from "@/components/ui";
 import { CURRENCIES } from "@/lib/constants";
 
+/** The other auth page, keeping where to return to and the invited email. */
+function authLink(path: string, next?: string, email?: string) {
+  const query = new URLSearchParams();
+  if (next) query.set("next", next);
+  if (email) query.set("email", email);
+  const qs = query.toString();
+  return qs ? `${path}?${qs}` : path;
+}
+
 /** `next` is the page to return to after signing in, e.g. an invite link. */
-export function LoginForm({ next }: { next?: string }) {
+export function LoginForm({ next, email }: { next?: string; email?: string }) {
   const { state, pending, onSubmit } = useActionForm(login);
   return (
     <Card className="p-6 sm:p-8">
@@ -17,7 +26,7 @@ export function LoginForm({ next }: { next?: string }) {
       <form onSubmit={onSubmit} className="mt-6 space-y-4" noValidate>
         {next ? <input type="hidden" name="next" value={next} /> : null}
         <Field label="Email" htmlFor="email" error={state.fieldErrors?.email}>
-          <input id="email" name="email" type="email" autoComplete="email" required className={inputClass} aria-invalid={!!state.fieldErrors?.email} />
+          <input id="email" name="email" type="email" autoComplete="email" defaultValue={email} required className={inputClass} aria-invalid={!!state.fieldErrors?.email} />
         </Field>
         <Field label="Password" htmlFor="password" error={state.fieldErrors?.password}>
           <input id="password" name="password" type="password" autoComplete="current-password" required className={inputClass} aria-invalid={!!state.fieldErrors?.password} />
@@ -27,7 +36,7 @@ export function LoginForm({ next }: { next?: string }) {
         </SubmitButton>
       </form>
       <div className="mt-3">
-        <ButtonLink href={next ? `/signup?next=${encodeURIComponent(next)}` : "/signup"} variant="soft" className="h-13 w-full text-base">
+        <ButtonLink href={authLink("/signup", next, email)} variant="soft" className="h-13 w-full text-base">
           Create account
         </ButtonLink>
       </div>
@@ -35,7 +44,7 @@ export function LoginForm({ next }: { next?: string }) {
   );
 }
 
-export function SignupForm({ next }: { next?: string }) {
+export function SignupForm({ next, email }: { next?: string; email?: string }) {
   const { state, pending, onSubmit } = useActionForm(signup);
   return (
     <Card className="p-6 sm:p-8">
@@ -47,7 +56,7 @@ export function SignupForm({ next }: { next?: string }) {
           <input id="name" name="name" autoComplete="name" required className={inputClass} aria-invalid={!!state.fieldErrors?.name} />
         </Field>
         <Field label="Email" htmlFor="email" error={state.fieldErrors?.email}>
-          <input id="email" name="email" type="email" autoComplete="email" required className={inputClass} aria-invalid={!!state.fieldErrors?.email} />
+          <input id="email" name="email" type="email" autoComplete="email" defaultValue={email} required className={inputClass} aria-invalid={!!state.fieldErrors?.email} />
         </Field>
         <Field label="Password" htmlFor="password" error={state.fieldErrors?.password} hint="At least 8 characters.">
           <input id="password" name="password" type="password" autoComplete="new-password" required className={inputClass} aria-invalid={!!state.fieldErrors?.password} />
@@ -67,7 +76,7 @@ export function SignupForm({ next }: { next?: string }) {
       </form>
       <p className="mt-6 text-center text-sm text-ink-soft">
         Already have an account?{" "}
-        <Link href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"} className="font-semibold text-primary hover:underline">
+        <Link href={authLink("/login", next, email)} className="font-semibold text-primary hover:underline">
           Log in
         </Link>
       </p>

@@ -68,7 +68,7 @@ The schema lives in `supabase/migrations`. To change it:
 
 ## Deploying
 
-Any host that runs Node works, including Vercel. Set `SUPABASE_URL`, `SUPABASE_SECRET_KEY` and `SESSION_SECRET`, then run `npm run build && npm start`. Apply new migrations with `npx supabase db push` before you deploy.
+Any host that runs Node works, including Vercel. Set `SUPABASE_URL`, `SUPABASE_SECRET_KEY` and `SESSION_SECRET`, then run `npm run build && npm start`. To email partner invites automatically, also set `SMTP_USER` and `SMTP_PASSWORD` (for Gmail, an app password; see `.env.example`); without them the invite page offers a copy link and a Send via Gmail button. Apply new migrations with `npx supabase db push` before you deploy.
 
 The app reads and writes through supabase-js on the server only, with the secret key. Every table has row level security turned on with no policies, and the SQL functions can only be called with the secret key, so the publishable (anon) key cannot read anything. Every query filters by the signed-in user.
 
