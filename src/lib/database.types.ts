@@ -64,6 +64,48 @@ export type Database = {
           },
         ]
       }
+      Card: {
+        Row: {
+          accountId: string
+          createdAt: string
+          id: string
+          last4: string
+          name: string
+          userId: string
+        }
+        Insert: {
+          accountId: string
+          createdAt?: string
+          id?: string
+          last4: string
+          name?: string
+          userId: string
+        }
+        Update: {
+          accountId?: string
+          createdAt?: string
+          id?: string
+          last4?: string
+          name?: string
+          userId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Card_accountId_fkey"
+            columns: ["accountId"]
+            isOneToOne: false
+            referencedRelation: "Account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Card_userId_fkey"
+            columns: ["userId"]
+            isOneToOne: false
+            referencedRelation: "User"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       Category: {
         Row: {
           color: string

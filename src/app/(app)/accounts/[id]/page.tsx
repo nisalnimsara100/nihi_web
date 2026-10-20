@@ -3,9 +3,10 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { PageHeader, Skeleton } from "@/components/ui";
 import { requireOwnView } from "@/lib/auth";
-import { getAccounts } from "@/lib/data";
+import { getAccounts, getCards } from "@/lib/data";
 import { toInputAmount } from "@/lib/money";
 import { AccountForm } from "../account-form";
+import { CardManager } from "../card-manager";
 
 export const metadata: Metadata = { title: "Edit account" };
 
@@ -23,24 +24,28 @@ export default function EditAccountPage({ params }: { params: Promise<{ id: stri
 async function EditAccount({ params }: { params: Promise<{ id: string }> }) {
   const { user } = await requireOwnView();
   const { id } = await params;
-  const account = (await getAccounts(user.id, { includeArchived: true })).find((a) => a.id === id);
+  const [accounts, cards] = await Promise.all([getAccounts(user.id, { includeArchived: true }), getCards(user.id, id)]);
+  const account = accounts.find((a) => a.id === id);
   if (!account) {
     notFound();
   }
   return (
-    <AccountForm
-      initial={{
-        id: account.id,
-        name: account.name,
-        type: account.type,
-        currency: account.currency,
-        initialBalance: toInputAmount(account.initialBalance),
-        color: account.color,
-        theme: account.theme,
-        note: account.note,
-        archived: account.archived,
-        balanceOffset: account.balance - account.initialBalance,
-      }}
-    />
+    <>
+      <AccountForm
+        initial={{
+          id: account.id,
+          name: account.name,
+          type: account.type,
+          currency: account.currency,
+          initialBalance: toInputAmount(account.initialBalance),
+          color: account.color,
+          theme: account.theme,
+          note: account.note,
+          archived: account.archived,
+          balanceOffset: account.balance - account.initialBalance,
+        }}
+      />
+      <CardManager accountId={account.id} cards={cards} />
+    </>
   );
 }
