@@ -59,6 +59,7 @@ async function NewTransaction({ searchParams }: { searchParams: SearchParams }) 
         toAccountId: accounts.find((a) => a.id !== accountId)?.id ?? "",
         categoryId: type === "TRANSFER" ? "" : (categories.find((c) => c.type === type)?.id ?? ""),
         date: todayDay(),
+        cardId: "",
         note: "",
         tagIds: [],
       }}

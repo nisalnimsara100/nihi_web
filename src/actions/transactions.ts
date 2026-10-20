@@ -31,6 +31,7 @@ const transactionSchema = z
     accountId: z.string().min(1, "Choose an account"),
     toAccountId: z.string().optional(),
     categoryId: z.string().optional(),
+    cardId: z.string().optional(),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a date"),
     note: z.string().trim().max(500).default(""),
   })
@@ -59,7 +60,7 @@ export async function saveTransaction(_prev: ActionState, formData: FormData): P
 
   // Every referenced record must belong to this user.
   const accountIds = [data.accountId, ...(isTransfer && data.toAccountId ? [data.toAccountId] : [])];
-  const [accounts, category, tags] = await Promise.all([
+  const [accounts, category, tags, card] = await Promise.all([
     run(db().from("Account").select("id, currency").in("id", accountIds).eq("userId", userId)),
     !isTransfer && data.categoryId
       ? run(
@@ -73,12 +74,20 @@ export async function saveTransaction(_prev: ActionState, formData: FormData): P
         )
       : null,
     tagIds.length > 0 ? run(db().from("Tag").select("id").in("id", tagIds).eq("userId", userId)) : [],
+    // The card must be one of this account's linked cards.
+    !isTransfer && data.cardId
+      ? run(db().from("Card").select("id").eq("id", data.cardId).eq("userId", userId).eq("accountId", data.accountId).maybeSingle())
+      : null,
   ]);
   if (accounts.length !== accountIds.length) {
     return { error: "Account not found." };
   }
   if (!isTransfer && data.categoryId && !category) {
     return { fieldErrors: { categoryId: ["Choose a category of the same type"] } };
+  }
+
+  if (!isTransfer && data.cardId && !card) {
+    return { fieldErrors: { cardId: ["Choose a card linked to this account"] } };
   }
 
   const amount = data.amount!;
@@ -104,6 +113,10 @@ export async function saveTransaction(_prev: ActionState, formData: FormData): P
   if (!savedId) {
     return { error: "Transaction not found." };
   }
+  // The card is saved right after, so the database function stays unchanged. Always written, to clear it on edit.
+  await run(
+    db().from("Transaction").update({ cardId: card?.id ?? null }).eq("id", savedId).eq("userId", userId).select("id"),
+  );
 
   const currency = accounts.find((a) => a.id === data.accountId)?.currency ?? "LKR";
   const kind = { INCOME: "Income", EXPENSE: "Expense", TRANSFER: "Transfer" }[data.type];

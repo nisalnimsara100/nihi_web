@@ -16,7 +16,7 @@ import { readScan } from "@/lib/scan/read";
 
 export type ScanAccount = { id: string; name: string; currency: string };
 /** A card the user linked to an account, by its last 4 digits. */
-export type ScanCard = { accountId: string; last4: string; name: string; network: string };
+export type ScanCard = { id: string; accountId: string; last4: string; name: string; network: string };
 export type ScanCategory = CategoryRef & { color: string };
 
 export type ScanResult = {
@@ -24,6 +24,8 @@ export type ScanResult = {
   amount: string;
   accountId: string;
   categoryId: string;
+  /** The linked card that paid, when the receipt's card number matched one. */
+  cardId: string;
   date: string;
   note: string;
 };
@@ -169,6 +171,7 @@ export function ScanSheet({
               date: parsed.date.day,
               accountId: account.id,
               categoryId: category.id,
+              cardId: account.card?.id ?? "",
             },
           };
         });
@@ -234,6 +237,9 @@ export function ScanSheet({
         const draft = { ...c.draft, ...patch };
         const edited = { ...c.edited };
         for (const key of Object.keys(patch) as Field[]) edited[key] = true;
+        // A card belongs to one account: keep it only while that account is selected.
+        if (patch.accountId && c.matchedCard && patch.accountId !== c.matchedCard.accountId) draft.cardId = "";
+        else if (patch.accountId && c.matchedCard) draft.cardId = c.matchedCard.id;
         let categoryConfidence = c.categoryConfidence;
         if (patch.type && patch.type !== c.draft.type && !c.edited.categoryId) {
           const guess = guessCategory(draft.note, patch.type, r.raw);

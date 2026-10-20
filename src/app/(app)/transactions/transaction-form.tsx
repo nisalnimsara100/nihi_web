@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { deleteTransaction, saveTransaction } from "@/actions/transactions";
 import { ScanSheet, type ScanCard, type ScanResult } from "@/components/finance/scan-sheet";
-import { Prohibit, Scan } from "@/components/icons";
+import { CreditCard, Prohibit, Scan } from "@/components/icons";
+import { cardLabel } from "@/lib/card-networks";
 import type { HistoryRow } from "@/lib/scan/categorize";
 import { DateField, DeleteButton, SubmitButton } from "@/components/form-bits";
 import { useActionForm } from "@/components/use-action-form";
@@ -27,6 +28,7 @@ export type TransactionFormValues = {
   accountId: string;
   toAccountId: string;
   categoryId: string;
+  cardId: string;
   date: string;
   note: string;
   tagIds: string[];
@@ -63,6 +65,7 @@ export function TransactionForm({
   const [tagIds, setTagIds] = useState(initial.tagIds);
   const [scanOpen, setScanOpen] = useState(false);
   const [date, setDate] = useState(initial.date);
+  const [cardId, setCardId] = useState(initial.cardId);
   // The amount, date and note inputs are uncontrolled; a new key remounts them with scanned values.
   const [scanned, setScanned] = useState({ n: 0, amount: initial.amount, date: initial.date, note: initial.note });
   const errors = state.fieldErrors ?? {};
@@ -70,6 +73,7 @@ export function TransactionForm({
   const isTransfer = type === "TRANSFER";
   const visibleCategories = categories.filter((c) => c.type === type);
   const from = accounts.find((a) => a.id === accountId);
+  const accountCards = cards.filter((c) => c.accountId === accountId);
   const to = accounts.find((a) => a.id === toAccountId);
   const crossCurrency = isTransfer && from && to && from.currency !== to.currency;
 
@@ -88,6 +92,7 @@ export function TransactionForm({
       setToAccountId(accounts.find((a) => a.id !== r.accountId)?.id ?? "");
     }
     setDate(r.date);
+    setCardId(r.cardId);
     setScanned((s) => ({ n: s.n + 1, amount: r.amount, date: r.date, note: r.note }));
     setScanOpen(false);
   }
@@ -162,7 +167,11 @@ export function TransactionForm({
               id="accountId"
               name="accountId"
               value={accountId}
-              onChange={(e) => setAccountId(e.target.value)}
+              onChange={(e) => {
+                setAccountId(e.target.value);
+                // A card belongs to one account, so it cannot stay selected on another.
+                if (!cards.some((c) => c.id === cardId && c.accountId === e.target.value)) setCardId("");
+              }}
               className={inputClass}
             >
               {accounts.map((a) => (
@@ -195,6 +204,32 @@ export function TransactionForm({
             </Field>
           ) : null}
         </div>
+
+        {!isTransfer && accountCards.length > 0 ? (
+          <fieldset>
+            <legend className="mb-2 block text-sm font-semibold text-ink">{type === "INCOME" ? "Received on card" : "Paid with card"}</legend>
+            <input type="hidden" name="cardId" value={cardId} />
+            <div role="radiogroup" aria-label="Card" className="flex flex-wrap gap-2">
+              {[{ id: "", label: "No card" }, ...accountCards.map((c) => ({ id: c.id, label: cardLabel(c.network, c.last4) }))].map((o) => (
+                <button
+                  key={o.id || "none"}
+                  type="button"
+                  role="radio"
+                  aria-checked={cardId === o.id}
+                  onClick={() => setCardId(o.id)}
+                  className={cn(
+                    "inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold tabular-nums transition-colors",
+                    cardId === o.id ? "bg-primary-soft text-on-primary-soft ring-2 ring-primary" : "bg-muted text-ink hover:bg-line",
+                  )}
+                >
+                  {o.id ? <CreditCard className="size-4" aria-hidden /> : null}
+                  {o.label}
+                </button>
+              ))}
+            </div>
+            {errors.cardId?.length ? <p className="mt-1.5 text-sm text-danger">{errors.cardId[0]}</p> : null}
+          </fieldset>
+        ) : null}
 
         {!isTransfer ? (
           <fieldset>

@@ -15,3 +15,15 @@ export const CARD_NETWORK_VALUES = CARD_NETWORKS.map((n) => n.value) as [CardNet
 export function networkLabel(network: string) {
   return CARD_NETWORKS.find((n) => n.value === network)?.label ?? "Card";
 }
+
+const SHORT: Record<string, string> = { VISA: "VISA", MASTERCARD: "MC", AMEX: "AMEX", UNIONPAY: "UP", JCB: "JCB", OTHER: "CARD" };
+
+/** Short badge text for tight spaces: "VISA", "MC", "AMEX". */
+export function networkShort(network: string) {
+  return SHORT[network] ?? "CARD";
+}
+
+/** "Visa •••• 8663" */
+export function cardLabel(network: string, last4: string) {
+  return `${networkLabel(network)} •••• ${last4}`;
+}
