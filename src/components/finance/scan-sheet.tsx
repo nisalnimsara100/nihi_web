@@ -112,6 +112,8 @@ export function ScanSheet({
   const [review, setReview] = useState<Review | null>(null);
   const [pick, setPick] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [viewing, setViewing] = useState(false);
+  const [zoomed, setZoomed] = useState(false);
   const runId = useRef(0);
 
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
@@ -194,11 +196,14 @@ export function ScanSheet({
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key !== "Escape") return;
+      // Escape closes the full-size image first, then the sheet.
+      if (viewing) setViewing(false);
+      else onClose();
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, viewing]);
 
   function choose(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -210,6 +215,7 @@ export function ScanSheet({
     runId.current++;
     setReview(null);
     setPreview(null);
+    setViewing(false);
     setBusy("idle");
   }
 
@@ -265,7 +271,7 @@ export function ScanSheet({
           if (file) void handleFile(file);
         }}
         className={cn(
-          "max-h-[92dvh] w-full overflow-y-auto rounded-t-3xl bg-surface p-5 shadow-xl sm:max-w-lg sm:rounded-3xl",
+          "max-h-[92dvh] w-full overflow-x-hidden overflow-y-auto overscroll-contain rounded-t-3xl [&_input]:min-w-0 [&_select]:min-w-0 bg-surface p-5 shadow-xl sm:max-w-lg sm:rounded-3xl",
           dragging && "ring-4 ring-primary/40",
         )}
       >
@@ -296,8 +302,16 @@ export function ScanSheet({
         ) : null}
 
         {preview ? (
-          // eslint-disable-next-line @next/next/no-img-element -- local blob preview, nothing to optimise
-          <img src={preview} alt="Selected screenshot" className="mx-auto mb-4 max-h-40 rounded-2xl object-contain" />
+          <button
+            type="button"
+            onClick={() => { setZoomed(false); setViewing(true); }}
+            aria-label="View the full image"
+            className="group relative mx-auto mb-4 block overflow-hidden rounded-2xl"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- local blob preview, nothing to optimise */}
+            <img src={preview} alt="Selected screenshot" className="max-h-40 max-w-full object-contain" />
+            <span className="absolute inset-x-0 bottom-0 bg-black/55 py-1 text-center text-xs font-semibold text-white">Tap to view</span>
+          </button>
         ) : null}
 
         {busy !== "idle" ? (
@@ -419,6 +433,39 @@ export function ScanSheet({
           </div>
         ) : null}
       </div>
+
+      {viewing && preview ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Full image"
+          onClick={(e) => { e.stopPropagation(); setViewing(false); }}
+          className="fixed inset-0 z-[60] flex flex-col bg-black/90"
+        >
+          <div className="flex items-center justify-between px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-2 text-white">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setZoomed((z) => !z); }}
+              className="h-9 rounded-full bg-white/15 px-4 text-sm font-semibold"
+            >
+              {zoomed ? "Fit to screen" : "Zoom in"}
+            </button>
+            <button type="button" aria-label="Close image" onClick={() => setViewing(false)} className="inline-flex size-9 items-center justify-center rounded-full bg-white/15">
+              <X className="size-5" />
+            </button>
+          </div>
+          <div className="flex min-h-0 flex-1 overflow-auto p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            {/* eslint-disable-next-line @next/next/no-img-element -- local blob preview, nothing to optimise */}
+            <img
+              src={preview}
+              alt="Selected screenshot, full size"
+              onClick={(e) => { e.stopPropagation(); setZoomed((z) => !z); }}
+              className={zoomed ? "m-auto max-w-none cursor-zoom-out" : "m-auto max-h-full max-w-full cursor-zoom-in object-contain"}
+              style={zoomed ? { width: "220%" } : undefined}
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

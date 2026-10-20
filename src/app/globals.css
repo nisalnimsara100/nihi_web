@@ -225,3 +225,23 @@ input[type="number"]::-webkit-outer-spin-button {
     animation: fx-blink 1s steps(1) infinite;
   }
 }
+
+/* iOS Safari draws date inputs with a fixed intrinsic width and top-aligned text, which
+   made forms scroll sideways and the value sit off-centre. Make them behave like text inputs. */
+input[type="date"],
+input[type="time"],
+input[type="month"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value {
+  text-align: left;
+  min-height: 1.5em;
+  margin: 0;
+}
