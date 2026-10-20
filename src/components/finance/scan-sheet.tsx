@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { notify } from "@/components/toast";
+import { DateField } from "@/components/form-bits";
 import { Button, buttonClass, inputClass } from "@/components/ui";
 import { Camera, CircleNotch, ImageSquare, X } from "@/components/icons";
 import { cn } from "@/lib/cn";
@@ -389,7 +390,7 @@ export function ScanSheet({
             </FieldRow>
 
             <FieldRow label="Date" htmlFor="scan-date" level={current.parsed.date.confidence} edited={current.edited.date}>
-              <input id="scan-date" type="date" value={draft.date} onChange={(e) => edit({ date: e.target.value })} className={inputClass} />
+              <DateField id="scan-date" name="scan-date" value={draft.date} onChange={(day) => edit({ date: day })} />
             </FieldRow>
 
             <FieldRow label="Account" htmlFor="scan-account" level={currencyMismatch ? "low" : current.accountConfidence} edited={current.edited.accountId}>

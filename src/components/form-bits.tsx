@@ -2,10 +2,11 @@
 
 import { useState, useTransition, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
-import { CircleNotch, Trash } from "@/components/icons";
+import { Calendar, CircleNotch, Trash } from "@/components/icons";
 import type { ActionState } from "@/actions/state";
 import { CATEGORY_ICON_NAMES, CategoryIcon, DEFAULT_CATEGORY_ICON, isCategoryIcon } from "@/lib/category-icons";
 import { COLORS } from "@/lib/constants";
+import { dateToDay, dayToDate, todayDay } from "@/lib/dates";
 import { cn } from "@/lib/cn";
 import { notify } from "./toast";
 import { Button } from "./ui";
@@ -133,5 +134,81 @@ export function IconPicker({ name = "icon", defaultValue }: { name?: string; def
         ))}
       </div>
     </fieldset>
+  );
+}
+
+const DAY_LABEL = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+
+/**
+ * A date field that reads like a sentence ("Mon, 19 Oct 2026") with a calendar icon at the
+ * right and Today / Yesterday shortcuts. The browser's own date input sits invisibly on top,
+ * so tapping anywhere opens the native picker and the form still submits `name` as YYYY-MM-DD.
+ */
+export function DateField({
+  id,
+  name,
+  value,
+  onChange,
+  invalid,
+}: {
+  id: string;
+  name: string;
+  value: string;
+  onChange: (day: string) => void;
+  invalid?: boolean;
+}) {
+  const today = todayDay();
+  const yesterday = dateToDay(new Date(dayToDate(today).getTime() - 86_400_000));
+  const valid = /^\d{4}-\d{2}-\d{2}$/.test(value);
+
+  return (
+    <div className="space-y-2">
+      <div
+        className={cn(
+          "relative flex h-12 items-center justify-between gap-3 rounded-2xl border border-transparent bg-muted px-4 text-base text-ink sm:text-sm",
+          "focus-within:border-primary focus-within:bg-surface focus-within:ring-4 focus-within:ring-primary/15",
+          invalid && "border-danger",
+        )}
+      >
+        <span className={cn("truncate", !valid && "text-ink-faint")}>{valid ? DAY_LABEL.format(dayToDate(value)) : "Pick a date"}</span>
+        <Calendar className="size-5 shrink-0 text-ink-soft" aria-hidden />
+        <input
+          id={id}
+          name={name}
+          type="date"
+          required
+          value={value}
+          aria-invalid={invalid}
+          onChange={(e) => onChange(e.target.value)}
+          onClick={(e) => {
+            try {
+              e.currentTarget.showPicker();
+            } catch {
+              // Older browsers open their picker from the tap itself.
+            }
+          }}
+          className="absolute inset-0 size-full cursor-pointer opacity-0"
+        />
+      </div>
+      <div className="flex gap-2">
+        {[
+          { label: "Today", day: today },
+          { label: "Yesterday", day: yesterday },
+        ].map((chip) => (
+          <button
+            key={chip.label}
+            type="button"
+            aria-pressed={value === chip.day}
+            onClick={() => onChange(chip.day)}
+            className={cn(
+              "h-8 rounded-full px-3.5 text-xs font-semibold transition-colors",
+              value === chip.day ? "bg-primary-soft text-on-primary-soft ring-1 ring-primary/40" : "bg-muted text-ink-soft hover:bg-line hover:text-ink",
+            )}
+          >
+            {chip.label}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }

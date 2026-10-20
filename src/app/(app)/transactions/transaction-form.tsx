@@ -6,7 +6,7 @@ import { deleteTransaction, saveTransaction } from "@/actions/transactions";
 import { ScanSheet, type ScanCard, type ScanResult } from "@/components/finance/scan-sheet";
 import { Scan } from "@/components/icons";
 import type { HistoryRow } from "@/lib/scan/categorize";
-import { DeleteButton, SubmitButton } from "@/components/form-bits";
+import { DateField, DeleteButton, SubmitButton } from "@/components/form-bits";
 import { useActionForm } from "@/components/use-action-form";
 import { buttonClass, Card, Field, inputClass } from "@/components/ui";
 import type { Enums } from "@/lib/database.types";
@@ -62,6 +62,7 @@ export function TransactionForm({
   const [categoryId, setCategoryId] = useState(initial.categoryId);
   const [tagIds, setTagIds] = useState(initial.tagIds);
   const [scanOpen, setScanOpen] = useState(false);
+  const [date, setDate] = useState(initial.date);
   // The amount, date and note inputs are uncontrolled; a new key remounts them with scanned values.
   const [scanned, setScanned] = useState({ n: 0, amount: initial.amount, date: initial.date, note: initial.note });
   const errors = state.fieldErrors ?? {};
@@ -86,6 +87,7 @@ export function TransactionForm({
     if (r.type === "TRANSFER" && (!toAccountId || toAccountId === r.accountId)) {
       setToAccountId(accounts.find((a) => a.id !== r.accountId)?.id ?? "");
     }
+    setDate(r.date);
     setScanned((s) => ({ n: s.n + 1, amount: r.amount, date: r.date, note: r.note }));
     setScanOpen(false);
   }
@@ -254,7 +256,7 @@ export function TransactionForm({
         ) : null}
 
         <Field label="Date" htmlFor="date" error={errors.date}>
-          <input key={`date-${scanned.n}`} id="date" name="date" type="date" required defaultValue={scanned.date} className={inputClass} />
+          <DateField id="date" name="date" value={date} onChange={setDate} invalid={!!errors.date} />
         </Field>
 
         {tags.length > 0 ? (
