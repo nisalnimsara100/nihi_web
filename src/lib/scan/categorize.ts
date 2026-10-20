@@ -17,16 +17,16 @@ export function words(text: string) {
 
 // Keyword -> words that may appear in the category name.
 const KEYWORDS: [RegExp, string[]][] = [
-  [/keells|cargills|arpico|supermarket|grocer|mart|food\s*city|laugfs\s*super/i, ["grocer", "food", "shopping"]],
-  [/restaurant|cafe|coffee|pizza|burger|kfc|mcdonald|dominos|bakery|hotel|uber\s*eats|pickme\s*food/i, ["dining", "food", "restaurant", "eating"]],
-  [/fuel|petrol|diesel|ceypetco|ioc|lanka\s*ioc|shell/i, ["fuel", "transport", "vehicle", "car"]],
-  [/uber|pickme|taxi|bus|train|toll|parking/i, ["transport", "taxi", "travel"]],
-  [/electricity|ceb|leco|water\s*board|nwsdb|dialog|mobitel|slt|airtel|hutch|internet|broadband|bill/i, ["bill", "utilit"]],
-  [/pharmacy|hospital|clinic|medic|health|channel|lab/i, ["health", "medic", "pharm"]],
-  [/cinema|netflix|spotify|movie|concert|game/i, ["entertain", "fun", "subscription"]],
+  [/pharmacy|hospital|clinic|medic|health|channeling/i, ["health", "medic", "pharm"]],
+  [/keells|cargills|arpico|supermarket|grocer|\bmart\b|food\s*city|laugfs\s*super/i, ["grocer", "food", "shopping"]],
+  [/restaurant|cafe|coffee|pizza|burger|kfc|mcdonald|dominos|bakery|bakers|\bfood\b|hotel|uber\s*eats|pickme\s*food/i, ["dining", "food", "restaurant", "eating"]],
+  [/fuel|petrol|diesel|ceypetco|\bioc\b|\bshell\b/i, ["fuel", "transport", "vehicle", "car"]],
+  [/uber|pickme|taxi|\bbus\b|express|train|toll|parking|ride/i, ["transport", "taxi", "travel"]],
+  [/electricity|\bceb\b|\bleco\b|water\s*board|nwsdb|dialog|mobitel|\bslt\b|airtel|hutch|internet|broadband/i, ["bill", "utilit"]],
+  [/cinema|netflix|spotify|movie|concert|\bgame/i, ["entertain", "fun", "subscription"]],
   [/salary|payroll|wages/i, ["salary", "income", "wage"]],
-  [/rent|landlord/i, ["rent", "housing", "home"]],
-  [/school|tuition|university|course|book/i, ["education", "school"]],
+  [/\brent\b|landlord/i, ["rent", "housing", "home"]],
+  [/school|tuition|university|\bcourse\b/i, ["education", "school"]],
 ];
 
 export function suggestCategory(
@@ -34,10 +34,12 @@ export function suggestCategory(
   history: HistoryRow[],
   categories: CategoryRef[],
   type: "INCOME" | "EXPENSE" | "TRANSFER",
+  /** The rest of the scanned text, only used for the keyword fallback ("Panadol", "fare"). */
+  context = "",
 ): { categoryId: string; source: "history" | "keyword" } | null {
   if (type === "TRANSFER") return null;
   const usable = categories.filter((c) => c.type === type);
-  if (usable.length === 0 || !merchant.trim()) return null;
+  if (usable.length === 0 || !(merchant.trim() || context.trim())) return null;
   const valid = new Set(usable.map((c) => c.id));
 
   const mine = new Set(words(merchant));
@@ -52,10 +54,17 @@ export function suggestCategory(
     if (best) return { categoryId: best[0], source: "history" };
   }
 
-  for (const [pattern, names] of KEYWORDS) {
-    if (!pattern.test(merchant)) continue;
-    const hit = usable.find((c) => names.some((n) => c.name.toLowerCase().includes(n)));
-    if (hit) return { categoryId: hit.id, source: "keyword" };
+  // Merchant text is a stronger signal than the surrounding text, so try it first.
+  for (const haystack of [merchant, context]) {
+    for (const [pattern, names] of KEYWORDS) {
+      if (!pattern.test(haystack)) continue;
+      // Try the names in order of preference, so "grocer" beats "food" even when
+      // "Food & Dining" comes first in the user's list.
+      for (const name of names) {
+        const hit = usable.find((c) => c.name.toLowerCase().includes(name));
+        if (hit) return { categoryId: hit.id, source: "keyword" };
+      }
+    }
   }
   return null;
 }

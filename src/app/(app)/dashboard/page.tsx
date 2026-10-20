@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import {
@@ -14,6 +14,7 @@ import {
   Wallet,
   Warning,
 } from "@/components/icons";
+import { StatusBarTint } from "@/components/shell/status-bar-tint";
 import { BalanceCard } from "@/components/finance/balance-card";
 import { CategoryBars } from "@/components/finance/category-bars";
 import { Greeting } from "@/components/finance/greeting";
@@ -26,6 +27,10 @@ import { getAccounts, getCategoryBreakdown, getRecentTransactions, getTotalsByCu
 import { currentMonthKey, formatMonth, monthRange } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/cn";
+
+// The blue header reaches the top edge, so the phone's status bar takes its colour
+// (the middle of the header gradient) instead of the white used elsewhere.
+export const viewport: Viewport = { themeColor: "#5a5efc" };
 
 export const metadata: Metadata = { title: "Home" };
 
@@ -72,6 +77,7 @@ async function Dashboard() {
   return (
     <>
       {/* Full-bleed on phones, a rounded card from sm up. */}
+      <StatusBarTint />
       <section className="bg-hero -mx-4 -mt-[max(1.25rem,env(safe-area-inset-top))] rounded-b-[32px] px-5 pt-[calc(max(1.25rem,env(safe-area-inset-top))+0.5rem)] pb-6 text-white shadow-xl shadow-primary/20 sm:mx-0 sm:mt-0 sm:rounded-[32px] sm:p-7">
         <div className="flex items-center justify-between gap-3">
           <Avatar name={user.name} className="size-11 bg-white/20 text-white ring-2 ring-white/30" />
