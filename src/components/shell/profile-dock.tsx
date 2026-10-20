@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Eye, X } from "@/components/icons";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowsLeftRight, Check, Eye } from "@/components/icons";
 import { cn } from "@/lib/cn";
 
 export type DockProfile = { id: string; name: string };
@@ -15,15 +16,11 @@ function initials(name: string) {
     .join("");
 }
 
-function Face({ name, active, size = "md" }: { name: string; active?: boolean; size?: "md" | "lg" }) {
+function Face({ name, className }: { name: string; className?: string }) {
   return (
     <span
       aria-hidden
-      className={cn(
-        "flex shrink-0 items-center justify-center rounded-full bg-primary-soft font-semibold text-on-primary-soft ring-2 ring-surface",
-        size === "lg" ? "size-12 text-base" : "size-9 text-xs",
-        active && "bg-primary text-on-primary",
-      )}
+      className={cn("flex shrink-0 items-center justify-center rounded-full font-semibold", className)}
     >
       {initials(name) || "?"}
     </span>
@@ -31,10 +28,10 @@ function Face({ name, active, size = "md" }: { name: string; active?: boolean; s
 }
 
 /**
- * Profile switcher. A small floating pill above the bottom menu shows who you are looking at, as
- * overlapping avatars; tapping it opens a sheet to switch between your own account and the accounts
- * shared with you. It takes no space in the page, and while you view someone else it turns amber and
- * says "read-only" so you never mistake it for your own data.
+ * Profile switcher as a small floating bubble above the bottom menu. It shows the face of whoever
+ * you are looking at; tapping it fans the other profiles out above it, and tapping one switches.
+ * While you view someone else the bubble gets an amber ring, an eye badge and a "Read-only" tag, so
+ * it can't be mistaken for your own data. It takes no room in the page.
  */
 export function ProfileDock({
   me,
@@ -51,7 +48,8 @@ export function ProfileDock({
 }) {
   const [open, setOpen] = useState(false);
   const viewing = viewingId ? shared.find((s) => s.id === viewingId) : undefined;
-  const everyone = [me, ...shared];
+  const current = viewing ?? me;
+  const options = [me, ...shared];
 
   useEffect(() => {
     if (!open) return;
@@ -62,78 +60,76 @@ export function ProfileDock({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label={viewing ? `Viewing ${viewing.name}'s finances. Switch profile` : "Switch profile"}
-        className={cn(
-          "fixed bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] left-4 z-30 flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 shadow-[0_8px_24px_rgb(20_21_28/0.14)] transition-colors lg:bottom-6 lg:left-[17.5rem]",
-          viewing ? "border-warning bg-warning-soft text-ink" : "border-line bg-surface text-ink",
-        )}
-      >
-        <span className="flex -space-x-2.5">
-          {(viewing ? [viewing, me] : [me, ...shared.slice(0, 2)]).map((p, i) => (
-            <Face key={p.id} name={p.name} active={i === 0} />
-          ))}
-        </span>
-        <span className="text-sm font-semibold">{viewing ? `${viewing.name.split(/\s+/)[0]} · read-only` : "Profiles"}</span>
-      </button>
+      {open ? <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} aria-hidden /> : null}
 
-      {open ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center sm:p-4" onClick={() => setOpen(false)}>
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="profile-sheet-title"
-            onClick={(e) => e.stopPropagation()}
-            className="w-full rounded-t-3xl bg-surface p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-xl sm:max-w-sm sm:rounded-3xl"
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <h2 id="profile-sheet-title" className="text-lg font-bold text-ink">
-                Whose finances?
-              </h2>
-              <button type="button" aria-label="Close" onClick={() => setOpen(false)} className="inline-flex size-9 items-center justify-center rounded-full hover:bg-muted">
-                <X className="size-5" />
-              </button>
-            </div>
-
-            <form action={switchTo} className="space-y-2">
-              {everyone.map((p) => {
+      <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] left-4 z-30 flex flex-col items-start gap-2 lg:bottom-6 lg:left-[17.5rem]">
+        <AnimatePresence>
+          {open ? (
+            <form action={switchTo} onSubmit={() => setOpen(false)} className="flex flex-col items-start gap-2" aria-label="Switch profile">
+              {[...options].reverse().map((p, i) => {
                 const isMe = p.id === me.id;
                 const active = isMe ? !viewing : viewing?.id === p.id;
                 return (
-                  <button
+                  <motion.button
                     key={p.id}
                     type="submit"
                     name="ownerId"
                     value={isMe ? "me" : p.id}
                     aria-pressed={active}
+                    initial={{ opacity: 0, y: 14, scale: 0.85 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.9, transition: { duration: 0.12 } }}
+                    transition={{ type: "spring", stiffness: 520, damping: 30, delay: i * 0.04 }}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-2xl p-3 text-left transition-colors",
-                      active ? "bg-primary-soft ring-2 ring-primary" : "bg-muted hover:bg-line",
+                      "flex items-center gap-2 rounded-full border bg-surface py-1 pr-4 pl-1 text-left shadow-[0_6px_20px_rgb(20_21_28/0.14)]",
+                      active ? "border-primary" : "border-line",
                     )}
                   >
-                    <Face name={p.name} active={active} size="lg" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-base font-semibold text-ink">{isMe ? "My account" : p.name}</span>
-                      <span className="flex items-center gap-1 text-xs text-ink-soft">
-                        {isMe ? (
-                          "You can add and change things"
-                        ) : (
-                          <>
-                            <Eye className="size-3.5" aria-hidden /> Shared with you · read-only
-                          </>
-                        )}
+                    <Face name={p.name} className={cn("size-9 text-xs", isMe ? "bg-primary-soft text-on-primary-soft" : "bg-warning-soft text-ink")} />
+                    <span className="leading-tight">
+                      <span className="block text-sm font-semibold text-ink">{isMe ? "My account" : p.name}</span>
+                      <span className="flex items-center gap-1 text-[11px] text-ink-soft">
+                        {isMe ? "Edit" : "Read-only"}
+                        {active ? <Check className="size-3 text-primary" aria-hidden /> : null}
                       </span>
                     </span>
-                    {active ? <Check className="size-5 shrink-0 text-primary" aria-hidden /> : null}
-                  </button>
+                  </motion.button>
                 );
               })}
             </form>
-          </div>
+          ) : null}
+        </AnimatePresence>
+
+        <div className="flex items-center gap-2">
+          <motion.button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            whileTap={{ scale: 0.92 }}
+            aria-expanded={open}
+            aria-label={viewing ? `Viewing ${viewing.name}'s finances, read-only. Switch profile` : "Switch profile"}
+            className={cn(
+              "relative flex size-11 items-center justify-center rounded-full bg-surface shadow-[0_6px_20px_rgb(20_21_28/0.18)] ring-2",
+              viewing ? "ring-warning" : "ring-primary/50",
+            )}
+          >
+            <Face name={current.name} className={cn("size-9 text-xs", viewing ? "bg-warning-soft text-ink" : "bg-primary text-on-primary")} />
+            <span
+              aria-hidden
+              className={cn(
+                "absolute -right-0.5 -bottom-0.5 flex size-5 items-center justify-center rounded-full ring-2 ring-surface",
+                viewing ? "bg-warning text-ink" : "bg-primary text-on-primary",
+              )}
+            >
+              {viewing ? <Eye className="size-3" /> : <ArrowsLeftRight className="size-3" />}
+            </span>
+          </motion.button>
+          {viewing && !open ? (
+            <span className="rounded-full bg-warning-soft px-2.5 py-1 text-[11px] font-semibold text-ink shadow-sm">
+              {viewing.name.split(/\s+/)[0]} · read-only
+            </span>
+          ) : null}
         </div>
-      ) : null}
+      </div>
     </>
   );
 }
