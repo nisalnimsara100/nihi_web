@@ -5,7 +5,7 @@ import { useState } from "react";
 import { deleteAccount, saveAccount } from "@/actions/accounts";
 import { AccountCardFace } from "@/components/finance/account-card";
 import { CardThemePicker } from "@/components/finance/card-theme-picker";
-import { ColorPicker, DeleteButton, FormError, SubmitButton } from "@/components/form-bits";
+import { ColorPicker, DeleteButton, SubmitButton } from "@/components/form-bits";
 import { useActionForm } from "@/components/use-action-form";
 import { buttonClass, Card, Field, inputClass } from "@/components/ui";
 import type { Enums } from "@/lib/database.types";
@@ -49,7 +49,6 @@ export function AccountForm({ initial }: { initial: AccountFormValues }) {
     <Card className="p-4 sm:p-6">
       <form onSubmit={onSubmit} className="space-y-5" noValidate>
         {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
-        <FormError state={state} />
 
         <div className="rounded-3xl bg-muted p-4 sm:p-6">
           <AccountCardFace

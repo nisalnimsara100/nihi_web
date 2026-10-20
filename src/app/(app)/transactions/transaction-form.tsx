@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { deleteTransaction, saveTransaction } from "@/actions/transactions";
-import { DeleteButton, FormError, SubmitButton } from "@/components/form-bits";
+import { DeleteButton, SubmitButton } from "@/components/form-bits";
 import { useActionForm } from "@/components/use-action-form";
 import { buttonClass, Card, Field, inputClass } from "@/components/ui";
 import type { Enums } from "@/lib/database.types";
@@ -100,7 +100,6 @@ export function TransactionForm({
           ))}
         </div>
 
-        <FormError state={state} />
 
         <Field label={crossCurrency ? `Amount sent (${from.currency})` : "Amount"} htmlFor="amount" error={errors.amount}>
           <div className="relative">

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { invitePartner, leaveShare, removeShare, viewAs } from "@/actions/sharing";
-import { DeleteButton, FormError, SubmitButton } from "@/components/form-bits";
+import { DeleteButton, SubmitButton } from "@/components/form-bits";
+import { notify } from "@/components/toast";
 import { useActionForm } from "@/components/use-action-form";
 import { Button, Card, CardHeader, Field, inputClass } from "@/components/ui";
 
@@ -25,7 +26,6 @@ export function PartnerSharing({ sent, received }: { sent: SentShare[]; received
             invited email to accept it.
           </p>
           <form ref={formRef} onSubmit={onSubmit} className="mt-3 space-y-3" noValidate>
-            <FormError state={state} />
             <Field label="Partner's email" htmlFor="partner-email" error={errors.email}>
               <input
                 id="partner-email"
@@ -100,8 +100,9 @@ function CopyInviteLink({ token }: { token: string }) {
       await navigator.clipboard.writeText(`${window.location.origin}/invite/${token}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      notify.success("Invite link copied", "Send it to your partner.");
     } catch {
-      // Clipboard can be blocked; the link stays reachable by tapping Create invite again.
+      notify.error("Couldn't copy the link", "Your browser blocked clipboard access.");
     }
   }
 

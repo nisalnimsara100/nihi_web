@@ -2,6 +2,7 @@
 
 import { startTransition, useActionState, useEffect, useRef, type FormEvent } from "react";
 import type { ActionState } from "@/actions/state";
+import { notify } from "@/components/toast";
 
 /**
  * Wraps a Server Action for a form without React's automatic form reset,
@@ -19,6 +20,16 @@ export function useActionForm(
   useEffect(() => {
     onSuccessRef.current = onSuccess;
   });
+
+  // Results show as toasts. Field errors also stay next to their inputs.
+  useEffect(() => {
+    if (state.error) {
+      const firstField = Object.values(state.fieldErrors ?? {}).flat()[0];
+      notify.error(state.error, firstField);
+    } else if (state.ok && state.message) {
+      notify.success(state.message, state.detail);
+    }
+  }, [state]);
 
   useEffect(() => {
     if (!state.ok) return;

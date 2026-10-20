@@ -23,11 +23,11 @@ npm install
 cp .env.example .env        # then set SUPABASE_URL, SUPABASE_SECRET_KEY and SESSION_SECRET (openssl rand -base64 32)
 npx supabase link --project-ref <project-ref>
 npx supabase db push        # creates the tables from supabase/migrations
-npm run db:seed             # optional: demo account with a year of sample data
+ALLOW_DEMO_SEED=1 npm run db:seed   # optional, local only: demo account with a year of sample data
 npm run dev
 ```
 
-Open http://localhost:3000. The demo login is printed by the seed script (see `scripts/seed.ts`).
+Open http://localhost:3000. If you seeded the demo account, the login is printed by the seed script (see `scripts/seed.ts`). Local development and production share a database, so the live site refuses the demo account (`src/lib/demo.ts`).
 
 ## Scripts
 
@@ -37,7 +37,7 @@ Open http://localhost:3000. The demo login is printed by the seed script (see `s
 | `npm run build` | Build for production |
 | `npm start` | Run the production build |
 | `npm run lint` / `npm run typecheck` | ESLint / TypeScript checks |
-| `npm run db:seed` | Reset and fill the demo account |
+| `ALLOW_DEMO_SEED=1 npm run db:seed` | Reset and fill the demo account (local only) |
 | `npm run db:types` | Regenerate `src/lib/database.types.ts` from the linked project |
 
 ## Project layout

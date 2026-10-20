@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireUserId } from "@/lib/auth";
 import { isValidTheme } from "@/lib/card-themes";
 import { CURRENCIES } from "@/lib/constants";
+import { flash } from "@/lib/flash";
 import { db, isId, run } from "@/lib/db";
 import { parseAmount } from "@/lib/money";
 import { Constants } from "@/lib/database.types";
@@ -51,6 +52,8 @@ export async function saveAccount(_prev: ActionState, formData: FormData): Promi
     await run(db().from("Account").insert({ ...data, userId }));
   }
 
+  await flash({ type: "success", title: id ? "Account updated" : "Account added", description: data.name });
+
   revalidatePath("/", "layout");
   redirect("/accounts");
 }
@@ -72,10 +75,11 @@ export async function deleteAccount(id: string): Promise<ActionState> {
     return { error: "This account has transactions. Archive it instead, or delete its transactions first." };
   }
 
-  const deleted = await run(db().from("Account").delete().eq("id", id).eq("userId", userId).select("id"));
+  const deleted = await run(db().from("Account").delete().eq("id", id).eq("userId", userId).select("name"));
   if (deleted.length === 0) {
     return { error: "Account not found." };
   }
+  await flash({ type: "success", title: "Account deleted", description: deleted[0].name });
   revalidatePath("/", "layout");
   redirect("/accounts");
 }

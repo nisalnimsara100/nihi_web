@@ -51,14 +51,14 @@ export async function saveCategory(_prev: ActionState, formData: FormData): Prom
   }
 
   revalidatePath("/", "layout");
-  return { ok: true };
+  return { ok: true, message: id ? "Category updated" : "Category added", detail: data.name };
 }
 
 export async function deleteCategory(id: string): Promise<ActionState> {
   const userId = await requireUserId();
-  await run(db().from("Category").delete().eq("id", id).eq("userId", userId));
+  const deleted = await run(db().from("Category").delete().eq("id", id).eq("userId", userId).select("name"));
   revalidatePath("/", "layout");
-  return { ok: true };
+  return { ok: true, message: "Category deleted", detail: deleted[0]?.name };
 }
 
 const tagSchema = z.object({
@@ -89,12 +89,12 @@ export async function saveTag(_prev: ActionState, formData: FormData): Promise<A
   }
 
   revalidatePath("/", "layout");
-  return { ok: true };
+  return { ok: true, message: id ? "Tag updated" : "Tag added", detail: data.name };
 }
 
 export async function deleteTag(id: string): Promise<ActionState> {
   const userId = await requireUserId();
-  await run(db().from("Tag").delete().eq("id", id).eq("userId", userId));
+  const deleted = await run(db().from("Tag").delete().eq("id", id).eq("userId", userId).select("name"));
   revalidatePath("/", "layout");
-  return { ok: true };
+  return { ok: true, message: "Tag deleted", detail: deleted[0]?.name };
 }

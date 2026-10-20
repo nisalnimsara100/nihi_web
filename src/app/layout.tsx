@@ -1,6 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { Suspense } from "react";
+import "goey-toast/styles.css";
 import "./globals.css";
+import { AppToaster, FlashToast } from "@/components/toast";
+import { readFlash } from "@/lib/flash";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -20,10 +24,22 @@ export const viewport: Viewport = {
   themeColor: "#ffffff",
 };
 
+/** Shows the one-time message a redirecting Server Action left behind. */
+async function FlashMessage() {
+  const flash = await readFlash();
+  return flash ? <FlashToast flash={flash} /> : null;
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        {children}
+        <AppToaster />
+        <Suspense>
+          <FlashMessage />
+        </Suspense>
+      </body>
     </html>
   );
 }

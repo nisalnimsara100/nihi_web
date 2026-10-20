@@ -7,7 +7,8 @@ import { requireUserId } from "@/lib/auth";
 import { Constants, type Database } from "@/lib/database.types";
 import { db, run } from "@/lib/db";
 import { dayToDate } from "@/lib/dates";
-import { parseAmount } from "@/lib/money";
+import { flash } from "@/lib/flash";
+import { formatMoney, parseAmount } from "@/lib/money";
 import { fromZodError, type ActionState } from "./state";
 
 const amountField = (label: string) =>
@@ -59,7 +60,7 @@ export async function saveTransaction(_prev: ActionState, formData: FormData): P
   // Every referenced record must belong to this user.
   const accountIds = [data.accountId, ...(isTransfer && data.toAccountId ? [data.toAccountId] : [])];
   const [accounts, category, tags] = await Promise.all([
-    run(db().from("Account").select("id").in("id", accountIds).eq("userId", userId)),
+    run(db().from("Account").select("id, currency").in("id", accountIds).eq("userId", userId)),
     !isTransfer && data.categoryId
       ? run(
           db()
@@ -104,6 +105,14 @@ export async function saveTransaction(_prev: ActionState, formData: FormData): P
     return { error: "Transaction not found." };
   }
 
+  const currency = accounts.find((a) => a.id === data.accountId)?.currency ?? "LKR";
+  const kind = { INCOME: "Income", EXPENSE: "Expense", TRANSFER: "Transfer" }[data.type];
+  await flash({
+    type: "success",
+    title: data.id ? "Transaction updated" : "Transaction added",
+    description: `${kind} · ${formatMoney(amount, currency)}`,
+  });
+
   revalidatePath("/", "layout");
   redirect("/transactions");
 }
@@ -114,6 +123,7 @@ export async function deleteTransaction(id: string): Promise<ActionState> {
   if (deleted.length === 0) {
     return { error: "Transaction not found." };
   }
+  await flash({ type: "success", title: "Transaction deleted" });
   revalidatePath("/", "layout");
   redirect("/transactions");
 }

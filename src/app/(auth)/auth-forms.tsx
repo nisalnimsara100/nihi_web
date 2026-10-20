@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { login, signup } from "@/actions/auth";
-import { FormError, SubmitButton } from "@/components/form-bits";
+import { SubmitButton } from "@/components/form-bits";
 import { useActionForm } from "@/components/use-action-form";
 import { ButtonLink, Card, Field, inputClass } from "@/components/ui";
 import { CURRENCIES } from "@/lib/constants";
@@ -15,7 +15,6 @@ export function LoginForm({ next }: { next?: string }) {
       <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
       <p className="mt-2 text-sm text-ink-soft">Log in to your NiHi account.</p>
       <form onSubmit={onSubmit} className="mt-6 space-y-4" noValidate>
-        <FormError state={state} />
         {next ? <input type="hidden" name="next" value={next} /> : null}
         <Field label="Email" htmlFor="email" error={state.fieldErrors?.email}>
           <input id="email" name="email" type="email" autoComplete="email" required className={inputClass} aria-invalid={!!state.fieldErrors?.email} />
@@ -43,7 +42,6 @@ export function SignupForm({ next }: { next?: string }) {
       <h1 className="text-2xl font-semibold tracking-tight">Create your account</h1>
       <p className="mt-2 text-sm text-ink-soft">Start tracking in under a minute.</p>
       <form onSubmit={onSubmit} className="mt-6 space-y-4" noValidate>
-        <FormError state={state} />
         {next ? <input type="hidden" name="next" value={next} /> : null}
         <Field label="Name" htmlFor="name" error={state.fieldErrors?.name}>
           <input id="name" name="name" autoComplete="name" required className={inputClass} aria-invalid={!!state.fieldErrors?.name} />

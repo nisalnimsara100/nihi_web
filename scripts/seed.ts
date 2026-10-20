@@ -1,12 +1,22 @@
 /**
- * Creates a demo user with a year of sample data.
- * Run with `npm run db:seed`. Log in as demo@nihi.app / demo1234.
+ * Creates a demo user with a year of sample data, for local development.
+ * Run with `ALLOW_DEMO_SEED=1 npm run db:seed`, then log in as
+ * demo@nihi.app / demo1234. Production refuses that account (src/lib/demo.ts).
  */
 import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "../src/lib/database.types";
 import { DEFAULT_CATEGORIES } from "../src/lib/constants";
+import { DEMO_EMAIL } from "../src/lib/demo";
+
+if (process.env.ALLOW_DEMO_SEED !== "1") {
+  console.error(
+    "Refusing to seed: this creates a demo user with a known password in the database from .env.\n" +
+      "Run it as: ALLOW_DEMO_SEED=1 npm run db:seed",
+  );
+  process.exit(1);
+}
 
 const supabase = createClient<Database>(process.env.SUPABASE_URL!, process.env.SUPABASE_SECRET_KEY!, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -21,7 +31,7 @@ async function run<R extends { data: unknown; error: { message: string } | null 
   return data as Extract<R, { error: null }>["data"];
 }
 
-const EMAIL = "demo@nihi.app";
+const EMAIL = DEMO_EMAIL;
 
 // Small deterministic random generator so every seed run looks the same.
 let seed = 42;
