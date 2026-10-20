@@ -39,7 +39,7 @@ export function AccountCardFace({
   label: string;
   /** Cards linked to this account; shown as small badges beside the balance. */
   cards?: { last4: string; network: string }[];
-  /** Limit and due date of a credit card account. */
+  /** Remaining credit of a credit card account. */
   credit?: CreditFaceInfo;
   dimmed?: boolean;
   className?: string;
@@ -71,14 +71,6 @@ export function AccountCardFace({
             {name}
           </p>
           <span className="flex shrink-0 items-center gap-1.5 text-xs font-semibold">
-            {credit?.due ? (
-              <span
-                className="rounded-md px-1.5 py-0.5 text-[10px] leading-none font-bold"
-                style={credit.due.soon ? { background: "#f6b23e", color: "#3b2a00" } : { background: fade(ink, 16) }}
-              >
-                {credit.due.label}
-              </span>
-            ) : null}
             <ColorDot color={color} className="ring-2 ring-white/40" />
             {currency}
           </span>

@@ -7,7 +7,6 @@ import { param, type SearchParams } from "@/lib/search-params";
 import { accountTypeLabel } from "@/lib/constants";
 import { getAccounts, getCards, type AccountWithBalance } from "@/lib/data";
 import { creditFaceInfo, creditSummary } from "@/lib/credit-card";
-import { todayDay } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { AccountTile, WalletList, type WalletItem } from "./wallet-list";
 
@@ -38,7 +37,7 @@ function toItem(
       cards,
       credit:
         account.type === "CREDIT_CARD"
-          ? creditFaceInfo(creditSummary(account.balance, account, todayDay()), account.currency)
+          ? creditFaceInfo(creditSummary(account.balance, account), account.currency)
           : undefined,
       dimmed: account.archived,
     },

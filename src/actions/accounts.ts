@@ -27,21 +27,6 @@ const optionalMoney = (label: string) =>
       return amount;
     });
 
-/** Optional whole number in a range, like a day of the month. */
-const optionalInt = (label: string, min: number, max: number) =>
-  z
-    .string()
-    .default("")
-    .transform((v, ctx) => {
-      if (!v.trim()) return null;
-      const n = Number(v);
-      if (!Number.isInteger(n) || n < min || n > max) {
-        ctx.addIssue({ code: "custom", message: `${label} must be ${min} to ${max}` });
-        return z.NEVER;
-      }
-      return n;
-    });
-
 /** Optional percentage with up to two decimals. */
 const optionalPercent = (label: string) =>
   z
@@ -75,15 +60,9 @@ const accountSchema = z.object({
   color: z.string().regex(/^#[0-9a-f]{6}$/i, "Pick a color"),
   theme: z.string().refine(isValidTheme, "Pick a card theme"),
   note: z.string().trim().max(200).default(""),
-  // Credit card terms. Only kept for credit card accounts.
+  // Credit card only: the limit and the monthly interest rate.
   creditLimit: optionalMoney("credit limit"),
-  statementDay: optionalInt("Statement day", 1, 31),
-  dueDay: optionalInt("Payment due day", 1, 31),
   interestRate: optionalPercent("Interest rate"),
-  annualFee: optionalMoney("annual fee"),
-  lateFee: optionalMoney("late fee"),
-  minPaymentPercent: optionalPercent("Minimum payment"),
-  minPaymentFloor: optionalMoney("minimum payment amount"),
   archived: z.literal("on").optional(),
 });
 
@@ -93,19 +72,13 @@ export async function saveAccount(_prev: ActionState, formData: FormData): Promi
   if (!parsed.success) {
     return fromZodError(parsed.error);
   }
-  const { id, archived, minPaymentPercent, minPaymentFloor, ...rest } = parsed.data;
-  // Credit terms belong to credit cards; switching an account to another type clears them.
+  const { id, archived, ...rest } = parsed.data;
+  // The limit and rate belong to credit cards; switching an account to another type clears them.
   const isCredit = rest.type === "CREDIT_CARD";
   const data = {
     ...rest,
     creditLimit: isCredit ? rest.creditLimit : null,
-    statementDay: isCredit ? rest.statementDay : null,
-    dueDay: isCredit ? rest.dueDay : null,
     interestRate: isCredit ? rest.interestRate : null,
-    annualFee: isCredit ? rest.annualFee : null,
-    lateFee: isCredit ? rest.lateFee : null,
-    minPaymentPercent: minPaymentPercent ?? 5,
-    minPaymentFloor: minPaymentFloor ?? 50000,
   };
 
   if (id) {

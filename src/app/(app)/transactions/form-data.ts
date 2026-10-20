@@ -4,8 +4,8 @@ import { db, isId, run } from "@/lib/db";
 /** Options the transaction form needs: active accounts, categories and tags. */
 export async function getTransactionFormOptions(userId: string, keepAccountIds: string[] = []) {
   const keep = keepAccountIds.filter(isId);
-  const accountsQuery = db().from("Account").select("id, name, color, currency, type, creditLimit, initialBalance").eq("userId", userId);
-  const [accountRows, categories, tags, history, cards, deltas] = await Promise.all([
+  const accountsQuery = db().from("Account").select("id, name, color, currency").eq("userId", userId);
+  const [accounts, categories, tags, history, cards] = await Promise.all([
     run(
       (keep.length > 0 ? accountsQuery.or(`archived.eq.false,id.in.(${keep.join(",")})`) : accountsQuery.eq("archived", false))
         .order("sortOrder")
@@ -26,13 +26,6 @@ export async function getTransactionFormOptions(userId: string, keepAccountIds: 
     ),
     // Linked cards let a scanned receipt's card number pick the account that pays for it.
     run(db().from("Card").select("id, accountId, last4, name, network").eq("userId", userId)),
-    run(db().rpc("account_balance_deltas", { p_user_id: userId })),
   ]);
-  // Credit cards also carry the room left under their limit, so the form can warn before going over it.
-  const delta = new Map(deltas.map((d) => [d.accountId, d.delta]));
-  const accounts = accountRows.map(({ type, creditLimit, initialBalance, ...account }) => ({
-    ...account,
-    available: type === "CREDIT_CARD" && creditLimit !== null ? creditLimit + initialBalance + (delta.get(account.id) ?? 0) : null,
-  }));
   return { accounts, categories, tags, history, cards };
 }
