@@ -1,0 +1,44 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { PageHeader, Skeleton } from "@/components/ui";
+import { getCurrentUser } from "@/lib/auth";
+import { db, run } from "@/lib/db";
+import { toInputAmount } from "@/lib/money";
+import { AccountForm } from "../account-form";
+
+export const metadata: Metadata = { title: "Edit account" };
+
+export default function EditAccountPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <div className="mx-auto max-w-2xl">
+      <PageHeader title="Edit account" />
+      <Suspense fallback={<Skeleton className="h-[620px]" />}>
+        <EditAccount params={params} />
+      </Suspense>
+    </div>
+  );
+}
+
+async function EditAccount({ params }: { params: Promise<{ id: string }> }) {
+  const user = await getCurrentUser();
+  const { id } = await params;
+  const account = await run(db().from("Account").select("*").eq("id", id).eq("userId", user.id).maybeSingle());
+  if (!account) {
+    notFound();
+  }
+  return (
+    <AccountForm
+      initial={{
+        id: account.id,
+        name: account.name,
+        type: account.type,
+        currency: account.currency,
+        initialBalance: toInputAmount(account.initialBalance),
+        color: account.color,
+        note: account.note,
+        archived: account.archived,
+      }}
+    />
+  );
+}
