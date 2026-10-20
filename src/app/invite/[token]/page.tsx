@@ -6,6 +6,7 @@ import { AcceptInviteDialog } from "./accept-invite-dialog";
 import { ButtonLink, Card, Skeleton } from "@/components/ui";
 import { db, run } from "@/lib/db";
 import { getSessionUserId } from "@/lib/session";
+import { hasPassed } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Partner invite" };
 
@@ -27,7 +28,7 @@ async function Invite({ params }: { params: Promise<{ token: string }> }) {
   const share = await run(
     db()
       .from("PartnerShare")
-      .select("email, partnerId, owner:User!PartnerShare_ownerId_fkey(name)")
+      .select("email, partnerId, expiresAt, owner:User!PartnerShare_ownerId_fkey(name)")
       .eq("token", token)
       .maybeSingle(),
   );
@@ -47,6 +48,17 @@ async function Invite({ params }: { params: Promise<{ token: string }> }) {
   }
 
   const ownerName = share.owner?.name ?? "Someone";
+  if (!share.partnerId && hasPassed(share.expiresAt)) {
+    return (
+      <Card className="p-6 sm:p-8">
+        <h1 className="text-2xl font-semibold tracking-tight">Invite expired</h1>
+        <p className="mt-2 text-sm text-ink-soft">This link was only valid for 7 days. Ask {ownerName} to send you a new one.</p>
+        <ButtonLink href="/" variant="soft" className="mt-6 w-full">
+          Go to NiHi
+        </ButtonLink>
+      </Card>
+    );
+  }
   const userId = await getSessionUserId();
   const signedIn = !!userId;
   const next = encodeURIComponent(`/invite/${token}`);

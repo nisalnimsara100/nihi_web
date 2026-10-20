@@ -179,6 +179,7 @@ export type Database = {
           acceptedAt: string | null
           createdAt: string
           email: string
+          expiresAt: string
           id: string
           ownerId: string
           partnerId: string | null
@@ -188,6 +189,7 @@ export type Database = {
           acceptedAt?: string | null
           createdAt?: string
           email: string
+          expiresAt?: string
           id?: string
           ownerId: string
           partnerId?: string | null
@@ -197,6 +199,7 @@ export type Database = {
           acceptedAt?: string | null
           createdAt?: string
           email?: string
+          expiresAt?: string
           id?: string
           ownerId?: string
           partnerId?: string | null
@@ -438,6 +441,7 @@ export type Database = {
         Args: {
           p_account_id: string
           p_amount: number
+          p_card_id: string
           p_category_id: string
           p_date: string
           p_id: string

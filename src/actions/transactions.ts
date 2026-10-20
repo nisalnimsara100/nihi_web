@@ -103,6 +103,7 @@ export async function saveTransaction(_prev: ActionState, formData: FormData): P
     p_date: dayToDate(data.date).toISOString(),
     p_note: data.note,
     p_tag_ids: tags.map((t) => t.id),
+    p_card_id: card?.id ?? null,
   };
 
   // Generated types mark every function argument as required and non-null,
@@ -113,11 +114,6 @@ export async function saveTransaction(_prev: ActionState, formData: FormData): P
   if (!savedId) {
     return { error: "Transaction not found." };
   }
-  // The card is saved right after, so the database function stays unchanged. Always written, to clear it on edit.
-  await run(
-    db().from("Transaction").update({ cardId: card?.id ?? null }).eq("id", savedId).eq("userId", userId).select("id"),
-  );
-
   const currency = accounts.find((a) => a.id === data.accountId)?.currency ?? "LKR";
   const kind = { INCOME: "Income", EXPENSE: "Expense", TRANSFER: "Transfer" }[data.type];
   await flash({

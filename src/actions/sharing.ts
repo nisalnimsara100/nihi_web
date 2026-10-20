@@ -9,8 +9,13 @@ import { db, run } from "@/lib/db";
 import { flash } from "@/lib/flash";
 import { mailConfigured, sendMail } from "@/lib/mail";
 import { getOrigin } from "@/lib/site";
+import { hasPassed } from "@/lib/time";
 import { clearViewCookie, getViewCookie, setViewCookie } from "@/lib/session";
 import { fromZodError, type ActionState } from "./state";
+
+/** How long an unused invite link works. */
+const INVITE_DAYS = 7;
+const inviteExpiry = () => new Date(Date.now() + INVITE_DAYS * 86_400_000).toISOString();
 
 const inviteSchema = z.object({
   email: z.email("Enter a valid email").trim().toLowerCase(),
@@ -59,7 +64,9 @@ export async function invitePartner(_prev: ActionState, formData: FormData): Pro
 
   // A fresh token also revokes any link sent before; the partner, if accepted, keeps access.
   const token = randomBytes(24).toString("base64url");
-  await run(db().from("PartnerShare").upsert({ ownerId: userId, email, token }, { onConflict: "ownerId,email" }));
+  await run(
+    db().from("PartnerShare").upsert({ ownerId: userId, email, token, expiresAt: inviteExpiry() }, { onConflict: "ownerId,email" }),
+  );
 
   // The link is the invite. Email is a bonus when the site can send it.
   if (!mailConfigured()) {
@@ -71,6 +78,25 @@ export async function invitePartner(_prev: ActionState, formData: FormData): Pro
   return failure
     ? { ok: true, message: "Invite link ready", detail: `${failure} Copy the link below and send it yourself.` }
     : { ok: true, message: "Invite sent", detail: `We emailed ${email}. You can also copy the link below.` };
+}
+
+/** Gives a pending (or expired) invite a fresh link that works for another week. The old link stops working. */
+export async function renewInvite(id: string): Promise<ActionState> {
+  const userId = await requireUserId();
+  const renewed = await run(
+    db()
+      .from("PartnerShare")
+      .update({ token: randomBytes(24).toString("base64url"), expiresAt: inviteExpiry() })
+      .eq("id", id)
+      .eq("ownerId", userId)
+      .is("acceptedAt", null)
+      .select("email"),
+  );
+  if (renewed.length === 0) {
+    return { error: "This invite is no longer pending." };
+  }
+  revalidatePath("/", "layout");
+  return { ok: true, message: "New invite link ready", detail: `Valid for ${INVITE_DAYS} days. Copy it below.` };
 }
 
 /** Emails a pending invite again, with the same link. */
@@ -131,7 +157,7 @@ export async function acceptInvite(token: string): Promise<ActionState> {
   const share = await run(
     db()
       .from("PartnerShare")
-      .select("id, ownerId, partnerId, owner:User!PartnerShare_ownerId_fkey(name)")
+      .select("id, ownerId, partnerId, expiresAt, owner:User!PartnerShare_ownerId_fkey(name)")
       .eq("token", token)
       .maybeSingle(),
   );
@@ -148,6 +174,9 @@ export async function acceptInvite(token: string): Promise<ActionState> {
   }
   if (share.partnerId && share.partnerId !== userId) {
     return fail("This invite has already been used");
+  }
+  if (!share.partnerId && hasPassed(share.expiresAt)) {
+    return fail("This invite has expired", `Ask ${share.owner?.name ?? "them"} for a new link.`);
   }
 
   await run(

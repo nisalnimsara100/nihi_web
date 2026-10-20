@@ -6,6 +6,7 @@ import { Button, Card, CardHeader, PageHeader, Skeleton } from "@/components/ui"
 import { getCurrentUser } from "@/lib/auth";
 import { db, run } from "@/lib/db";
 import { mailConfigured } from "@/lib/mail";
+import { daysUntil } from "@/lib/time";
 import { PartnerSharing } from "./partner-sharing";
 import { PasswordForm, ProfileForm } from "./settings-forms";
 
@@ -48,7 +49,7 @@ async function Partners() {
     run(
       db()
         .from("PartnerShare")
-        .select("id, email, token, acceptedAt")
+        .select("id, email, token, acceptedAt, expiresAt")
         .eq("ownerId", user.id)
         .order("createdAt", { ascending: false }),
     ),
@@ -65,7 +66,14 @@ async function Partners() {
     <PartnerSharing
       mailReady={mailConfigured()}
       ownerName={user.name}
-      sent={sent.map((s) => ({ id: s.id, email: s.email, token: s.token, accepted: s.acceptedAt !== null }))}
+      sent={sent.map((s) => ({
+        id: s.id,
+        email: s.email,
+        token: s.token,
+        accepted: s.acceptedAt !== null,
+        // Whole days left on an unused link; zero or less means it has expired.
+        daysLeft: daysUntil(s.expiresAt),
+      }))}
       received={received.map((s) => ({ id: s.id, ownerId: s.ownerId, ownerName: s.owner?.name ?? "Unknown" }))}
     />
   );
