@@ -1,12 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { deleteCard, addCard } from "@/actions/cards";
 import { DeleteButton, SubmitButton } from "@/components/form-bits";
 import { CreditCard } from "@/components/icons";
 import { useActionForm } from "@/components/use-action-form";
 import { Card, Field, inputClass } from "@/components/ui";
+import { CARD_NETWORKS, networkLabel, type CardNetwork } from "@/lib/card-networks";
+import { cn } from "@/lib/cn";
 
-export type LinkedCard = { id: string; last4: string; name: string };
+export type LinkedCard = { id: string; last4: string; name: string; network: string };
 
 /**
  * Cards that pay from this account. When a scanned receipt shows one of these
@@ -15,6 +18,7 @@ export type LinkedCard = { id: string; last4: string; name: string };
 export function CardManager({ accountId, cards }: { accountId: string; cards: LinkedCard[] }) {
   const { state, pending, formRef, onSubmit } = useActionForm(addCard, { resetOnSuccess: true });
   const errors = state.fieldErrors ?? {};
+  const [network, setNetwork] = useState<CardNetwork>("VISA");
 
   return (
     <Card className="mt-4 p-4 sm:p-6">
@@ -31,7 +35,9 @@ export function CardManager({ accountId, cards }: { accountId: string; cards: Li
               <span className="flex min-w-0 items-center gap-3">
                 <CreditCard className="size-5 shrink-0 text-ink-soft" />
                 <span className="min-w-0">
-                  <span className="block text-sm font-semibold tabular-nums text-ink">•••• {card.last4}</span>
+                  <span className="block text-sm font-semibold tabular-nums text-ink">
+                    {networkLabel(card.network)} •••• {card.last4}
+                  </span>
                   {card.name ? <span className="block truncate text-xs text-ink-soft">{card.name}</span> : null}
                 </span>
               </span>
@@ -43,6 +49,28 @@ export function CardManager({ accountId, cards }: { accountId: string; cards: Li
 
       <form ref={formRef} onSubmit={onSubmit} className="mt-4 space-y-3" noValidate>
         <input type="hidden" name="accountId" value={accountId} />
+        <input type="hidden" name="network" value={network} />
+        <fieldset>
+          <legend className="mb-1.5 block text-sm font-semibold text-ink">Card type</legend>
+          <div role="radiogroup" aria-label="Card type" className="flex flex-wrap gap-2">
+            {CARD_NETWORKS.map((n) => (
+              <button
+                key={n.value}
+                type="button"
+                role="radio"
+                aria-checked={network === n.value}
+                onClick={() => setNetwork(n.value)}
+                className={cn(
+                  "h-9 rounded-full px-4 text-sm font-semibold transition-colors",
+                  network === n.value ? "bg-primary text-on-primary shadow-sm" : "bg-muted text-ink hover:bg-line",
+                )}
+              >
+                {n.label}
+              </button>
+            ))}
+          </div>
+          {errors.network?.length ? <p className="mt-1.5 text-sm text-danger">{errors.network[0]}</p> : null}
+        </fieldset>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Last 4 digits" htmlFor="card-last4" error={errors.last4}>
             <input

@@ -3,12 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUserId } from "@/lib/auth";
+import { CARD_NETWORK_VALUES, networkLabel } from "@/lib/card-networks";
 import { db, isId, run, UNIQUE_VIOLATION } from "@/lib/db";
 import { fromZodError, type ActionState } from "./state";
 
 const cardSchema = z.object({
   accountId: z.string().min(1),
   last4: z.string().trim().regex(/^\d{4}$/, "Enter the last 4 digits of the card"),
+  network: z.enum(CARD_NETWORK_VALUES, "Pick the card type"),
   name: z.string().trim().max(40).default(""),
 });
 
@@ -19,7 +21,7 @@ export async function addCard(_prev: ActionState, formData: FormData): Promise<A
   if (!parsed.success) {
     return fromZodError(parsed.error);
   }
-  const { accountId, last4, name } = parsed.data;
+  const { accountId, last4, network, name } = parsed.data;
   if (!isId(accountId)) {
     return { error: "Account not found." };
   }
@@ -29,7 +31,7 @@ export async function addCard(_prev: ActionState, formData: FormData): Promise<A
     return { error: "Account not found." };
   }
 
-  const { error } = await db().from("Card").insert({ userId, accountId, last4, name });
+  const { error } = await db().from("Card").insert({ userId, accountId, last4, network, name });
   if (error) {
     if (error.code === UNIQUE_VIOLATION) {
       return { fieldErrors: { last4: ["This card is already linked to this account"] } };
@@ -38,7 +40,7 @@ export async function addCard(_prev: ActionState, formData: FormData): Promise<A
   }
 
   revalidatePath("/", "layout");
-  return { ok: true, message: "Card linked", detail: `•••• ${last4}` };
+  return { ok: true, message: "Card linked", detail: `${networkLabel(network)} •••• ${last4}` };
 }
 
 export async function deleteCard(id: string): Promise<ActionState> {

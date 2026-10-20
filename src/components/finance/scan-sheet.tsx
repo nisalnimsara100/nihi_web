@@ -5,6 +5,7 @@ import { notify } from "@/components/toast";
 import { DateField } from "@/components/form-bits";
 import { Button, buttonClass, inputClass } from "@/components/ui";
 import { Camera, CircleNotch, ImageSquare, X } from "@/components/icons";
+import { networkLabel } from "@/lib/card-networks";
 import { cn } from "@/lib/cn";
 import { todayDay } from "@/lib/dates";
 import { formatMoney, parseAmount, toInputAmount } from "@/lib/money";
@@ -15,7 +16,7 @@ import { readScan } from "@/lib/scan/read";
 
 export type ScanAccount = { id: string; name: string; currency: string };
 /** A card the user linked to an account, by its last 4 digits. */
-export type ScanCard = { accountId: string; last4: string; name: string };
+export type ScanCard = { accountId: string; last4: string; name: string; network: string };
 export type ScanCategory = CategoryRef & { color: string };
 
 export type ScanResult = {
@@ -59,7 +60,9 @@ const TYPE_LABEL = Object.fromEntries(TYPES.map((t) => [t.value, t.label])) as R
 function matchAccount(parsed: ParsedScan, accounts: ScanAccount[], cards: ScanCard[], fallback: string) {
   const { hint, last4 } = parsed.account;
   const lower = (s: string) => s.toLowerCase();
-  const card = last4 ? cards.find((c) => c.last4 === last4.slice(-4) && accounts.some((a) => a.id === c.accountId)) : undefined;
+  // Two cards can end in the same digits; the network on the receipt ("Visa ••••8663") tells them apart.
+  const sameDigits = last4 ? cards.filter((c) => c.last4 === last4.slice(-4) && accounts.some((a) => a.id === c.accountId)) : [];
+  const card = sameDigits.find((c) => parsed.account.network && c.network === parsed.account.network) ?? sameDigits[0];
   if (card) return { id: card.accountId, confidence: "high" as const, card };
   const byLast4 = last4 ? accounts.find((a) => a.name.includes(last4)) : undefined;
   const byBank = hint
@@ -401,7 +404,7 @@ export function ScanSheet({
               </select>
               {current.matchedCard && draft.accountId === current.matchedCard.accountId ? (
                 <p className="text-sm text-ink-soft">
-                  Card •••• {current.matchedCard.last4}
+                  {networkLabel(current.matchedCard.network)} card •••• {current.matchedCard.last4}
                   {current.matchedCard.name ? ` (${current.matchedCard.name})` : ""} is linked to this account, so the amount will come out of it.
                 </p>
               ) : null}

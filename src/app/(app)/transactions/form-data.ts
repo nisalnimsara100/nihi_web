@@ -24,7 +24,7 @@ export async function getTransactionFormOptions(userId: string, keepAccountIds: 
         .limit(300),
     ),
     // Linked cards let a scanned receipt's card number pick the account that pays for it.
-    run(db().from("Card").select("accountId, last4, name").eq("userId", userId)),
+    run(db().from("Card").select("accountId, last4, name, network").eq("userId", userId)),
   ]);
   return { accounts, categories, tags, history, cards };
 }

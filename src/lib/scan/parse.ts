@@ -13,7 +13,7 @@ export type ParsedScan = {
   type: { value: ScanType; confidence: Confidence };
   date: { day: string; confidence: Confidence };
   merchant: { text: string; confidence: Confidence };
-  account: { hint: string; last4: string | null; confidence: Confidence };
+  account: { hint: string; last4: string | null; network: string; confidence: Confidence };
 };
 
 const CURRENCY_WORDS: Record<string, string> = {
@@ -229,7 +229,8 @@ export function parseAccountHint(text: string): ParsedScan["account"] {
   // A receipt paid in cash ("Paid by Cash", "Cash LKR 337.80") belongs to the Cash account.
   const cash = !bank && !last4 && /\bcash\b/i.test(t) ? "Cash" : "";
   const hint = bank || cash;
-  return { hint, last4, confidence: last4 || hint ? "low" : "missing" };
+  const network = /\bvisa\b/i.test(t) ? "VISA" : /\bmaster\s*card\b|\bmaster\b/i.test(t) ? "MASTERCARD" : /\bamex\b|american\s+express/i.test(t) ? "AMEX" : /\bunion\s*pay\b/i.test(t) ? "UNIONPAY" : /\bjcb\b/i.test(t) ? "JCB" : "";
+  return { hint, last4, network, confidence: last4 || hint ? "low" : "missing" };
 }
 
 /**

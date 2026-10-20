@@ -71,6 +71,7 @@ export type Database = {
           id: string
           last4: string
           name: string
+          network: string
           userId: string
         }
         Insert: {
@@ -79,6 +80,7 @@ export type Database = {
           id?: string
           last4: string
           name?: string
+          network?: string
           userId: string
         }
         Update: {
@@ -87,6 +89,7 @@ export type Database = {
           id?: string
           last4?: string
           name?: string
+          network?: string
           userId?: string
         }
         Relationships: [
