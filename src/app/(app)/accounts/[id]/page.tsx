@@ -8,13 +8,15 @@ import { toInputAmount } from "@/lib/money";
 import { AccountForm } from "../account-form";
 import { BalanceAdjust } from "../balance-adjust";
 import { CardManager } from "../card-manager";
+import { getT } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "Edit account" };
 
-export default function EditAccountPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditAccountPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = await getT();
   return (
     <div className="mx-auto max-w-2xl">
-      <PageHeader title="Edit account" />
+      <PageHeader title={t("Edit account")} />
       <Suspense fallback={<Skeleton className="h-[620px]" />}>
         <EditAccount params={params} />
       </Suspense>

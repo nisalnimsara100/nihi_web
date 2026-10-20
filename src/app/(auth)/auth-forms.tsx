@@ -6,6 +6,7 @@ import { SubmitButton } from "@/components/form-bits";
 import { useActionForm } from "@/components/use-action-form";
 import { ButtonLink, Card, Field, inputClass } from "@/components/ui";
 import { CURRENCIES } from "@/lib/constants";
+import { useT } from "@/lib/i18n/client";
 
 /** The other auth page, keeping where to return to and the invited email. */
 function authLink(path: string, next?: string, email?: string) {
@@ -18,11 +19,12 @@ function authLink(path: string, next?: string, email?: string) {
 
 /** `next` is the page to return to after signing in, e.g. an invite link. */
 export function LoginForm({ next, email }: { next?: string; email?: string }) {
+  const t = useT();
   const { state, pending, onSubmit } = useActionForm(login);
   return (
     <Card className="p-6 sm:p-8">
-      <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
-      <p className="mt-2 text-sm text-ink-soft">Log in to your NiHi account.</p>
+      <h1 className="text-2xl font-semibold tracking-tight">{t("Welcome back")}</h1>
+      <p className="mt-2 text-sm text-ink-soft">{t("Log in to your NiHi account.")}</p>
       <form onSubmit={onSubmit} className="mt-6 space-y-4" noValidate>
         {next ? <input type="hidden" name="next" value={next} /> : null}
         <Field label="Email" htmlFor="email" error={state.fieldErrors?.email}>
@@ -32,12 +34,12 @@ export function LoginForm({ next, email }: { next?: string; email?: string }) {
           <input id="password" name="password" type="password" autoComplete="current-password" required className={inputClass} aria-invalid={!!state.fieldErrors?.password} />
         </Field>
         <SubmitButton pending={pending} className="h-13 w-full text-base">
-          Log in
+          {t("Log in")}
         </SubmitButton>
       </form>
       <div className="mt-3">
         <ButtonLink href={authLink("/signup", next, email)} variant="soft" className="h-13 w-full text-base">
-          Create account
+          {t("Create account")}
         </ButtonLink>
       </div>
     </Card>
@@ -45,11 +47,12 @@ export function LoginForm({ next, email }: { next?: string; email?: string }) {
 }
 
 export function SignupForm({ next, email }: { next?: string; email?: string }) {
+  const t = useT();
   const { state, pending, onSubmit } = useActionForm(signup);
   return (
     <Card className="p-6 sm:p-8">
-      <h1 className="text-2xl font-semibold tracking-tight">Create your account</h1>
-      <p className="mt-2 text-sm text-ink-soft">Start tracking in under a minute.</p>
+      <h1 className="text-2xl font-semibold tracking-tight">{t("Create your account")}</h1>
+      <p className="mt-2 text-sm text-ink-soft">{t("Start tracking in under a minute.")}</p>
       <form onSubmit={onSubmit} className="mt-6 space-y-4" noValidate>
         {next ? <input type="hidden" name="next" value={next} /> : null}
         <Field label="Name" htmlFor="name" error={state.fieldErrors?.name}>
@@ -71,13 +74,13 @@ export function SignupForm({ next, email }: { next?: string; email?: string }) {
           </select>
         </Field>
         <SubmitButton pending={pending} className="h-13 w-full text-base">
-          Create account
+          {t("Create account")}
         </SubmitButton>
       </form>
       <p className="mt-6 text-center text-sm text-ink-soft">
-        Already have an account?{" "}
+        {t("Already have an account?")}{" "}
         <Link href={authLink("/login", next, email)} className="font-semibold text-primary hover:underline">
-          Log in
+          {t("Log in")}
         </Link>
       </p>
     </Card>

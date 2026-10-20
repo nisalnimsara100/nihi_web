@@ -3,6 +3,7 @@ import { SignOut } from "@/components/icons";
 import { logout } from "@/actions/auth";
 import { getViewer } from "@/lib/auth";
 import { cn } from "@/lib/cn";
+import { getT } from "@/lib/i18n/server";
 
 function initials(name: string) {
   return name
@@ -27,6 +28,7 @@ export function Avatar({ name, className }: { name: string; className?: string }
 }
 
 export async function SidebarUser() {
+  const t = await getT();
   const { user, owner, readOnly } = await getViewer();
   return (
     <div className="flex items-center gap-2">
@@ -42,7 +44,7 @@ export async function SidebarUser() {
       <form action={logout}>
         <button
           type="submit"
-          aria-label="Sign out"
+          aria-label={t("Sign out")}
           className="rounded-xl p-2.5 text-ink-soft hover:bg-muted hover:text-ink"
         >
           <SignOut className="size-5" aria-hidden />

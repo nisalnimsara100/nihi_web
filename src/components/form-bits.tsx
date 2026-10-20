@@ -9,6 +9,7 @@ import { COLORS } from "@/lib/constants";
 import { cn } from "@/lib/cn";
 import { notify } from "./toast";
 import { Button, inputClass } from "./ui";
+import { useT } from "@/lib/i18n/client";
 
 export function SubmitButton({
   children,
@@ -38,10 +39,11 @@ export function ColorPicker({
   defaultValue?: string;
   onChange?: (color: string) => void;
 }) {
+  const t = useT();
   const initial = defaultValue ?? COLORS[0];
   return (
     <fieldset>
-      <legend className="mb-2 block text-sm font-semibold text-ink">Color</legend>
+      <legend className="mb-2 block text-sm font-semibold text-ink">{t("Color")}</legend>
       <div className="flex flex-wrap gap-2">
         {COLORS.map((color) => (
           <label key={color} className="relative cursor-pointer">
@@ -80,6 +82,7 @@ export function DeleteButton({
   size?: "sm" | "md";
   iconOnly?: boolean;
 }) {
+  const t = useT();
   const [armed, setArmed] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -90,7 +93,7 @@ export function DeleteButton({
         size={size}
         variant={armed ? "danger" : iconOnly ? "ghost" : "secondary"}
         disabled={pending}
-        aria-label={iconOnly && !armed ? label : undefined}
+        aria-label={iconOnly && !armed ? t(label) : undefined}
         onBlur={() => setArmed(false)}
         onClick={() => {
           if (!armed) {
@@ -107,17 +110,18 @@ export function DeleteButton({
         className={cn(!armed && !iconOnly && "text-danger")}
       >
         {pending ? <CircleNotch className="size-4 animate-spin" aria-hidden /> : <Trash className="size-4" aria-hidden />}
-        {armed ? confirmLabel : iconOnly ? null : label}
+        {armed ? t(confirmLabel) : iconOnly ? null : t(label)}
       </Button>
     </div>
   );
 }
 
 export function IconPicker({ name = "icon", defaultValue }: { name?: string; defaultValue?: string }) {
+  const t = useT();
   const initial = defaultValue && isCategoryIcon(defaultValue) ? defaultValue : DEFAULT_CATEGORY_ICON;
   return (
     <fieldset>
-      <legend className="mb-2 block text-sm font-semibold text-ink">Icon</legend>
+      <legend className="mb-2 block text-sm font-semibold text-ink">{t("Icon")}</legend>
       <div className="grid grid-cols-[repeat(auto-fill,minmax(2.75rem,1fr))] gap-1.5">
         {CATEGORY_ICON_NAMES.map((icon) => (
           <label key={icon} className="relative flex cursor-pointer justify-center" title={icon}>

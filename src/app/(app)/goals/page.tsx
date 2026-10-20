@@ -6,6 +6,7 @@ import { getViewer } from "@/lib/auth";
 import { getAccounts, getGoals } from "@/lib/data";
 import { todayDay } from "@/lib/dates";
 import { GoalCard, NewGoal } from "./goal-forms";
+import { getT } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "Goals" };
 
@@ -18,6 +19,7 @@ export default function GoalsPage() {
 }
 
 async function Goals() {
+  const t = await getT();
   const { owner: user, readOnly } = await getViewer();
   const [goals, accounts] = await Promise.all([getGoals(user.id), getAccounts(user.id)]);
   const savings = accounts.filter((a) => a.type === "SAVINGS").map((a) => ({ id: a.id, name: a.name, currency: a.currency }));
@@ -25,10 +27,10 @@ async function Goals() {
 
   return (
     <>
-      <PageHeader title="Goals" description="Save towards something, like Rs. 100,000 by December." actions={readOnly ? undefined : <NewGoal accounts={savings} defaultCurrency={user.defaultCurrency} />} />
+      <PageHeader title={t("Goals")} description="Save towards something, like Rs. 100,000 by December." actions={readOnly ? undefined : <NewGoal accounts={savings} defaultCurrency={user.defaultCurrency} />} />
       {goals.length === 0 ? (
         <Card>
-          <EmptyState icon={<Flag className="size-6" />} title="No goals yet" description="Add one to see how much to put aside each month." />
+          <EmptyState icon={<Flag className="size-6" />} title={t("No goals yet")} description="Add one to see how much to put aside each month." />
         </Card>
       ) : (
         <div className="grid gap-4 *:min-w-0 sm:grid-cols-2">

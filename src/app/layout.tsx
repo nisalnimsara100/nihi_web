@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Noto_Sans_Sinhala } from "next/font/google";
 import { Suspense } from "react";
 import "goey-toast/styles.css";
 import "./globals.css";
@@ -10,6 +10,13 @@ import { readFlash } from "@/lib/flash";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+});
+
+// Inter has no Sinhala letters; this font fills in wherever the text is Sinhala.
+const sinhala = Noto_Sans_Sinhala({
+  variable: "--font-sinhala",
+  subsets: ["sinhala"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -35,7 +42,7 @@ async function FlashMessage() {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
+    <html lang="en" className={`${inter.variable} ${sinhala.variable} h-full antialiased`}>
       <body className="min-h-full">
         {children}
         <AppToaster />

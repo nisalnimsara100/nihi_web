@@ -9,6 +9,7 @@ import { budgetStatus } from "@/lib/budgets";
 import { CategoryIcon } from "@/lib/category-icons";
 import { cn } from "@/lib/cn";
 import { formatMoney, toInputAmount } from "@/lib/money";
+import { useT } from "@/lib/i18n/client";
 
 export type BudgetItem = {
   categoryId: string;
@@ -34,6 +35,7 @@ export function BudgetRow({
   /** Shown when spending runs ahead of the month, for budgets still within the limit. */
   paceNote?: string;
 }) {
+  const t = useT();
   const [editing, setEditing] = useState(false);
   const { state, pending, onSubmit } = useActionForm(saveBudget, { onSuccess: () => setEditing(false) });
   const errors = state.fieldErrors ?? {};
@@ -48,12 +50,12 @@ export function BudgetRow({
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold">{item.name}</span>
           <span className="block text-xs text-ink-soft tabular-nums">
-            {item.limit ? `${formatMoney(item.spent, currency)} of ${formatMoney(item.limit, currency)}` : item.spent > 0 ? `${formatMoney(item.spent, currency)} spent, no limit` : "No limit set"}
+            {item.limit ? t("{spent} of {limit}", { spent: formatMoney(item.spent, currency), limit: formatMoney(item.limit, currency) }) : item.spent > 0 ? t("{spent} spent, no limit", { spent: formatMoney(item.spent, currency) }) : t("No limit set")}
           </span>
         </span>
         {!readOnly && !editing ? (
           <Button type="button" size="sm" variant={item.limit ? "ghost" : "soft"} onClick={() => setEditing(true)}>
-            {item.limit ? "Edit" : "Set limit"}
+            {item.limit ? t("Edit") : t("Set limit")}
           </Button>
         ) : null}
       </div>
@@ -63,17 +65,17 @@ export function BudgetRow({
           <div
             className="h-2 overflow-hidden rounded-full bg-muted"
             role="img"
-            aria-label={`${Math.round(status.ratio * 100)}% of the ${item.name} budget used`}
+            aria-label={t("{percent}% of the {name} budget used", { percent: Math.round(status.ratio * 100), name: item.name })}
           >
             <div className={cn("h-full rounded-full transition-all", BAR[status.level])} style={{ width: `${Math.min(100, status.ratio * 100)}%` }} />
           </div>
           <p className={cn("mt-1 text-xs font-semibold", status.level === "over" ? "text-danger" : "text-ink-soft")}>
             {status.level === "over"
-              ? `Over by ${formatMoney(-status.left, currency)}`
+              ? t("Over by {amount}", { amount: formatMoney(-status.left, currency) })
               : status.level === "warn"
-                ? `Careful: only ${formatMoney(status.left, currency)} left (${Math.round(status.ratio * 100)}% used)`
-                : `${formatMoney(status.left, currency)} left`}
-            {status.level === "ok" && paceNote ? <span className="font-normal"> · {paceNote}</span> : null}
+                ? t("Careful: only {amount} left ({percent}% used)", { amount: formatMoney(status.left, currency), percent: Math.round(status.ratio * 100) })
+                : t("{amount} left", { amount: formatMoney(status.left, currency) })}
+            {status.level === "ok" && paceNote ? <span className="font-normal"> · {t(paceNote)}</span> : null}
           </p>
         </div>
       ) : null}
@@ -83,7 +85,7 @@ export function BudgetRow({
           <input type="hidden" name="categoryId" value={item.categoryId} />
           <input type="hidden" name="currency" value={currency} />
           <label htmlFor={`budget-${item.categoryId}`} className="block text-xs font-semibold text-ink-soft">
-            Monthly limit ({currency}). Leave empty to remove it.
+            {t("Monthly limit ({currency}). Leave empty to remove it.", { currency })}
           </label>
           <div className="flex gap-2">
             <input
@@ -93,13 +95,13 @@ export function BudgetRow({
               autoComplete="off"
               autoFocus
               defaultValue={item.limit ? toInputAmount(item.limit) : ""}
-              placeholder="e.g. 25000"
+              placeholder={t("e.g. 25000")}
               aria-invalid={!!errors.amount}
               className={cn(inputClass, "h-11 min-w-0 flex-1 tabular-nums")}
             />
-            <SubmitButton pending={pending}>Save</SubmitButton>
+            <SubmitButton pending={pending}>{t("Save")}</SubmitButton>
             <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
-              Cancel
+              {t("Cancel")}
             </Button>
           </div>
           {errors.amount?.length ? <p className="text-sm text-danger">{errors.amount[0]}</p> : null}

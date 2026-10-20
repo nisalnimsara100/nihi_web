@@ -11,13 +11,15 @@ import { LanguageSwitch } from "@/components/language-switch";
 import { InstallApp } from "@/components/pwa";
 import { PartnerSharing } from "./partner-sharing";
 import { PasswordForm, ProfileForm } from "./settings-forms";
+import { getT } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "Settings" };
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const t = await getT();
   return (
     <div className="max-w-2xl">
-      <PageHeader title="Settings" />
+      <PageHeader title={t("Settings")} />
       <div className="space-y-4">
         <Suspense fallback={<Skeleton className="h-80" />}>
           <Profile />
@@ -27,24 +29,24 @@ export default function SettingsPage() {
           <Partners />
         </Suspense>
         <Card>
-          <CardHeader title="Language" />
+          <CardHeader title={t("Language")} />
           <div className="p-4 sm:p-5">
             <LanguageSwitch />
           </div>
         </Card>
         <Card>
-          <CardHeader title="Install on your phone" />
+          <CardHeader title={t("Install on your phone")} />
           <div className="space-y-2 p-4 sm:p-5">
-            <p className="text-sm text-ink-soft">Open NiHi from your home screen like an app, and add transactions even without a connection.</p>
+            <p className="text-sm text-ink-soft">{t("Open NiHi from your home screen like an app, and add transactions even without a connection.")}</p>
             <InstallApp />
           </div>
         </Card>
         <Card>
-          <CardHeader title="Session" />
+          <CardHeader title={t("Session")} />
           <form action={logout} className="p-4 sm:p-5">
             <Button type="submit" variant="secondary">
               <SignOut className="size-4" aria-hidden />
-              Sign out
+              {t("Sign out")}
             </Button>
           </form>
         </Card>

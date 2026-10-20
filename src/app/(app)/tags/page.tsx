@@ -5,13 +5,15 @@ import { LabelManager } from "@/components/label-manager";
 import { PageHeader, PageSkeleton } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
 import { getTags } from "@/lib/data";
+import { getT } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "Tags" };
 
-export default function TagsPage() {
+export default async function TagsPage() {
+  const t = await getT();
   return (
     <>
-      <PageHeader title="Tags" description="Mark transactions across categories, like a trip or a project." />
+      <PageHeader title={t("Tags")} description="Mark transactions across categories, like a trip or a project." />
       <Suspense fallback={<PageSkeleton />}>
         <Tags />
       </Suspense>
@@ -20,12 +22,13 @@ export default function TagsPage() {
 }
 
 async function Tags() {
+  const t = await getT();
   const { owner: user, readOnly } = await getViewer();
   const tags = await getTags(user.id);
   return (
     <div className="max-w-2xl">
       <LabelManager
-        title="All tags"
+        title={t("All tags")}
         noun="tag"
         items={tags.map((t) => ({ id: t.id, name: t.name, color: t.color, count: t.transactionCount }))}
         save={saveTag}

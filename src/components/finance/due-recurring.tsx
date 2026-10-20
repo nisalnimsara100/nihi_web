@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { confirmRecurring, skipRecurring } from "@/actions/recurring";
 import { Button } from "@/components/ui";
 import { notify } from "@/components/toast";
+import { useT } from "@/lib/i18n/client";
 
 export type DueItem = {
   id: string;
@@ -19,6 +20,7 @@ export type DueItem = {
 
 /** Repeating transactions that have come due. The user adds or skips each; nothing is added on its own. */
 export function DueRecurring({ items }: { items: DueItem[] }) {
+  const t = useT();
   const [busy, setBusy] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
@@ -46,10 +48,10 @@ export function DueRecurring({ items }: { items: DueItem[] }) {
           <span className="text-sm font-semibold tabular-nums">{item.amount}</span>
           <span className="flex gap-2">
             <Button size="sm" variant="ghost" disabled={busy === item.id} onClick={() => run(item, skipRecurring)}>
-              Skip
+              {t("Skip")}
             </Button>
             <Button size="sm" disabled={busy === item.id} onClick={() => run(item, confirmRecurring)}>
-              Add
+              {t("Add")}
             </Button>
           </span>
         </li>

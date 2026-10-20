@@ -7,6 +7,7 @@ import { Trash } from "@/components/icons";
 import { notify } from "@/components/toast";
 import { Button, inputClass } from "@/components/ui";
 import { cn } from "@/lib/cn";
+import { useT } from "@/lib/i18n/client";
 
 type Category = { id: string; name: string; type: "INCOME" | "EXPENSE" };
 
@@ -15,6 +16,7 @@ type Category = { id: string; name: string; type: "INCOME" | "EXPENSE" };
  * ticked ones, with Undo, or give them a category. The list itself stays a server component.
  */
 export function BulkForm({ categories, doneHref, children }: { categories: Category[]; doneHref: string; children: ReactNode }) {
+  const t = useT();
   const formRef = useRef<HTMLFormElement>(null);
   const [count, setCount] = useState(0);
   const [armed, setArmed] = useState(false);
@@ -73,17 +75,17 @@ export function BulkForm({ categories, doneHref, children }: { categories: Categ
 
       <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] z-40 flex justify-center px-4 lg:bottom-6 lg:pl-64">
         <div className="flex w-full max-w-xl flex-wrap items-center gap-2 rounded-3xl border border-line bg-surface p-2.5 text-sm font-semibold text-ink shadow-[0_8px_30px_rgb(20_21_28/0.14)]">
-          <span className="px-2 tabular-nums">{count} selected</span>
+          <span className="px-2 tabular-nums">{t("{count} selected", { count })}</span>
           <Button type="button" size="sm" variant="ghost" onClick={toggleAll}>
-            All / none
+            {t("All / none")}
           </Button>
           <select
-            aria-label="Category for the selected transactions"
+            aria-label={t("Category for the selected transactions")}
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
             className={cn(inputClass, "h-9 w-auto min-w-0 flex-1 py-0 text-sm sm:flex-none")}
           >
-            <option value="">No category</option>
+            <option value="">{t("No category")}</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name} ({c.type === "INCOME" ? "income" : "expense"})
@@ -91,7 +93,7 @@ export function BulkForm({ categories, doneHref, children }: { categories: Categ
             ))}
           </select>
           <Button type="button" size="sm" variant="secondary" disabled={count === 0 || pending} onClick={recategorize}>
-            Set category
+            {t("Set category")}
           </Button>
           <Button
             type="button"
@@ -106,7 +108,7 @@ export function BulkForm({ categories, doneHref, children }: { categories: Categ
             {armed ? "Tap again to delete" : "Delete"}
           </Button>
           <Link href={doneHref} className="ml-auto inline-flex h-9 items-center rounded-2xl px-3 text-sm font-semibold text-primary hover:bg-muted">
-            Done
+            {t("Done")}
           </Link>
         </div>
       </div>

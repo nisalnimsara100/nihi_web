@@ -4,9 +4,11 @@ import { useState, type ReactNode } from "react";
 import { SlidersHorizontal } from "@/components/icons";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui";
+import { useT } from "@/lib/i18n/client";
 
 /** Filters fold behind a button on small screens and stay open on large ones. */
 export function FilterPanel({ activeCount, children }: { activeCount: number; children: ReactNode }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   return (
     <div className="mb-4">
@@ -19,7 +21,7 @@ export function FilterPanel({ activeCount, children }: { activeCount: number; ch
         onClick={() => setOpen((v) => !v)}
       >
         <SlidersHorizontal className="size-4" aria-hidden />
-        Filters
+        {t("Filters")}
         {activeCount > 0 ? (
           <span className="rounded-full bg-primary px-1.5 text-xs font-semibold text-on-primary">{activeCount}</span>
         ) : null}

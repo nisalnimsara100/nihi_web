@@ -3,7 +3,7 @@
 /* Semantic tokens. Components use these names, never raw palette steps,
    so light and dark mode swap in one place. */
 @theme inline {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), var(--font-sinhala), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
 
   --color-canvas: var(--canvas);

@@ -7,13 +7,15 @@ import { getRecurringById } from "@/lib/data";
 import { toInputAmount } from "@/lib/money";
 import { getTransactionFormOptions } from "../../transactions/form-data";
 import { RecurringForm } from "../recurring-form";
+import { getT } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "Edit repeat" };
 
-export default function EditRecurringPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditRecurringPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = await getT();
   return (
     <div className="mx-auto max-w-2xl">
-      <PageHeader title="Edit repeat" />
+      <PageHeader title={t("Edit repeat")} />
       <Suspense fallback={<Skeleton className="h-[640px]" />}>
         <EditRecurring params={params} />
       </Suspense>

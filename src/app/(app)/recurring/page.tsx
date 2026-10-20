@@ -10,6 +10,7 @@ import { dayToDate, dueLabel, formatDay, todayDay } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { dueCount, frequencyLabel, type Frequency } from "@/lib/recurring";
 import { PauseButton } from "./pause-button";
+import { getT } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "Repeats" };
 
@@ -22,6 +23,7 @@ export default function RecurringPage() {
 }
 
 async function Recurring() {
+  const t = await getT();
   const { owner: user, readOnly } = await getViewer();
   const rules = await getRecurring(user.id);
   const today = todayDay();
@@ -39,7 +41,7 @@ async function Recurring() {
   return (
     <>
       <PageHeader
-        title="Repeats"
+        title={t("Repeats")}
         description="Rent, salary, subscriptions. You confirm each one when it is due."
         actions={
           readOnly ? undefined : (
@@ -52,7 +54,7 @@ async function Recurring() {
 
       {dueItems.length > 0 && !readOnly ? (
         <Card className="mb-4">
-          <CardHeader title="Due now" />
+          <CardHeader title={t("Due now")} />
           <DueRecurring items={dueItems} />
         </Card>
       ) : null}
@@ -61,9 +63,9 @@ async function Recurring() {
         <Card>
           <EmptyState
             icon={<Repeat className="size-6" />}
-            title="Nothing repeats yet"
+            title={t("Nothing repeats yet")}
             description="Add the payments and income that come around every week, month or year."
-            action={readOnly ? undefined : <Link href="/recurring/new" className="font-semibold text-primary hover:underline">Add a repeat</Link>}
+            action={readOnly ? undefined : <Link href="/recurring/new" className="font-semibold text-primary hover:underline">{t("Add a repeat")}</Link>}
           />
         </Card>
       ) : (
@@ -80,7 +82,7 @@ async function Recurring() {
                       {r.note || r.category?.name || (r.type === "TRANSFER" ? "Transfer" : "Repeating transaction")}
                     </span>
                     <span className="block text-xs text-ink-soft">
-                      {frequencyLabel(r.frequency)} · {r.active ? `next ${formatDay(dayToDate(r.nextDate))}` : "paused"} · {r.account.name}
+                      {t(frequencyLabel(r.frequency))} · {r.active ? t("next {date}", { date: formatDay(dayToDate(r.nextDate)) }) : t("paused")} · {r.account.name}
                       {r.type === "TRANSFER" && r.toAccount ? ` → ${r.toAccount.name}` : ""}
                     </span>
                   </span>

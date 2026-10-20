@@ -10,13 +10,15 @@ import { toInputAmount } from "@/lib/money";
 import { getTransactionFormOptions } from "../form-data";
 import { SplitPanel } from "@/components/finance/split-panel";
 import { TransactionForm } from "../transaction-form";
+import { getT } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "Edit transaction" };
 
-export default function EditTransactionPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditTransactionPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = await getT();
   return (
     <div className="mx-auto max-w-2xl">
-      <PageHeader title="Edit transaction" />
+      <PageHeader title={t("Edit transaction")} />
       <Suspense fallback={<Skeleton className="h-[520px]" />}>
         <EditTransaction params={params} />
       </Suspense>
@@ -25,6 +27,7 @@ export default function EditTransactionPage({ params }: { params: Promise<{ id: 
 }
 
 async function EditTransaction({ params }: { params: Promise<{ id: string }> }) {
+  const t = await getT();
   const { user } = await requireOwnView();
   const { id } = await params;
   const tx = await getTransaction(user.id, id);
@@ -61,7 +64,7 @@ async function EditTransaction({ params }: { params: Promise<{ id: string }> }) 
     />
     <p className="mt-4 text-center text-sm">
       <Link href={`/recurring/new?${repeatParams}`} className="font-semibold text-primary hover:underline">
-        Make this repeat
+        {t("Make this repeat")}
       </Link>
     </p>
     {tx.type !== "TRANSFER" ? (

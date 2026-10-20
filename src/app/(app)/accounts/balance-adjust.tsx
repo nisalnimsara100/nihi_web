@@ -6,9 +6,11 @@ import { notify } from "@/components/toast";
 import { Button, Card, Field, inputClass } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatMoney, parseAmount } from "@/lib/money";
+import { useT } from "@/lib/i18n/client";
 
 /** Lets the user correct a balance that drifted from the bank's, without adding a fake transaction. */
 export function BalanceAdjust({ accountId, balance, currency, isCredit }: { accountId: string; balance: number; currency: string; isCredit: boolean }) {
+  const t = useT();
   const [actual, setActual] = useState("");
   const [pending, startTransition] = useTransition();
   const target = parseAmount(actual);
@@ -27,10 +29,9 @@ export function BalanceAdjust({ accountId, balance, currency, isCredit }: { acco
 
   return (
     <Card className="mt-4 p-4 sm:p-6">
-      <h2 className="text-base font-bold text-ink">Match your bank&apos;s balance</h2>
+      <h2 className="text-base font-bold text-ink">{t("Match your bank's balance")}</h2>
       <p className="mt-1 text-sm text-ink-soft">
-        NiHi shows <span className="font-semibold text-ink tabular-nums">{formatMoney(balance, currency)}</span>. If your bank says something
-        different, type its balance below. The starting balance is adjusted to close the gap, and your transactions and reports stay as they are.
+        {t("NiHi shows {amount}. If your bank says something different, type its balance below. The starting balance is adjusted to close the gap, and your transactions and reports stay as they are.", { amount: formatMoney(balance, currency) })}
       </p>
       <div className="mt-4">
         <Field label={isCredit ? "Balance in your bank (a minus means you owe)" : "Balance in your bank"} htmlFor="actual-balance">
@@ -40,14 +41,14 @@ export function BalanceAdjust({ accountId, balance, currency, isCredit }: { acco
             autoComplete="off"
             value={actual}
             onChange={(e) => setActual(e.target.value)}
-            placeholder="e.g. 15000.50"
+            placeholder={t("e.g. 15000.50")}
             className={cn(inputClass, "tabular-nums")}
           />
         </Field>
       </div>
       {difference !== null && difference !== 0 ? (
         <p className="mt-2 text-sm font-semibold tabular-nums">
-          Difference: {difference > 0 ? "+" : "-"}
+          {t("Difference")}: {difference > 0 ? "+" : "-"}
           {formatMoney(Math.abs(difference), currency)}
         </p>
       ) : null}

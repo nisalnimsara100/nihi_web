@@ -9,6 +9,7 @@ import { buttonClass, Card, Field, inputClass } from "@/components/ui";
 import type { Enums } from "@/lib/database.types";
 import { cn } from "@/lib/cn";
 import { FREQUENCIES } from "@/lib/recurring";
+import { useT } from "@/lib/i18n/client";
 
 type TransactionType = Enums<"TransactionType">;
 
@@ -36,6 +37,7 @@ const TYPE_TABS: { value: TransactionType; label: string }[] = [
 
 /** Create or edit a repeating transaction. */
 export function RecurringForm({ initial, accounts, categories }: { initial: RecurringFormValues; accounts: Account[]; categories: Category[] }) {
+  const t = useT();
   const { state, pending, onSubmit } = useActionForm(saveRecurring);
   const errors = state.fieldErrors ?? {};
   const [type, setType] = useState(initial.type);
@@ -57,7 +59,7 @@ export function RecurringForm({ initial, accounts, categories }: { initial: Recu
         {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
         <input type="hidden" name="type" value={type} />
 
-        <div role="radiogroup" aria-label="Transaction type" className="grid grid-cols-3 gap-1 rounded-2xl bg-muted p-1">
+        <div role="radiogroup" aria-label={t("Transaction type")} className="grid grid-cols-3 gap-1 rounded-2xl bg-muted p-1">
           {TYPE_TABS.map((tab) => (
             <button
               key={tab.value}
@@ -73,7 +75,7 @@ export function RecurringForm({ initial, accounts, categories }: { initial: Recu
         </div>
 
         <Field label="Note" htmlFor="note" error={errors.note} hint="What it is, like Rent or Netflix.">
-          <input id="note" name="note" maxLength={200} defaultValue={initial.note} placeholder="e.g. House rent" className={inputClass} />
+          <input id="note" name="note" maxLength={200} defaultValue={initial.note} placeholder={t("e.g. House rent")} className={inputClass} />
         </Field>
 
         <Field label="Amount" htmlFor="amount" error={errors.amount}>
@@ -93,7 +95,7 @@ export function RecurringForm({ initial, accounts, categories }: { initial: Recu
           {isTransfer ? (
             <Field label="To account" htmlFor="toAccountId" error={errors.toAccountId}>
               <select id="toAccountId" name="toAccountId" defaultValue={initial.toAccountId} aria-invalid={!!errors.toAccountId} className={inputClass}>
-                <option value="">Choose account</option>
+                <option value="">{t("Choose account")}</option>
                 {accounts.filter((a) => a.id !== accountId).map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.name} ({a.currency})
@@ -107,7 +109,7 @@ export function RecurringForm({ initial, accounts, categories }: { initial: Recu
         {!isTransfer ? (
           <Field label="Category" htmlFor="categoryId" error={errors.categoryId}>
             <select id="categoryId" name="categoryId" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={inputClass}>
-              <option value="">None</option>
+              <option value="">{t("None")}</option>
               {visibleCategories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -121,7 +123,7 @@ export function RecurringForm({ initial, accounts, categories }: { initial: Recu
           <select id="frequency" name="frequency" defaultValue={initial.frequency} className={inputClass}>
             {FREQUENCIES.map((f) => (
               <option key={f.value} value={f.value}>
-                {f.label}
+                {t(f.label)}
               </option>
             ))}
           </select>
@@ -136,7 +138,7 @@ export function RecurringForm({ initial, accounts, categories }: { initial: Recu
               <DateField id="endDate" name="endDate" value={endDate} onChange={setEndDate} required={false} invalid={!!errors.endDate} />
               {endDate ? (
                 <button type="button" onClick={() => setEndDate("")} className="text-sm font-semibold text-primary hover:underline">
-                  Clear last date
+                  {t("Clear last date")}
                 </button>
               ) : null}
             </div>
@@ -144,14 +146,14 @@ export function RecurringForm({ initial, accounts, categories }: { initial: Recu
         </div>
 
         <p className="rounded-2xl bg-muted p-3 text-sm text-ink-soft">
-          Nothing is added on its own. When a date arrives it shows up on your home page, and you tap Add or Skip.
+          {t("Nothing is added on its own. When a date arrives it shows up on your home page, and you tap Add or Skip.")}
         </p>
 
         <div className="flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-start sm:justify-between">
           {initial.id ? <DeleteButton action={deleteRecurring.bind(null, initial.id)} /> : <span className="hidden sm:block" />}
           <div className="flex flex-col-reverse gap-2 sm:flex-row">
             <Link href="/recurring" className={buttonClass("ghost")}>
-              Cancel
+              {t("Cancel")}
             </Link>
             <SubmitButton pending={pending}>{initial.id ? "Save changes" : "Add repeat"}</SubmitButton>
           </div>

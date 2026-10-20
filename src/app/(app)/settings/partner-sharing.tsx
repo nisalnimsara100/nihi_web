@@ -6,6 +6,7 @@ import { DeleteButton, SubmitButton } from "@/components/form-bits";
 import { notify } from "@/components/toast";
 import { useActionForm } from "@/components/use-action-form";
 import { Button, Card, CardHeader, Field, inputClass } from "@/components/ui";
+import { useT } from "@/lib/i18n/client";
 
 export type SentShare = { id: string; email: string; token: string; accepted: boolean; daysLeft: number };
 export type ReceivedShare = { id: string; ownerId: string; ownerName: string };
@@ -23,18 +24,18 @@ export function PartnerSharing({
   mailReady: boolean;
   ownerName: string;
 }) {
+  const t = useT();
   const { state, pending, formRef, onSubmit } = useActionForm(invitePartner, { resetOnSuccess: true });
   const errors = state.fieldErrors ?? {};
 
   return (
     <Card>
-      <CardHeader title="Partner access" />
+      <CardHeader title={t("Partner access")} />
       <div className="space-y-6 p-4 sm:p-5">
         <section>
-          <h3 className="text-sm font-semibold">Let someone view your finances</h3>
+          <h3 className="text-sm font-semibold">{t("Let someone view your finances")}</h3>
           <p className="mt-1 text-sm text-ink-soft">
-            They can look at everything but change nothing. Create a link and send it to them on WhatsApp, SMS or anywhere.
-            When they open it, they sign in or sign up and confirm, and they are connected.
+            {t("They can look at everything but change nothing. Create a link and send it to them on WhatsApp, SMS or anywhere. When they open it, they sign in or sign up and confirm, and they are connected.")}
           </p>
           <form ref={formRef} onSubmit={onSubmit} className="mt-3 space-y-3" noValidate>
             <Field label="Partner's email" htmlFor="partner-email" error={errors.email} hint="Only to remember who the link is for. They can use any email.">
@@ -43,7 +44,7 @@ export function PartnerSharing({
                 name="email"
                 type="email"
                 autoComplete="off"
-                placeholder="partner@example.com"
+                placeholder={t("partner@example.com")}
                 aria-invalid={!!errors.email}
                 className={inputClass}
               />
@@ -60,10 +61,12 @@ export function PartnerSharing({
                       <span className="block truncate text-sm font-semibold">{share.email}</span>
                       <span className="block text-xs text-ink-soft">
                         {share.accepted
-                          ? "Connected: can view"
+                          ? t("Connected: can view")
                           : share.daysLeft <= 0
-                            ? "Expired: make a new link"
-                            : `Waiting: works once, ${share.daysLeft} ${share.daysLeft === 1 ? "day" : "days"} left`}
+                            ? t("Expired: make a new link")
+                            : share.daysLeft === 1
+                              ? t("Waiting: works once, 1 day left")
+                              : t("Waiting: works once, {days} days left", { days: share.daysLeft })}
                       </span>
                     </span>
                     <DeleteButton
@@ -82,14 +85,14 @@ export function PartnerSharing({
 
         {received.length > 0 ? (
           <section>
-            <h3 className="text-sm font-semibold">Shared with you</h3>
+            <h3 className="text-sm font-semibold">{t("Shared with you")}</h3>
             <ul className="mt-3 divide-y divide-line rounded-2xl ring-1 ring-line">
               {received.map((share) => (
                 <li key={share.id} className="flex flex-wrap items-center gap-2 px-4 py-3">
                   <span className="min-w-0 flex-1 truncate text-sm font-semibold">{share.ownerName}</span>
                   <form action={() => void viewAs(share.ownerId)}>
                     <Button type="submit" size="sm" variant="secondary">
-                      View
+                      {t("View")}
                     </Button>
                   </form>
                   <DeleteButton
@@ -110,6 +113,7 @@ export function PartnerSharing({
 
 /** What to do with a pending invite link: copy it, send it on WhatsApp or the phone's share sheet, or email it. */
 function InviteActions({ share, mailReady, ownerName }: { share: SentShare; mailReady: boolean; ownerName: string }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   const [renewing, setRenewing] = useState(false);
   const [sending, setSending] = useState(false);
@@ -169,7 +173,7 @@ function InviteActions({ share, mailReady, ownerName }: { share: SentShare; mail
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 rounded-2xl bg-muted px-3 py-2">
-        <span className="min-w-0 flex-1 truncate font-mono text-xs text-ink-soft" aria-label="Invite link">
+        <span className="min-w-0 flex-1 truncate font-mono text-xs text-ink-soft" aria-label={t("Invite link")}>
           {`/invite/${share.token}`}
         </span>
         <Button type="button" size="sm" onClick={copy}>
@@ -178,11 +182,11 @@ function InviteActions({ share, mailReady, ownerName }: { share: SentShare; mail
       </div>
       <div className="flex flex-wrap gap-2">
         <Button type="button" size="sm" variant="secondary" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(message())}`, "_blank", "noopener")}>
-          WhatsApp
+          {t("WhatsApp")}
         </Button>
         {canShare ? (
           <Button type="button" size="sm" variant="secondary" onClick={nativeShare}>
-            Share
+            {t("Share")}
           </Button>
         ) : null}
         {mailReady ? (

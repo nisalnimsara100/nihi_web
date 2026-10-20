@@ -252,7 +252,7 @@ async function Dashboard() {
             ) : (
               <EmptyState
                 icon={<Receipt className="size-6" />}
-                title="No transactions yet"
+                title={t("No transactions yet")}
                 description={readOnly ? "Nothing has been added yet." : "Add your first expense or income to see it here."}
                 action={readOnly ? undefined : <ButtonLink href="/transactions/new">{t("Add transaction")}</ButtonLink>}
               />
@@ -263,7 +263,7 @@ async function Dashboard() {
         <div className="min-w-0 space-y-5 lg:col-span-2">
           {alerts.length > 0 ? (
             <Card>
-              <CardHeader title="Heads-up" />
+              <CardHeader title={t("Heads-up")} />
               <ul className="divide-y divide-line">
                 {alerts.map((a) => (
                   <li key={a.id}>
@@ -290,7 +290,7 @@ async function Dashboard() {
 
           {dueRules.length > 0 ? (
             <Card>
-              <CardHeader title="Due now" action={<SeeAll href="/recurring">All repeats</SeeAll>} />
+              <CardHeader title={t("Due now")} action={<SeeAll href="/recurring">{t("All repeats")}</SeeAll>} />
               <DueRecurring
                 items={dueRules.map((r) => ({
                   id: r.id,
@@ -306,7 +306,7 @@ async function Dashboard() {
 
           {budgetRows.some((r) => r.limit !== null) ? (
             <Card>
-              <CardHeader title="Budgets" action={<SeeAll href="/budgets">All budgets</SeeAll>} />
+              <CardHeader title={t("Budgets")} action={<SeeAll href="/budgets">{t("All budgets")}</SeeAll>} />
               <ul className="space-y-4 p-5">
                 {budgetRows
                   .filter((r) => r.limit !== null)
@@ -336,7 +336,7 @@ async function Dashboard() {
 
           {goals.length > 0 ? (
             <Card>
-              <CardHeader title="Goals" action={<SeeAll href="/goals">All goals</SeeAll>} />
+              <CardHeader title={t("Goals")} action={<SeeAll href="/goals">{t("All goals")}</SeeAll>} />
               <ul className="space-y-4 p-5">
                 {goals.slice(0, 3).map((g) => {
                   const p = goalProgress(g.saved, g.targetAmount, g.targetDate, today);
@@ -359,21 +359,21 @@ async function Dashboard() {
           ) : null}
 
           <Card>
-            <CardHeader title="Spending this month" action={<SeeAll href="/statistics">Details</SeeAll>} />
+            <CardHeader title={t("Spending this month")} action={<SeeAll href="/statistics">{t("Details")}</SeeAll>} />
             <div className="p-5">
               {breakdown.length > 0 ? (
                 <CategoryBars data={breakdown} currency={currency} limit={6} />
               ) : (
                 <p className="flex items-center gap-2 text-sm text-ink-soft">
                   <ChartBar className="size-4" aria-hidden />
-                  No {currency} spending this month yet.
+                  {t("No {currency} spending this month yet.", { currency })}
                 </p>
               )}
             </div>
           </Card>
 
           <Card>
-            <CardHeader title="Wallet" action={<SeeAll href="/accounts">See all</SeeAll>} />
+            <CardHeader title={t("Wallet")} action={<SeeAll href="/accounts">{t("See all")}</SeeAll>} />
             <ul className="space-y-1 p-3">
               {accounts
                 .filter((a) => a.type !== "SAVINGS")
@@ -386,7 +386,7 @@ async function Dashboard() {
                     <ColorDot color={a.color} className="size-3" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-semibold">{a.name}</span>
-                      <span className="block text-xs text-ink-soft">{accountTypeLabel(a.type)}</span>
+                      <span className="block text-xs text-ink-soft">{t(accountTypeLabel(a.type))}</span>
                     </span>
                     <span className="text-sm font-semibold tabular-nums">{formatMoney(a.balance, a.currency)}</span>
                   </MaybeLink>

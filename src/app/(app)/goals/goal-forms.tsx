@@ -10,6 +10,7 @@ import { cn } from "@/lib/cn";
 import { CURRENCIES } from "@/lib/constants";
 import { goalProgress } from "@/lib/goals";
 import { formatMoney, toInputAmount } from "@/lib/money";
+import { useT } from "@/lib/i18n/client";
 
 export type GoalItem = {
   id: string;
@@ -24,6 +25,7 @@ export type GoalItem = {
 export type SavingsAccount = { id: string; name: string; currency: string };
 
 function GoalForm({ goal, accounts, defaultCurrency, onDone }: { goal?: GoalItem; accounts: SavingsAccount[]; defaultCurrency: string; onDone: () => void }) {
+  const t = useT();
   const { state, pending, formRef, onSubmit } = useActionForm(saveGoal, { resetOnSuccess: !goal, onSuccess: onDone });
   const errors = state.fieldErrors ?? {};
   const [date, setDate] = useState(goal?.targetDate ?? "");
@@ -34,7 +36,7 @@ function GoalForm({ goal, accounts, defaultCurrency, onDone }: { goal?: GoalItem
     <form ref={formRef} onSubmit={onSubmit} className="space-y-4" noValidate>
       {goal ? <input type="hidden" name="id" value={goal.id} /> : null}
       <Field label="Goal" htmlFor={`goal-name-${goal?.id ?? "new"}`} error={errors.name}>
-        <input id={`goal-name-${goal?.id ?? "new"}`} name="name" defaultValue={goal?.name} placeholder="e.g. New phone" maxLength={60} aria-invalid={!!errors.name} className={inputClass} />
+        <input id={`goal-name-${goal?.id ?? "new"}`} name="name" defaultValue={goal?.name} placeholder={t("e.g. New phone")} maxLength={60} aria-invalid={!!errors.name} className={inputClass} />
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Target amount" htmlFor={`goal-target-${goal?.id ?? "new"}`} error={errors.targetAmount}>
@@ -55,14 +57,14 @@ function GoalForm({ goal, accounts, defaultCurrency, onDone }: { goal?: GoalItem
           <DateField id={`goal-date-${goal?.id ?? "new"}`} name="targetDate" value={date} onChange={setDate} required={false} />
           {date ? (
             <button type="button" onClick={() => setDate("")} className="text-sm font-semibold text-primary hover:underline">
-              Clear date
+              {t("Clear date")}
             </button>
           ) : null}
         </div>
       </Field>
       <Field label="Follow a savings account" htmlFor={`goal-account-${goal?.id ?? "new"}`} error={errors.accountId} hint="Progress is that account's balance. Leave empty to add money by hand.">
         <select id={`goal-account-${goal?.id ?? "new"}`} name="accountId" defaultValue={goal?.accountId ?? ""} className={inputClass}>
-          <option value="">No, I will add money myself</option>
+          <option value="">{t("No, I will add money myself")}</option>
           {options.map((a) => (
             <option key={a.id} value={a.id}>
               {a.name}
@@ -73,7 +75,7 @@ function GoalForm({ goal, accounts, defaultCurrency, onDone }: { goal?: GoalItem
       <div className="flex gap-2">
         <SubmitButton pending={pending}>{goal ? "Save changes" : "Add goal"}</SubmitButton>
         <Button type="button" variant="ghost" onClick={onDone}>
-          Cancel
+          {t("Cancel")}
         </Button>
       </div>
     </form>
@@ -82,9 +84,10 @@ function GoalForm({ goal, accounts, defaultCurrency, onDone }: { goal?: GoalItem
 
 /** Button and form to start a new goal. */
 export function NewGoal({ accounts, defaultCurrency }: { accounts: SavingsAccount[]; defaultCurrency: string }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   if (!open) {
-    return <Button onClick={() => setOpen(true)}>New goal</Button>;
+    return <Button onClick={() => setOpen(true)}>{t("New goal")}</Button>;
   }
   return (
     <Card className="p-4 sm:p-6">
@@ -94,6 +97,7 @@ export function NewGoal({ accounts, defaultCurrency }: { accounts: SavingsAccoun
 }
 
 export function GoalCard({ goal, accounts, today, readOnly }: { goal: GoalItem; accounts: SavingsAccount[]; today: string; readOnly: boolean }) {
+  const t = useT();
   const [editing, setEditing] = useState(false);
   const [amount, setAmount] = useState("");
   const [pending, startTransition] = useTransition();
@@ -125,48 +129,50 @@ export function GoalCard({ goal, accounts, today, readOnly }: { goal: GoalItem; 
         <div className="min-w-0">
           <h3 className="truncate text-base font-bold">{goal.name}</h3>
           <p className="text-xs text-ink-soft">
-            {goal.accountName ? `Following ${goal.accountName}` : "Added by hand"}
-            {goal.targetDate ? ` · by ${goal.targetDate}` : ""}
+            {goal.accountName ? t("Following {name}", { name: goal.accountName }) : t("Added by hand")}
+            {goal.targetDate ? ` · ${t("by {date}", { date: goal.targetDate })}` : ""}
           </p>
         </div>
         {!readOnly ? (
           <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
-            Edit
+            {t("Edit")}
           </Button>
         ) : null}
       </div>
 
       <p className="mt-3 text-2xl font-bold tabular-nums">
-        {formatMoney(p.saved, goal.currency)} <span className="text-sm font-medium text-ink-soft">of {formatMoney(p.target, goal.currency)}</span>
+        {formatMoney(p.saved, goal.currency)} <span className="text-sm font-medium text-ink-soft">{t("of")} {formatMoney(p.target, goal.currency)}</span>
       </p>
-      <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-muted" role="img" aria-label={`${Math.round(p.ratio * 100)}% of the goal saved`}>
+      <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-muted" role="img" aria-label={t("{percent}% of the goal saved", { percent: Math.round(p.ratio * 100) })}>
         <div className={cn("h-full rounded-full", p.reached ? "bg-income" : "bg-primary")} style={{ width: `${Math.max(p.ratio * 100, p.saved > 0 ? 2 : 0)}%` }} />
       </div>
       <p className="mt-2 text-sm text-ink-soft">
         {p.reached
-          ? "Goal reached. Well done!"
+          ? t("Goal reached. Well done!")
           : p.overdue
-            ? `The date has passed. ${formatMoney(p.remaining, goal.currency)} still to go.`
+            ? t("The date has passed. {amount} still to go.", { amount: formatMoney(p.remaining, goal.currency) })
             : p.perMonth
-              ? `Put aside about ${formatMoney(p.perMonth, goal.currency)} a month for ${p.monthsLeft} ${p.monthsLeft === 1 ? "month" : "months"}.`
-              : `${formatMoney(p.remaining, goal.currency)} still to go.`}
+              ? p.monthsLeft === 1
+                ? t("Put aside about {amount} for 1 more month.", { amount: formatMoney(p.perMonth, goal.currency) })
+                : t("Put aside about {amount} a month for {months} months.", { amount: formatMoney(p.perMonth, goal.currency), months: p.monthsLeft ?? 0 })
+              : t("{amount} still to go.", { amount: formatMoney(p.remaining, goal.currency) })}
       </p>
 
       {!readOnly && !goal.accountId ? (
         <div className="mt-4 flex gap-2">
           <input
-            aria-label={`Amount to add to ${goal.name}`}
+            aria-label={t("Amount to add to {name}", { name: goal.name })}
             inputMode="decimal"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            placeholder="Amount"
+            placeholder={t("Amount")}
             className={cn(inputClass, "h-10 min-w-0 flex-1 tabular-nums")}
           />
           <Button size="sm" disabled={pending || !amount.trim()} onClick={() => move(1)}>
-            Add
+            {t("Add")}
           </Button>
           <Button size="sm" variant="secondary" disabled={pending || !amount.trim()} onClick={() => move(-1)}>
-            Take out
+            {t("Take out")}
           </Button>
         </div>
       ) : null}

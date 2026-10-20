@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { findSimilar, type SimilarTransaction } from "@/actions/transactions";
 import { Warning } from "@/components/icons";
 import { dayToDate, formatDay } from "@/lib/dates";
+import { useT } from "@/lib/i18n/client";
 
 /**
  * Warns when a transaction like the one being entered (same account, type and amount, within a day)
@@ -24,6 +25,7 @@ export function SimilarWarning({
   day: string;
   excludeId?: string;
 }) {
+  const t = useT();
   const key = `${type}|${amount}|${accountId}|${day}|${excludeId ?? ""}`;
   const [found, setFound] = useState<{ key: string; list: SimilarTransaction[] } | null>(null);
 
@@ -52,7 +54,7 @@ export function SimilarWarning({
     <div role="status" className="rounded-2xl bg-warning-soft p-3 text-sm text-ink">
       <p className="flex items-center gap-2 font-semibold">
         <Warning className="size-4 shrink-0" aria-hidden />
-        Looks like one you already added
+        {t("Looks like one you already added")}
       </p>
       <ul className="mt-1.5 space-y-0.5 pl-6">
         {list.map((t) => (
@@ -65,7 +67,7 @@ export function SimilarWarning({
           </li>
         ))}
       </ul>
-      <p className="mt-1.5 pl-6 text-ink-soft">If this is a new payment, you can ignore this.</p>
+      <p className="mt-1.5 pl-6 text-ink-soft">{t("If this is a new payment, you can ignore this.")}</p>
     </div>
   );
 }

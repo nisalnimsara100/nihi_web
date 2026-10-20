@@ -11,6 +11,7 @@ import { formatMoney } from "@/lib/money";
 import { buildHref, param, type SearchParams } from "@/lib/search-params";
 import { cn } from "@/lib/cn";
 import { BudgetRow } from "./budget-row";
+import { getT } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "Budgets" };
 
@@ -23,6 +24,7 @@ export default function BudgetsPage({ searchParams }: { searchParams: SearchPara
 }
 
 async function Budgets({ searchParams }: { searchParams: SearchParams }) {
+  const t = await getT();
   const { owner: user, readOnly } = await getViewer();
   const sp = await searchParams;
   const monthParam = param(sp, "month");
@@ -45,16 +47,16 @@ async function Budgets({ searchParams }: { searchParams: SearchParams }) {
   return (
     <>
       <PageHeader
-        title="Budgets"
+        title={t("Budgets")}
         description={`Monthly limits in ${currency}`}
         actions={<PeriodNav label={formatMonth(month)} prevHref={href(shiftMonth(month, -1))} nextHref={href(shiftMonth(month, 1))} />}
       />
 
       {total ? (
         <Card className="mb-4 p-5">
-          <p className="text-sm font-semibold text-ink-soft">All budgets together</p>
+          <p className="text-sm font-semibold text-ink-soft">{t("All budgets together")}</p>
           <p className="mt-1 text-2xl font-bold tabular-nums">
-            {formatMoney(totalSpent, currency)} <span className="text-base font-medium text-ink-soft">of {formatMoney(totalLimit, currency)}</span>
+            {formatMoney(totalSpent, currency)} <span className="text-base font-medium text-ink-soft">{t("of")} {formatMoney(totalLimit, currency)}</span>
           </p>
           <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-muted" aria-hidden>
             <div
@@ -63,8 +65,8 @@ async function Budgets({ searchParams }: { searchParams: SearchParams }) {
             />
           </div>
           <p className="mt-2 text-sm text-ink-soft">
-            {overCount > 0 ? `${overCount} over the limit` : "None over the limit"}
-            {warnCount > 0 ? ` · ${warnCount} close to it` : ""}
+            {overCount > 0 ? t("{count} over the limit", { count: overCount }) : t("None over the limit")}
+            {warnCount > 0 ? ` · ${t("{count} close to it", { count: warnCount })}` : ""}
           </p>
         </Card>
       ) : null}
@@ -72,7 +74,7 @@ async function Budgets({ searchParams }: { searchParams: SearchParams }) {
       <Card className="px-4 sm:px-5">
         {rows.length === 0 ? (
           <p className="flex items-center gap-2 py-8 text-sm text-ink-soft">
-            <Target className="size-5" aria-hidden /> Add an expense category first, then set a limit for it here.
+            <Target className="size-5" aria-hidden /> {t("Add an expense category first, then set a limit for it here.")}
           </p>
         ) : (
           <ul className="divide-y divide-line">

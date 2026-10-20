@@ -13,6 +13,7 @@ import { currentMonthKey, formatMonth, isMonthKey, monthRange, shiftMonth } from
 import { formatMoney } from "@/lib/money";
 import { buildHref, param, type SearchParams } from "@/lib/search-params";
 import { FilterPanel } from "./filter-panel";
+import { getT } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "Transactions" };
 
@@ -31,6 +32,7 @@ export default function TransactionsPage({ searchParams }: { searchParams: Searc
 }
 
 async function Transactions({ searchParams }: { searchParams: SearchParams }) {
+  const t = await getT();
   const { owner: user, readOnly } = await getViewer();
   const sp = await searchParams;
 
@@ -70,7 +72,7 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
   return (
     <>
       <PageHeader
-        title="Transactions"
+        title={t("Transactions")}
         description={`${transactions.length} in ${formatMonth(month)}`}
         actions={
           <>
@@ -83,7 +85,7 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
             {readOnly ? null : (
               <ButtonLink href="/transactions/new" size="sm" className="hidden sm:inline-flex">
                 <Plus className="size-4" aria-hidden />
-                New
+                {t("New")}
               </ButtonLink>
             )}
           </>
@@ -94,28 +96,28 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
         <Form action="/transactions" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
           <input type="hidden" name="month" value={month} />
           <label className="relative col-span-2 sm:col-span-3 lg:col-span-2">
-            <span className="sr-only">Search notes</span>
+            <span className="sr-only">{t("Search notes")}</span>
             <MagnifyingGlass className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-ink-faint" aria-hidden />
-            <input name="q" defaultValue={filters.q} placeholder="Search notes" className={`${inputClass} pl-9`} />
+            <input name="q" defaultValue={filters.q} placeholder={t("Search notes")} className={`${inputClass} pl-9`} />
           </label>
-          <select name="type" defaultValue={filters.type ?? ""} aria-label="Type" className={inputClass}>
-            <option value="">All types</option>
+          <select name="type" defaultValue={filters.type ?? ""} aria-label={t("Type")} className={inputClass}>
+            <option value="">{t("All types")}</option>
             {TYPES.map((t) => (
               <option key={t.value} value={t.value}>
                 {t.label}
               </option>
             ))}
           </select>
-          <select name="account" defaultValue={filters.account ?? ""} aria-label="Account" className={inputClass}>
-            <option value="">All accounts</option>
+          <select name="account" defaultValue={filters.account ?? ""} aria-label={t("Account")} className={inputClass}>
+            <option value="">{t("All accounts")}</option>
             {accounts.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}
               </option>
             ))}
           </select>
-          <select name="category" defaultValue={filters.category ?? ""} aria-label="Category" className={inputClass}>
-            <option value="">All categories</option>
+          <select name="category" defaultValue={filters.category ?? ""} aria-label={t("Category")} className={inputClass}>
+            <option value="">{t("All categories")}</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name} ({c.type === "INCOME" ? "income" : "expense"})
@@ -123,8 +125,8 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
             ))}
           </select>
           <div className="flex gap-2">
-            <select name="tag" defaultValue={filters.tag ?? ""} aria-label="Tag" className={inputClass}>
-              <option value="">All tags</option>
+            <select name="tag" defaultValue={filters.tag ?? ""} aria-label={t("Tag")} className={inputClass}>
+              <option value="">{t("All tags")}</option>
               {tags.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
@@ -134,11 +136,11 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
           </div>
           <div className="col-span-2 flex gap-2 sm:col-span-3 lg:col-span-6">
             <Button type="submit" size="sm">
-              Apply filters
+              {t("Apply filters")}
             </Button>
             {activeCount > 0 ? (
               <Link href={buildHref("/transactions", { month })} className="inline-flex h-9 items-center px-3 text-sm font-semibold text-ink-soft hover:underline">
-                Clear
+                {t("Clear")}
               </Link>
             ) : null}
           </div>
@@ -180,7 +182,7 @@ async function Transactions({ searchParams }: { searchParams: SearchParams }) {
                   ? "Nothing was added this month."
                   : "Add one to start tracking."
             }
-            action={readOnly ? undefined : <ButtonLink href="/transactions/new">Add transaction</ButtonLink>}
+            action={readOnly ? undefined : <ButtonLink href="/transactions/new">{t("Add transaction")}</ButtonLink>}
           />
         )}
       </div>

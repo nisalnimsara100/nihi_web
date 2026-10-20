@@ -5,13 +5,15 @@ import { useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Check, CircleNotch, Eye, Lock } from "@/components/icons";
 import { Button } from "@/components/ui";
+import { useT } from "@/lib/i18n/client";
 
 function ConnectButton() {
+  const t = useT();
   const { pending } = useFormStatus();
   return (
     <Button type="submit" disabled={pending} className="flex-1">
       {pending ? <CircleNotch className="size-4 animate-spin" aria-hidden /> : <Check className="size-4" aria-hidden />}
-      Connect
+      {t("Connect")}
     </Button>
   );
 }
@@ -28,6 +30,7 @@ export function AcceptInviteDialog({
   /** Server action that accepts the invite and redirects to the dashboard. */
   accept: () => Promise<void>;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(true);
 
   useEffect(() => {
@@ -41,7 +44,7 @@ export function AcceptInviteDialog({
     <>
       <div className="mt-6">
         <Button type="button" className="w-full" onClick={() => setOpen(true)}>
-          Review and connect
+          {t("Review and connect")}
         </Button>
       </div>
 
@@ -54,20 +57,20 @@ export function AcceptInviteDialog({
             className="w-full rounded-t-3xl bg-surface p-6 shadow-xl sm:max-w-md sm:rounded-3xl"
           >
             <h2 id="connect-title" className="text-xl font-bold tracking-tight text-ink">
-              Connect with {ownerName}?
+              {t("Connect with {name}?", { name: ownerName })}
             </h2>
             <ul className="mt-4 space-y-3 text-sm text-ink">
               <li className="flex gap-3">
                 <Eye className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
-                <span>You will be able to see {ownerName}&apos;s accounts, transactions and reports.</span>
+                <span>{t("You will be able to see {name}'s accounts, transactions and reports.", { name: ownerName })}</span>
               </li>
               <li className="flex gap-3">
                 <Lock className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
-                <span>It is read-only: you can&apos;t add, change or delete anything.</span>
+                <span>{t("It is read-only: you can't add, change or delete anything.")}</span>
               </li>
               <li className="flex gap-3">
                 <Check className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
-                <span>You can leave at any time from Settings, and {ownerName} can remove your access too.</span>
+                <span>{t("You can leave at any time from Settings, and {name} can remove your access too.", { name: ownerName })}</span>
               </li>
             </ul>
             <form action={accept} className="mt-6 flex gap-2">
@@ -75,7 +78,7 @@ export function AcceptInviteDialog({
                 href="/dashboard"
                 className="inline-flex h-11 flex-1 items-center justify-center rounded-2xl px-5 text-sm font-semibold text-ink-soft transition-colors hover:bg-muted hover:text-ink"
               >
-                Not now
+                {t("Not now")}
               </Link>
               <ConnectButton />
             </form>

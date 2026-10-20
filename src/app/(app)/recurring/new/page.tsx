@@ -6,13 +6,15 @@ import { todayDay } from "@/lib/dates";
 import { param, type SearchParams } from "@/lib/search-params";
 import { getTransactionFormOptions } from "../../transactions/form-data";
 import { RecurringForm } from "../recurring-form";
+import { getT } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "New repeat" };
 
-export default function NewRecurringPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function NewRecurringPage({ searchParams }: { searchParams: SearchParams }) {
+  const t = await getT();
   return (
     <div className="mx-auto max-w-2xl">
-      <PageHeader title="New repeat" />
+      <PageHeader title={t("New repeat")} />
       <Suspense fallback={<Skeleton className="h-[640px]" />}>
         <NewRecurring searchParams={searchParams} />
       </Suspense>

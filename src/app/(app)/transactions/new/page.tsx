@@ -7,13 +7,15 @@ import { todayDay } from "@/lib/dates";
 import { param, type SearchParams } from "@/lib/search-params";
 import { getTransactionFormOptions } from "../form-data";
 import { TransactionForm } from "../transaction-form";
+import { getT } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "New transaction" };
 
-export default function NewTransactionPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function NewTransactionPage({ searchParams }: { searchParams: SearchParams }) {
+  const t = await getT();
   return (
     <div className="mx-auto max-w-2xl">
-      <PageHeader title="New transaction" />
+      <PageHeader title={t("New transaction")} />
       <Suspense fallback={<Skeleton className="h-[520px]" />}>
         <NewTransaction searchParams={searchParams} />
       </Suspense>
@@ -22,6 +24,7 @@ export default function NewTransactionPage({ searchParams }: { searchParams: Sea
 }
 
 async function NewTransaction({ searchParams }: { searchParams: SearchParams }) {
+  const t = await getT();
   const { user } = await requireOwnView();
   const sp = await searchParams;
   const { accounts, categories, tags, history, cards } = await getTransactionFormOptions(user.id);
@@ -31,9 +34,9 @@ async function NewTransaction({ searchParams }: { searchParams: SearchParams }) 
       <Card>
         <EmptyState
           icon={<Wallet className="size-6" />}
-          title="Add an account first"
+          title={t("Add an account first")}
           description="Transactions belong to an account, like your wallet or a bank account."
-          action={<ButtonLink href="/accounts/new">Add account</ButtonLink>}
+          action={<ButtonLink href="/accounts/new">{t("Add account")}</ButtonLink>}
         />
       </Card>
     );

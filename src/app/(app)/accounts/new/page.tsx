@@ -5,13 +5,15 @@ import { requireOwnView } from "@/lib/auth";
 import { DEFAULT_CARD_THEME } from "@/lib/card-themes";
 import { COLORS } from "@/lib/constants";
 import { AccountForm } from "../account-form";
+import { getT } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "New account" };
 
-export default function NewAccountPage() {
+export default async function NewAccountPage() {
+  const t = await getT();
   return (
     <div className="mx-auto max-w-2xl">
-      <PageHeader title="New account" />
+      <PageHeader title={t("New account")} />
       <Suspense fallback={<Skeleton className="h-[560px]" />}>
         <NewAccount />
       </Suspense>
