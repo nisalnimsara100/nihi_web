@@ -9,6 +9,7 @@ import {
   ChartBar,
   CreditCard,
   GearSix,
+  PiggyBank,
   Receipt,
   SlidersHorizontal,
   TrendUp,
@@ -68,7 +69,12 @@ async function Dashboard() {
 
   // The total balance is money you have. Credit cards are debt to a bank, so they stay out of it
   // and show on their own, small, under the total.
-  const ownAccounts = accounts.filter((a) => a.type !== "CREDIT_CARD");
+  // Savings are money set aside, so they are also kept out of the total and shown on their own.
+  const ownAccounts = accounts.filter((a) => a.type !== "CREDIT_CARD" && a.type !== "SAVINGS");
+  const savings = new Map<string, number>();
+  for (const a of accounts) {
+    if (a.type === "SAVINGS") savings.set(a.currency, (savings.get(a.currency) ?? 0) + a.balance);
+  }
   const netWorth = new Map<string, number>();
   for (const a of ownAccounts) {
     netWorth.set(a.currency, (netWorth.get(a.currency) ?? 0) + a.balance);
@@ -112,10 +118,20 @@ async function Dashboard() {
               <>
                 {ownAccounts.length} account{ownAccounts.length === 1 ? "" : "s"}
                 {otherNetWorth.length > 0 ? ` · ${otherNetWorth.map(([c, v]) => formatMoney(v, c)).join(" · ")}` : ""}
-                {cardsOwed.size > 0 ? (
-                  <span className="mt-2 flex w-fit items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
-                    <CreditCard className="size-3.5" aria-hidden />
-                    Cards owe {[...cardsOwed].map(([c, v]) => formatMoney(v, c)).join(" · ")}
+                {cardsOwed.size > 0 || savings.size > 0 ? (
+                  <span className="mt-2 flex flex-wrap gap-2">
+                    {savings.size > 0 ? (
+                      <span className="flex w-fit items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
+                        <PiggyBank className="size-3.5" aria-hidden />
+                        Savings {[...savings].map(([c, v]) => formatMoney(v, c)).join(" · ")}
+                      </span>
+                    ) : null}
+                    {cardsOwed.size > 0 ? (
+                      <span className="flex w-fit items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
+                        <CreditCard className="size-3.5" aria-hidden />
+                        Cards owe {[...cardsOwed].map(([c, v]) => formatMoney(v, c)).join(" · ")}
+                      </span>
+                    ) : null}
                   </span>
                 ) : null}
               </>
@@ -223,7 +239,9 @@ async function Dashboard() {
           <Card>
             <CardHeader title="Wallet" action={<SeeAll href="/accounts">See all</SeeAll>} />
             <ul className="space-y-1 p-3">
-              {accounts.map((a) => (
+              {accounts
+                .filter((a) => a.type !== "SAVINGS")
+                .map((a) => (
                 <li key={a.id}>
                   <MaybeLink
                     href={readOnly ? undefined : `/accounts/${a.id}`}
