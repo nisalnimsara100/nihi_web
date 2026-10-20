@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { logout } from "@/actions/auth";
 import { acceptInvite } from "@/actions/sharing";
 import { Logo } from "@/components/logo";
+import { AcceptInviteDialog } from "./accept-invite-dialog";
 import { Button, ButtonLink, Card, Skeleton } from "@/components/ui";
 import { db, run } from "@/lib/db";
 import { getSessionUserId } from "@/lib/session";
@@ -53,6 +54,8 @@ async function Invite({ params }: { params: Promise<{ token: string }> }) {
     ? await run(db().from("User").select("email").eq("id", userId).maybeSingle())
     : null;
   const next = encodeURIComponent(`/invite/${token}`);
+  // Sign-in and sign-up come back here with the invited email already filled in.
+  const emailParam = encodeURIComponent(share.email);
 
   return (
     <Card className="p-6 sm:p-8">
@@ -64,10 +67,10 @@ async function Invite({ params }: { params: Promise<{ token: string }> }) {
 
       {!me ? (
         <div className="mt-6 space-y-3">
-          <ButtonLink href={`/login?next=${next}`} className="w-full">
+          <ButtonLink href={`/login?next=${next}&email=${emailParam}`} className="w-full">
             Log in to accept
           </ButtonLink>
-          <ButtonLink href={`/signup?next=${next}`} variant="soft" className="w-full">
+          <ButtonLink href={`/signup?next=${next}&email=${emailParam}`} variant="soft" className="w-full">
             Create an account
           </ButtonLink>
           <p className="text-center text-xs text-ink-soft">Use the email {share.email}.</p>
@@ -77,7 +80,7 @@ async function Invite({ params }: { params: Promise<{ token: string }> }) {
           This invite has already been used. Ask {ownerName} for a new one.
         </p>
       ) : me.email === share.email ? (
-        <AcceptButton token={token} />
+        <AcceptButton token={token} ownerName={ownerName} />
       ) : (
         <div className="mt-6 space-y-3">
           <p className="rounded-2xl bg-warning-soft p-3 text-sm text-warning">
@@ -97,16 +100,10 @@ async function Invite({ params }: { params: Promise<{ token: string }> }) {
   );
 }
 
-function AcceptButton({ token }: { token: string }) {
+function AcceptButton({ token, ownerName }: { token: string; ownerName: string }) {
   async function accept() {
     "use server";
     await acceptInvite(token);
   }
-  return (
-    <form action={accept} className="mt-6">
-      <Button type="submit" className="w-full">
-        Accept and view
-      </Button>
-    </form>
-  );
+  return <AcceptInviteDialog ownerName={ownerName} accept={accept} />;
 }

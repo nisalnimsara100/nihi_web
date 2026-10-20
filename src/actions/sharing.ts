@@ -28,12 +28,12 @@ async function emailInvite(ownerName: string, to: string, token: string): Promis
     ``,
     `${ownerName} invited you to view their finances on NiHi. You can look at everything but change nothing.`,
     ``,
-    `Open this link and sign in (or create an account) with this email address (${to}) to accept:`,
+    `Open this link, sign in (or create an account) with this email address (${to}), then confirm to connect:`,
     link,
     ``,
     `If you weren't expecting this, you can ignore the email.`,
   ].join("\n");
-  const html = `<p>Hi,</p><p><b>${escapeHtml(ownerName)}</b> invited you to view their finances on NiHi. You can look at everything but change nothing.</p><p>Sign in (or create an account) with this email address (${escapeHtml(to)}) to accept:</p><p><a href="${link}">${link}</a></p><p style="color:#6e6e73">If you weren't expecting this, you can ignore the email.</p>`;
+  const html = `<p>Hi,</p><p><b>${escapeHtml(ownerName)}</b> invited you to view their finances on NiHi. You can look at everything but change nothing.</p><p>Tap the button, sign in (or create an account) with this email address (${escapeHtml(to)}), then confirm to connect.</p><p><a href="${link}" style="display:inline-block;background:#4744f7;color:#fff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:14px">Connect with ${escapeHtml(ownerName)}</a></p><p style="color:#6e6e73;font-size:13px">Or paste this link into your browser: ${link}</p><p style="color:#6e6e73">If you weren't expecting this, you can ignore the email.</p>`;
   try {
     await sendMail({ to, subject, text, html });
     return null;

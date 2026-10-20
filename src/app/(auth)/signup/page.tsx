@@ -17,14 +17,17 @@ export default function SignupPage({ searchParams }: { searchParams: SearchParam
 
 async function SignupContent({ searchParams }: { searchParams: SearchParams }) {
   // Only keep a "next" that points at this site; anything else is dropped.
-  const raw = param(await searchParams, "next");
+  const sp = await searchParams;
+  const raw = param(sp, "next");
+  // Used only to pre-fill the email box (an invite link carries the invited address).
+  const email = param(sp, "email")?.slice(0, 254);
   const next = raw && safeNext(raw) === raw ? raw : undefined;
   return (
     <>
       <Suspense>
         <RedirectIfSignedIn next={next} />
       </Suspense>
-      <SignupForm next={next} />
+      <SignupForm next={next} email={email} />
     </>
   );
 }
