@@ -68,6 +68,7 @@ import {
   TShirtIcon,
   Tag01Icon,
   Tick02Icon,
+  UnavailableIcon,
   Calendar03Icon,
   Camera01Icon,
   Cancel01Icon,
@@ -159,6 +160,7 @@ export const MusicNotes = icon(MusicNote03Icon, "MusicNotes");
 export const Palette = icon(PaintBoardIcon, "Palette");
 export const PencilSimple = icon(PencilEdit02Icon, "PencilSimple");
 export const PiggyBank = icon(PiggyBankIcon, "PiggyBank");
+export const Prohibit = icon(UnavailableIcon, "Prohibit");
 export const Pill = icon(Medicine02Icon, "Pill");
 export const Plus = icon(Add01Icon, "Plus");
 export const Receipt = icon(Invoice03Icon, "Receipt");

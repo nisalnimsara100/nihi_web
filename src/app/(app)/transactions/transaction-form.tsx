@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { deleteTransaction, saveTransaction } from "@/actions/transactions";
 import { ScanSheet, type ScanCard, type ScanResult } from "@/components/finance/scan-sheet";
-import { Scan } from "@/components/icons";
+import { Prohibit, Scan } from "@/components/icons";
 import type { HistoryRow } from "@/lib/scan/categorize";
 import { DateField, DeleteButton, SubmitButton } from "@/components/form-bits";
 import { useActionForm } from "@/components/use-action-form";
@@ -201,7 +201,7 @@ export function TransactionForm({
             <legend className="mb-2 block text-sm font-semibold text-ink">Category</legend>
             <input type="hidden" name="categoryId" value={categoryId} />
             <div role="radiogroup" aria-label="Category" className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-              {[...visibleCategories, { id: "", name: "None", icon: "other", color: "#8a8984" }].map((c) => {
+              {[...visibleCategories, { id: "", name: "None", icon: "", color: "#8a8984" }].map((c) => {
                 const selected = categoryId === c.id;
                 return (
                   <button
@@ -222,7 +222,7 @@ export function TransactionForm({
                         selected ? "bg-primary text-on-primary" : "bg-surface text-ink-soft",
                       )}
                     >
-                      <CategoryIcon name={c.icon} className="size-5" />
+                      {c.id ? <CategoryIcon name={c.icon} className="size-5" /> : <Prohibit className="size-5" />}
                       {c.id ? (
                         <span className="absolute -right-0.5 -bottom-0.5 size-3 rounded-full ring-2 ring-muted" style={{ background: c.color }} />
                       ) : null}
