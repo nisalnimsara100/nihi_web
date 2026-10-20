@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { deleteTransaction, saveTransaction } from "@/actions/transactions";
-import { ScanSheet, type ScanResult } from "@/components/finance/scan-sheet";
+import { ScanSheet, type ScanCard, type ScanResult } from "@/components/finance/scan-sheet";
 import { Scan } from "@/components/icons";
 import type { HistoryRow } from "@/lib/scan/categorize";
 import { DeleteButton, SubmitButton } from "@/components/form-bits";
@@ -44,6 +44,7 @@ export function TransactionForm({
   categories,
   tags,
   history = [],
+  cards = [],
 }: {
   initial: TransactionFormValues;
   accounts: AccountOption[];
@@ -51,6 +52,8 @@ export function TransactionForm({
   tags: Option[];
   /** Past notes and categories, used to guess the category of a scanned receipt. */
   history?: HistoryRow[];
+  /** Linked cards, so a scanned card number can pick the account. */
+  cards?: ScanCard[];
 }) {
   const { state, pending, onSubmit } = useActionForm(saveTransaction);
   const [type, setType] = useState<TransactionType>(initial.type);
@@ -314,6 +317,7 @@ export function TransactionForm({
           accounts={accounts}
           categories={categories}
           history={history}
+          cards={cards}
           currentAccountId={accountId}
           onApply={applyScan}
           onClose={() => setScanOpen(false)}

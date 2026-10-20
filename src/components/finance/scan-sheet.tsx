@@ -13,6 +13,8 @@ import { ScanImageError } from "@/lib/scan/preprocess";
 import { readScan } from "@/lib/scan/read";
 
 export type ScanAccount = { id: string; name: string; currency: string };
+/** A card the user linked to an account, by its last 4 digits. */
+export type ScanCard = { accountId: string; last4: string; name: string };
 export type ScanCategory = CategoryRef & { color: string };
 
 export type ScanResult = {
@@ -32,6 +34,8 @@ type Candidate = {
   parsed: ParsedScan;
   draft: Draft;
   accountConfidence: Confidence;
+  /** The linked card that picked the account, shown so the user sees why. */
+  matchedCard?: ScanCard;
   categoryConfidence: Confidence;
   /** Fields the user has changed, so their badge reads "Confirmed". */
   edited: Partial<Record<Field, true>>;
@@ -46,15 +50,22 @@ const TYPES: { value: ScanType; label: string }[] = [
 ];
 const TYPE_LABEL = Object.fromEntries(TYPES.map((t) => [t.value, t.label])) as Record<ScanType, string>;
 
-function matchAccount(parsed: ParsedScan, accounts: ScanAccount[], fallback: string) {
+/**
+ * Picks the account for a scanned payment. A linked card is the strongest clue: paying with
+ * card 8663 means the account that card belongs to. Then an account named after the card digits
+ * or the bank; otherwise the account that was already selected.
+ */
+function matchAccount(parsed: ParsedScan, accounts: ScanAccount[], cards: ScanCard[], fallback: string) {
   const { hint, last4 } = parsed.account;
   const lower = (s: string) => s.toLowerCase();
+  const card = last4 ? cards.find((c) => c.last4 === last4.slice(-4) && accounts.some((a) => a.id === c.accountId)) : undefined;
+  if (card) return { id: card.accountId, confidence: "high" as const, card };
   const byLast4 = last4 ? accounts.find((a) => a.name.includes(last4)) : undefined;
   const byBank = hint
     ? accounts.find((a) => lower(a.name).includes(lower(hint)) || lower(hint).split(" ").some((w) => w.length > 3 && lower(a.name).includes(w)))
     : undefined;
   const found = byLast4 ?? byBank;
-  return found ? { id: found.id, confidence: "high" as const } : { id: fallback, confidence: "low" as const };
+  return found ? { id: found.id, confidence: "high" as const, card: undefined } : { id: fallback, confidence: "low" as const, card: undefined };
 }
 
 function Badge({ level, edited }: { level: Confidence; edited?: boolean }) {
@@ -82,6 +93,7 @@ export function ScanSheet({
   accounts,
   categories,
   history,
+  cards = [],
   currentAccountId,
   onApply,
   onClose,
@@ -89,6 +101,7 @@ export function ScanSheet({
   accounts: ScanAccount[];
   categories: ScanCategory[];
   history: HistoryRow[];
+  cards?: ScanCard[];
   currentAccountId: string;
   onApply: (result: ScanResult) => void;
   onClose: () => void;
@@ -135,11 +148,12 @@ export function ScanSheet({
         }
         const candidates = reading.results.map((parsed): Candidate => {
           const type = parsed.type.value;
-          const account = matchAccount(parsed, accounts, currentAccountId);
+          const account = matchAccount(parsed, accounts, cards, currentAccountId);
           const category = guessCategory(parsed.merchant.text, type, reading.text);
           return {
             parsed,
             accountConfidence: account.confidence,
+            matchedCard: account.card,
             categoryConfidence: category.confidence,
             edited: {},
             draft: {
@@ -162,7 +176,7 @@ export function ScanSheet({
         notify.error("Couldn't read that image", error instanceof ScanImageError ? error.message : "Check your connection and try again.");
       }
     },
-    [accounts, currentAccountId, guessCategory],
+    [accounts, cards, currentAccountId, guessCategory],
   );
 
   // Paste an image from the clipboard (Ctrl/Cmd+V, or long-press Paste on a phone).
@@ -370,6 +384,12 @@ export function ScanSheet({
                   <option key={a.id} value={a.id}>{a.name} ({a.currency})</option>
                 ))}
               </select>
+              {current.matchedCard && draft.accountId === current.matchedCard.accountId ? (
+                <p className="text-sm text-ink-soft">
+                  Card •••• {current.matchedCard.last4}
+                  {current.matchedCard.name ? ` (${current.matchedCard.name})` : ""} is linked to this account, so the amount will come out of it.
+                </p>
+              ) : null}
               {currencyMismatch ? (
                 <p className="text-sm text-danger">The image shows {current.parsed.amount.currency} but {account?.name} uses {account?.currency}.</p>
               ) : null}
