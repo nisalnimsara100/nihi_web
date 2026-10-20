@@ -89,3 +89,8 @@ export function dueLabel(day: string, today: string) {
   const late = daysBetween(day, today);
   return late <= 0 ? "Due today" : late === 1 ? "Due yesterday" : `Due ${late} days ago`;
 }
+
+/** A "YYYY-MM-DD" day moved by a number of days. */
+export function addDays(day: string, delta: number) {
+  return dateToDay(new Date(dayToDate(day).getTime() + delta * 86_400_000));
+}

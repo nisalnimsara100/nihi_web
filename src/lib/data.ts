@@ -247,3 +247,25 @@ export async function getDueRecurring(userId: string, today: string) {
     db().from("Recurring").select(recurringSelect).eq("userId", userId).eq("active", true).lte("nextDate", today).order("nextDate"),
   );
 }
+
+/** Savings goals with the amount saved so far: the linked account's balance, or the hand-kept amount. */
+export async function getGoals(userId: string) {
+  const [goals, accounts] = await Promise.all([
+    run(db().from("SavingsGoal").select("*").eq("userId", userId).order("createdAt")),
+    getAccounts(userId, { includeArchived: true }),
+  ]);
+  const balanceOf = new Map(accounts.map((a) => [a.id, a]));
+  return goals.map((g) => {
+    const account = g.accountId ? balanceOf.get(g.accountId) : undefined;
+    return { ...g, accountName: account?.name ?? null, saved: account ? Math.max(0, account.balance) : g.savedAmount };
+  });
+}
+
+export type GoalRow = Awaited<ReturnType<typeof getGoals>>[number];
+
+/** Active repeats whose next date is after `after` and no later than `until`. */
+export async function getUpcomingRecurring(userId: string, after: string, until: string) {
+  return run(
+    db().from("Recurring").select(recurringSelect).eq("userId", userId).eq("active", true).gt("nextDate", after).lte("nextDate", until).order("nextDate"),
+  );
+}

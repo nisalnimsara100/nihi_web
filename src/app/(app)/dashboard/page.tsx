@@ -5,6 +5,7 @@ import {
   ArrowDownLeft,
   ArrowsLeftRight,
   ArrowUpRight,
+  Bell,
   CaretRight,
   ChartBar,
   CreditCard,
@@ -26,10 +27,12 @@ import { ButtonLink, Card, CardHeader, ColorDot, EmptyState, MaybeLink, PageSkel
 import { getViewer } from "@/lib/auth";
 import { accountTypeLabel } from "@/lib/constants";
 import { DueRecurring } from "@/components/finance/due-recurring";
-import { budgetStatus } from "@/lib/budgets";
+import { buildAlerts } from "@/lib/alerts";
+import { goalProgress } from "@/lib/goals";
+import { budgetStatus, monthProgress } from "@/lib/budgets";
 import { dueCount, type Frequency } from "@/lib/recurring";
-import { getAccounts, getBudgetRows, getDueRecurring, getCategoryBreakdown, getRecentTransactions, getTotalsByCurrency } from "@/lib/data";
-import { currentMonthKey, dueLabel, formatMonth, monthRange, todayDay } from "@/lib/dates";
+import { getAccounts, getBudgetRows, getDueRecurring, getGoals, getMonthlyTrend, getUpcomingRecurring, getCategoryBreakdown, getRecentTransactions, getTotalsByCurrency } from "@/lib/data";
+import { addDays, currentMonthKey, daysBetween, dueLabel, formatMonth, monthRange, shiftMonth, todayDay } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/cn";
 
@@ -63,14 +66,39 @@ async function Dashboard() {
   const { start, end } = monthRange(month);
   const currency = user.defaultCurrency;
 
-  const [accounts, totals, breakdown, recent, budgetRows, dueRules] = await Promise.all([
+  const today = todayDay();
+  const [accounts, totals, breakdown, recent, budgetRows, dueRules, upcoming, trend, goals] = await Promise.all([
     getAccounts(user.id),
     getTotalsByCurrency(user.id, start, end),
     getCategoryBreakdown(user.id, "EXPENSE", currency, start, end),
     getRecentTransactions(user.id, 6),
     getBudgetRows(user.id, currency, month),
-    readOnly ? Promise.resolve([]) : getDueRecurring(user.id, todayDay()),
+    readOnly ? Promise.resolve([]) : getDueRecurring(user.id, today),
+    readOnly ? Promise.resolve([]) : getUpcomingRecurring(user.id, today, addDays(today, 3)),
+    getMonthlyTrend(user.id, currency, shiftMonth(month, -3), month),
+    getGoals(user.id),
   ]);
+
+  // Heads-up messages are for the owner; a partner only looks.
+  const previous = trend.filter((m) => m.month !== month && m.expense > 0);
+  const alerts = readOnly
+    ? []
+    : buildAlerts({
+        budgets: budgetRows.filter((r) => r.limit !== null).map((r) => ({ id: r.category.id, name: r.category.name, spent: r.spent, limit: r.limit! })),
+        upcoming: upcoming.map((r) => ({
+          id: r.id,
+          title: r.note || r.category?.name || "Repeating transaction",
+          daysAway: daysBetween(today, r.nextDate),
+          money: formatMoney(r.amount, r.account.currency),
+        })),
+        cards: accounts
+          .filter((a) => a.type === "CREDIT_CARD" && a.creditLimit)
+          .map((a) => ({ id: a.id, name: a.name, utilization: Math.max(0, -a.balance) / a.creditLimit! })),
+        spendNow: trend.find((m) => m.month === month)?.expense ?? 0,
+        spendAverage: previous.length ? previous.reduce((sum, m) => sum + m.expense, 0) / previous.length : 0,
+        monthProgress: monthProgress(today),
+        money: (minor) => formatMoney(minor, currency),
+      });
 
   // The total balance is money you have. Credit cards are debt to a bank, so they stay out of it
   // and show on their own, small, under the total.
@@ -227,6 +255,33 @@ async function Dashboard() {
         </div>
 
         <div className="min-w-0 space-y-5 lg:col-span-2">
+          {alerts.length > 0 ? (
+            <Card>
+              <CardHeader title="Heads-up" />
+              <ul className="divide-y divide-line">
+                {alerts.map((a) => (
+                  <li key={a.id}>
+                    <Link href={a.href} className="flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-muted">
+                      <span
+                        aria-hidden
+                        className={cn(
+                          "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl",
+                          a.tone === "bad" ? "bg-danger-soft text-danger" : a.tone === "warn" ? "bg-warning-soft text-ink" : "bg-primary-soft text-on-primary-soft",
+                        )}
+                      >
+                        <Bell className="size-4" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-semibold">{a.title}</span>
+                        {a.detail ? <span className="block text-xs text-ink-soft">{a.detail}</span> : null}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ) : null}
+
           {dueRules.length > 0 ? (
             <Card>
               <CardHeader title="Due now" action={<SeeAll href="/recurring">All repeats</SeeAll>} />
@@ -235,9 +290,9 @@ async function Dashboard() {
                   id: r.id,
                   title: r.note || r.category?.name || (r.type === "TRANSFER" ? "Transfer" : "Repeating transaction"),
                   amount: formatMoney(r.amount, r.account.currency),
-                  when: dueLabel(r.nextDate, todayDay()),
+                  when: dueLabel(r.nextDate, today),
                   accountName: r.account.name,
-                  more: Math.max(0, dueCount(r.nextDate, r.frequency as Frequency, r.anchorDay, r.endDate, todayDay()) - 1),
+                  more: Math.max(0, dueCount(r.nextDate, r.frequency as Frequency, r.anchorDay, r.endDate, today) - 1),
                 }))}
               />
             </Card>
@@ -269,6 +324,30 @@ async function Dashboard() {
                       </li>
                     );
                   })}
+              </ul>
+            </Card>
+          ) : null}
+
+          {goals.length > 0 ? (
+            <Card>
+              <CardHeader title="Goals" action={<SeeAll href="/goals">All goals</SeeAll>} />
+              <ul className="space-y-4 p-5">
+                {goals.slice(0, 3).map((g) => {
+                  const p = goalProgress(g.saved, g.targetAmount, g.targetDate, today);
+                  return (
+                    <li key={g.id}>
+                      <div className="flex items-center justify-between gap-3 text-sm">
+                        <span className="min-w-0 truncate font-medium">{g.name}</span>
+                        <span className="shrink-0 text-xs font-semibold tabular-nums text-ink-soft">
+                          {formatMoney(p.saved, g.currency)} / {formatMoney(p.target, g.currency)}
+                        </span>
+                      </div>
+                      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-muted" aria-hidden>
+                        <div className={cn("h-full rounded-full", p.reached ? "bg-income" : "bg-primary")} style={{ width: `${p.ratio * 100}%` }} />
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </Card>
           ) : null}

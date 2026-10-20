@@ -68,6 +68,8 @@ import {
   TShirtIcon,
   Tag01Icon,
   Tick02Icon,
+  Flag01Icon,
+  Notification01Icon,
   CheckmarkSquare02Icon,
   RepeatIcon,
   Target01Icon,
@@ -169,6 +171,8 @@ export const Prohibit = icon(UnavailableIcon, "Prohibit");
 export const Target = icon(Target01Icon, "Target");
 export const Repeat = icon(RepeatIcon, "Repeat");
 export const CheckmarkSquare = icon(CheckmarkSquare02Icon, "CheckmarkSquare");
+export const Flag = icon(Flag01Icon, "Flag");
+export const Bell = icon(Notification01Icon, "Bell");
 export const Pill = icon(Medicine02Icon, "Pill");
 export const Plus = icon(Add01Icon, "Plus");
 export const Receipt = icon(Invoice03Icon, "Receipt");

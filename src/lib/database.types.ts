@@ -347,6 +347,57 @@ export type Database = {
           },
         ]
       }
+      SavingsGoal: {
+        Row: {
+          accountId: string | null
+          createdAt: string
+          currency: string
+          id: string
+          name: string
+          savedAmount: number
+          targetAmount: number
+          targetDate: string | null
+          userId: string
+        }
+        Insert: {
+          accountId?: string | null
+          createdAt?: string
+          currency: string
+          id?: string
+          name: string
+          savedAmount?: number
+          targetAmount: number
+          targetDate?: string | null
+          userId: string
+        }
+        Update: {
+          accountId?: string | null
+          createdAt?: string
+          currency?: string
+          id?: string
+          name?: string
+          savedAmount?: number
+          targetAmount?: number
+          targetDate?: string | null
+          userId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "SavingsGoal_accountId_fkey"
+            columns: ["accountId"]
+            isOneToOne: false
+            referencedRelation: "Account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "SavingsGoal_userId_fkey"
+            columns: ["userId"]
+            isOneToOne: false
+            referencedRelation: "User"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       Tag: {
         Row: {
           color: string
