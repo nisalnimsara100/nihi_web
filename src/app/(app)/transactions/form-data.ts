@@ -8,6 +8,7 @@ export async function getTransactionFormOptions(userId: string, keepAccountIds: 
   const [accountRows, categories, tags, history, cards, deltas] = await Promise.all([
     run(
       (keep.length > 0 ? accountsQuery.or(`archived.eq.false,id.in.(${keep.join(",")})`) : accountsQuery.eq("archived", false))
+        .order("sortOrder")
         .order("createdAt"),
     ),
     run(db().from("Category").select("id, name, color, type, icon").eq("userId", userId).order("name")),

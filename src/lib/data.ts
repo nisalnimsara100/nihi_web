@@ -14,7 +14,7 @@ export async function getAccounts(userId: string, opts: { includeArchived?: bool
     accountsQuery = accountsQuery.eq("archived", false);
   }
   const [accounts, deltas] = await Promise.all([
-    run(accountsQuery.order("archived").order("createdAt")),
+    run(accountsQuery.order("archived").order("sortOrder").order("createdAt")),
     run(db().rpc("account_balance_deltas", { p_user_id: userId })),
   ]);
 

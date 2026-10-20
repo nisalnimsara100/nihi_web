@@ -116,7 +116,9 @@ export async function saveAccount(_prev: ActionState, formData: FormData): Promi
       return { error: "Account not found." };
     }
   } else {
-    await run(db().from("Account").insert({ ...data, userId }));
+    // A new account goes to the end of the wallet.
+    const [last] = await run(db().from("Account").select("sortOrder").eq("userId", userId).order("sortOrder", { ascending: false }).limit(1));
+    await run(db().from("Account").insert({ ...data, userId, sortOrder: (last?.sortOrder ?? -1) + 1 }));
   }
 
   await flash({ type: "success", title: id ? "Account updated" : "Account added", description: data.name });
@@ -149,4 +151,19 @@ export async function deleteAccount(id: string): Promise<ActionState> {
   await flash({ type: "success", title: "Account deleted", description: deleted[0].name });
   revalidatePath("/", "layout");
   redirect("/accounts");
+}
+
+/** Saves the order of the wallet after dragging: `ids` lists the user's accounts, first to last. */
+export async function reorderAccounts(ids: string[]): Promise<ActionState> {
+  const userId = await requireUserId();
+  if (ids.length === 0 || ids.length > 100 || !ids.every(isId)) {
+    return { error: "Couldn't save the order." };
+  }
+  const owned = await run(db().from("Account").select("id").eq("userId", userId).in("id", ids));
+  if (owned.length !== ids.length) {
+    return { error: "Couldn't save the order." };
+  }
+  await Promise.all(ids.map((id, index) => run(db().from("Account").update({ sortOrder: index }).eq("id", id).eq("userId", userId).select("id"))));
+  revalidatePath("/", "layout");
+  return { ok: true };
 }

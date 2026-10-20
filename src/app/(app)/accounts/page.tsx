@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Plus, Wallet } from "@/components/icons";
-import { AccountCardFace } from "@/components/finance/account-card";
-import { ButtonLink, Card, EmptyState, IconLink, MaybeLink, PageHeader, PageSkeleton } from "@/components/ui";
+import { ButtonLink, Card, EmptyState, IconLink, PageHeader, PageSkeleton } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
 import { accountTypeLabel } from "@/lib/constants";
 import { getAccounts, getCards, type AccountWithBalance } from "@/lib/data";
 import { creditFaceInfo, creditSummary } from "@/lib/credit-card";
 import { todayDay } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
-import { cn } from "@/lib/cn";
+import { AccountTile, WalletList, type WalletItem } from "./wallet-list";
 
 export const metadata: Metadata = { title: "Wallet" };
 
@@ -21,45 +20,28 @@ export default function AccountsPage() {
   );
 }
 
-function AccountCard({
-  account,
-  index,
-  stacked,
-  cards,
-  readOnly,
-}: {
-  account: AccountWithBalance;
-  cards: { last4: string; network: string }[];
-  index: number;
-  stacked: boolean;
-  readOnly: boolean;
-}) {
-  return (
-    <MaybeLink
-      href={readOnly ? undefined : `/accounts/${account.id}`}
-      className={cn(
-        "group relative block",
-        !readOnly && "transition-transform hover:-translate-y-1",
-        // On phones the cards overlap so each one shows its top strip, like a wallet.
-        stacked && index > 0 && "-mt-28 sm:mt-0",
-      )}
-      style={{ zIndex: index }}
-    >
-      <AccountCardFace
-        theme={account.theme}
-        type={account.type}
-        name={account.name}
-        balance={formatMoney(account.balance, account.currency)}
-        currency={account.currency}
-        color={account.color}
-        label={`${accountTypeLabel(account.type)}${account.archived ? " · Archived" : ""}`}
-        cards={cards}
-        credit={account.type === "CREDIT_CARD" ? creditFaceInfo(creditSummary(account.balance, account, todayDay()), account.currency) : undefined}
-        dimmed={account.archived}
-        className="shadow-[0_-6px_24px_rgb(20_21_28/0.14)] sm:shadow-lg sm:shadow-primary/10"
-      />
-    </MaybeLink>
-  );
+function toItem(
+  account: AccountWithBalance,
+  cards: { last4: string; network: string }[],
+): WalletItem {
+  return {
+    id: account.id,
+    face: {
+      theme: account.theme,
+      type: account.type,
+      name: account.name,
+      balance: formatMoney(account.balance, account.currency),
+      currency: account.currency,
+      color: account.color,
+      label: `${accountTypeLabel(account.type)}${account.archived ? " · Archived" : ""}`,
+      cards,
+      credit:
+        account.type === "CREDIT_CARD"
+          ? creditFaceInfo(creditSummary(account.balance, account, todayDay()), account.currency)
+          : undefined,
+      dimmed: account.archived,
+    },
+  };
 }
 
 async function Accounts() {
@@ -100,11 +82,7 @@ async function Accounts() {
       ) : null}
 
       {active.length > 0 ? (
-        <div className="mx-auto max-w-md sm:mx-0 sm:grid sm:max-w-none sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
-          {active.map((a, i) => (
-            <AccountCard key={a.id} account={a} index={i} stacked cards={cardsOf(a.id)} readOnly={readOnly} />
-          ))}
-        </div>
+        <WalletList items={active.map((a) => toItem(a, cardsOf(a.id)))} readOnly={readOnly} />
       ) : null}
 
       {archived.length > 0 ? (
@@ -112,7 +90,7 @@ async function Accounts() {
           <h2 className="mb-3 text-base font-semibold">Archived</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {archived.map((a, i) => (
-              <AccountCard key={a.id} account={a} index={i} stacked={false} cards={cardsOf(a.id)} readOnly={readOnly} />
+              <AccountTile key={a.id} item={toItem(a, cardsOf(a.id))} index={i} stacked={false} readOnly={readOnly} />
             ))}
           </div>
         </section>
