@@ -41,7 +41,12 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# supabase cli (local state from `supabase link`, `supabase start`)
+supabase/.temp/
+supabase/.branches/
 
-# sqlite
-*.db
-*.db-journal
+# personal AI assistant setup (each developer keeps their own)
+/CLAUDE.md
+/docs/CAVEMAN_SETUP.md
+/.mcp.json
+.claude/settings.local.json
