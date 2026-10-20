@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { invitePartner, leaveShare, removeShare, resendInvite, viewAs } from "@/actions/sharing";
 import { DeleteButton, SubmitButton } from "@/components/form-bits";
 import { notify } from "@/components/toast";
@@ -33,10 +33,11 @@ export function PartnerSharing({
         <section>
           <h3 className="text-sm font-semibold">Let someone view your finances</h3>
           <p className="mt-1 text-sm text-ink-soft">
-            They can look at everything but change nothing. {mailReady ? "We email them the invite link." : "Send them the invite link by Gmail or any other way."} They sign in with the invited email to accept it.
+            They can look at everything but change nothing. Create a link and send it to them on WhatsApp, SMS or anywhere.
+            When they open it, they sign in or sign up and confirm, and they are connected.
           </p>
           <form ref={formRef} onSubmit={onSubmit} className="mt-3 space-y-3" noValidate>
-            <Field label="Partner's email" htmlFor="partner-email" error={errors.email}>
+            <Field label="Partner's email" htmlFor="partner-email" error={errors.email} hint="Only to remember who the link is for. They can use any email.">
               <input
                 id="partner-email"
                 name="email"
@@ -47,27 +48,28 @@ export function PartnerSharing({
                 className={inputClass}
               />
             </Field>
-            <SubmitButton pending={pending}>{mailReady ? "Send invite" : "Create invite"}</SubmitButton>
+            <SubmitButton pending={pending}>{mailReady ? "Create link and email it" : "Create invite link"}</SubmitButton>
           </form>
 
           {sent.length > 0 ? (
             <ul className="mt-4 divide-y divide-line rounded-2xl ring-1 ring-line">
               {sent.map((share) => (
-                <li key={share.id} className="flex flex-wrap items-center gap-2 px-4 py-3">
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-semibold">{share.email}</span>
-                    <span className="block text-xs text-ink-soft">
-                      {share.accepted ? "Active: can view" : "Pending: waiting for them to accept"}
+                <li key={share.id} className="space-y-3 px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold">{share.email}</span>
+                      <span className="block text-xs text-ink-soft">
+                        {share.accepted ? "Connected: can view" : "Waiting: the link works once"}
+                      </span>
                     </span>
-                  </span>
+                    <DeleteButton
+                      size="sm"
+                      label={share.accepted ? "Remove access" : "Cancel"}
+                      confirmLabel="Tap again to confirm"
+                      action={() => removeShare(share.id)}
+                    />
+                  </div>
                   {!share.accepted ? <InviteActions share={share} mailReady={mailReady} ownerName={ownerName} /> : null}
-                  {!share.accepted ? <CopyInviteLink token={share.token} /> : null}
-                  <DeleteButton
-                    size="sm"
-                    label={share.accepted ? "Remove access" : "Cancel"}
-                    confirmLabel="Tap again to confirm"
-                    action={() => removeShare(share.id)}
-                  />
                 </li>
               ))}
             </ul>
@@ -102,9 +104,35 @@ export function PartnerSharing({
   );
 }
 
-/** Pending invite: send it by email. Resend works when the server can email; Gmail opens a ready-to-send message. */
+/** What to do with a pending invite link: copy it, send it on WhatsApp or the phone's share sheet, or email it. */
 function InviteActions({ share, mailReady, ownerName }: { share: SentShare; mailReady: boolean; ownerName: string }) {
+  const [copied, setCopied] = useState(false);
   const [sending, setSending] = useState(false);
+  // Set after mount so the server and browser render the same thing first.
+  const [canShare, setCanShare] = useState(false);
+  useEffect(() => setCanShare(typeof navigator.share === "function"), []);
+
+  const link = () => `${window.location.origin}/invite/${share.token}`;
+  const message = () => `${ownerName} invited you to view their finances on NiHi. Open this link, sign in or sign up, and confirm to connect: ${link()}`;
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(link());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      notify.success("Invite link copied", "Paste it in a message to your partner.");
+    } catch {
+      notify.error("Couldn't copy the link", "Your browser blocked clipboard access.");
+    }
+  }
+
+  async function nativeShare() {
+    try {
+      await navigator.share({ title: "NiHi invite", text: message() });
+    } catch {
+      // The person closed the share sheet.
+    }
+  }
 
   async function resend() {
     setSending(true);
@@ -114,54 +142,31 @@ function InviteActions({ share, mailReady, ownerName }: { share: SentShare; mail
     else notify.success(result.message ?? "Invite sent again", result.detail);
   }
 
-  function openGmail() {
-    const link = `${window.location.origin}/invite/${share.token}`;
-    const subject = `${ownerName} invited you to view their finances on NiHi`;
-    const body = [
-      "Hi,",
-      "",
-      `${ownerName} invited you to view their finances on NiHi. You can look at everything but change nothing.`,
-      "",
-      `Open this link and sign in (or create an account) with this email address (${share.email}) to accept:`,
-      link,
-    ].join("\n");
-    const url = new URL("https://mail.google.com/mail/");
-    url.search = new URLSearchParams({ view: "cm", fs: "1", to: share.email, su: subject, body }).toString();
-    window.open(url.toString(), "_blank", "noopener");
-  }
-
   return (
-    <>
-      {mailReady ? (
-        <Button type="button" size="sm" variant="secondary" onClick={resend} disabled={sending}>
-          {sending ? "Sending…" : "Resend email"}
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 rounded-2xl bg-muted px-3 py-2">
+        <span className="min-w-0 flex-1 truncate font-mono text-xs text-ink-soft" aria-label="Invite link">
+          {`/invite/${share.token}`}
+        </span>
+        <Button type="button" size="sm" onClick={copy}>
+          {copied ? "Copied" : "Copy link"}
         </Button>
-      ) : null}
-      <Button type="button" size="sm" variant="secondary" onClick={openGmail}>
-        Send via Gmail
-      </Button>
-    </>
-  );
-}
-
-/** Copies the invite link. The origin comes from the browser so it works on any host. */
-function CopyInviteLink({ token }: { token: string }) {
-  const [copied, setCopied] = useState(false);
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}/invite/${token}`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      notify.success("Invite link copied", "Send it to your partner.");
-    } catch {
-      notify.error("Couldn't copy the link", "Your browser blocked clipboard access.");
-    }
-  }
-
-  return (
-    <Button type="button" size="sm" variant="ghost" onClick={copy}>
-      {copied ? "Copied" : "Copy invite link"}
-    </Button>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" size="sm" variant="secondary" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(message())}`, "_blank", "noopener")}>
+          WhatsApp
+        </Button>
+        {canShare ? (
+          <Button type="button" size="sm" variant="secondary" onClick={nativeShare}>
+            Share
+          </Button>
+        ) : null}
+        {mailReady ? (
+          <Button type="button" size="sm" variant="secondary" onClick={resend} disabled={sending}>
+            {sending ? "Sending…" : "Email it"}
+          </Button>
+        ) : null}
+      </div>
+    </div>
   );
 }
