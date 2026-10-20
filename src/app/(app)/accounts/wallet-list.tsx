@@ -84,7 +84,7 @@ export function WalletList({ items, readOnly, editing }: { items: WalletItem[]; 
 
       {/* A floating bar above the bottom navigation, so Done is always in reach. */}
       <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] z-40 flex justify-center px-4 lg:bottom-6 lg:pl-64">
-        <div className="flex items-center gap-3 rounded-full bg-ink py-1.5 pr-1.5 pl-5 text-sm font-semibold text-surface shadow-xl">
+        <div className="flex items-center gap-3 rounded-full border border-line bg-surface py-1.5 pr-1.5 pl-5 text-sm font-semibold text-ink shadow-[0_8px_30px_rgb(20_21_28/0.14)]">
           <span>Drag cards to reorder</span>
           <Button size="sm" onClick={done} disabled={saving} className="rounded-full">
             <Check className="size-4" aria-hidden /> Done
