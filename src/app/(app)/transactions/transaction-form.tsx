@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { notify } from "@/components/toast";
+import { useT } from "@/lib/i18n/client";
 import { enqueue } from "@/lib/offline-queue";
 import { saveTransaction } from "@/actions/transactions";
 import { SimilarWarning } from "@/components/finance/similar-warning";
@@ -65,6 +66,7 @@ export function TransactionForm({
   /** Open the scan sheet straight away (the home screen's Scan shortcut). */
   autoScan?: boolean;
 }) {
+  const t = useT();
   const { state, pending, onSubmit } = useActionForm(saveTransaction);
   const [type, setType] = useState<TransactionType>(initial.type);
   const [accountId, setAccountId] = useState(initial.accountId);
@@ -145,11 +147,11 @@ export function TransactionForm({
             onClick={() => setScanOpen(true)}
             className={buttonClass("soft", "md", "w-full")}
           >
-            <Scan className="size-5" /> Scan screenshot or bill
+            <Scan className="size-5" /> {t("Scan screenshot or bill")}
           </button>
         ) : null}
 
-        <div role="radiogroup" aria-label="Transaction type" className="grid grid-cols-3 gap-1 rounded-2xl bg-muted p-1">
+        <div role="radiogroup" aria-label={t("Transaction type")} className="grid grid-cols-3 gap-1 rounded-2xl bg-muted p-1">
           {TYPE_TABS.map((tab) => (
             <button
               key={tab.value}
@@ -164,13 +166,13 @@ export function TransactionForm({
                   : "text-ink-soft hover:text-ink",
               )}
             >
-              {tab.label}
+              {t(tab.label)}
             </button>
           ))}
         </div>
 
 
-        <Field label={crossCurrency ? `Amount sent (${from.currency})` : "Amount"} htmlFor="amount" error={errors.amount}>
+        <Field label={crossCurrency ? t("Amount sent ({currency})", { currency: from.currency }) : "Amount"} htmlFor="amount" error={errors.amount}>
           <div className="relative">
             <input
               key={`amount-${scanned.n}`}
@@ -224,7 +226,7 @@ export function TransactionForm({
                 aria-invalid={!!errors.toAccountId}
                 className={inputClass}
               >
-                <option value="">Choose account</option>
+                <option value="">{t("Choose account")}</option>
                 {accounts
                   .filter((a) => a.id !== accountId)
                   .map((a) => (
@@ -239,10 +241,10 @@ export function TransactionForm({
 
         {!isTransfer && accountCards.length > 0 ? (
           <fieldset>
-            <legend className="mb-2 block text-sm font-semibold text-ink">{type === "INCOME" ? "Received on card" : "Paid with card"}</legend>
+            <legend className="mb-2 block text-sm font-semibold text-ink">{type === "INCOME" ? t("Received on card") : t("Paid with card")}</legend>
             <input type="hidden" name="cardId" value={cardId} />
-            <div role="radiogroup" aria-label="Card" className="flex flex-wrap gap-2">
-              {[{ id: "", label: "No card" }, ...accountCards.map((c) => ({ id: c.id, label: cardLabel(c.network, c.last4) }))].map((o) => (
+            <div role="radiogroup" aria-label={t("Card")} className="flex flex-wrap gap-2">
+              {[{ id: "", label: t("No card") }, ...accountCards.map((c) => ({ id: c.id, label: cardLabel(c.network, c.last4) }))].map((o) => (
                 <button
                   key={o.id || "none"}
                   type="button"
@@ -265,10 +267,10 @@ export function TransactionForm({
 
         {!isTransfer ? (
           <fieldset>
-            <legend className="mb-2 block text-sm font-semibold text-ink">Category</legend>
+            <legend className="mb-2 block text-sm font-semibold text-ink">{t("Category")}</legend>
             <input type="hidden" name="categoryId" value={categoryId} />
-            <div role="radiogroup" aria-label="Category" className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-              {[...visibleCategories, { id: "", name: "None", icon: "", color: "#8a8984" }].map((c) => {
+            <div role="radiogroup" aria-label={t("Category")} className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+              {[...visibleCategories, { id: "", name: t("None"), icon: "", color: "#8a8984" }].map((c) => {
                 const selected = categoryId === c.id;
                 return (
                   <button
@@ -305,7 +307,7 @@ export function TransactionForm({
 
         {crossCurrency ? (
           <Field
-            label={`Amount received (${to.currency})`}
+            label={t("Amount received ({currency})", { currency: to.currency })}
             htmlFor="toAmount"
             error={errors.toAmount}
             hint="Leave empty to use the same number as the amount sent."
@@ -328,7 +330,7 @@ export function TransactionForm({
 
         {tags.length > 0 ? (
           <fieldset>
-            <legend className="mb-2 block text-sm font-semibold text-ink">Tags</legend>
+            <legend className="mb-2 block text-sm font-semibold text-ink">{t("Tags")}</legend>
             <div className="flex flex-wrap gap-2">
               {tags.map((tag) => {
                 const on = tagIds.includes(tag.id);
@@ -362,7 +364,7 @@ export function TransactionForm({
             rows={2}
             maxLength={500}
             defaultValue={scanned.note}
-            placeholder="Optional"
+            placeholder={t("Optional")}
             className={cn(inputClass, "h-auto py-2.5")}
           />
         </Field>
@@ -375,9 +377,9 @@ export function TransactionForm({
           )}
           <div className="flex flex-col-reverse gap-2 sm:flex-row">
             <Link href="/transactions" className={buttonClass("ghost")}>
-              Cancel
+              {t("Cancel")}
             </Link>
-            <SubmitButton pending={pending}>{initial.id ? "Save changes" : "Add transaction"}</SubmitButton>
+            <SubmitButton pending={pending}>{initial.id ? t("Save changes") : t("Add transaction")}</SubmitButton>
           </div>
         </div>
       </form>

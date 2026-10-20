@@ -1,7 +1,20 @@
+import { Suspense } from "react";
+import { LangScope } from "@/components/i18n-scope";
+import { LanguageSwitch } from "@/components/language-switch";
 import { Logo } from "@/components/logo";
 import { PhoneMock } from "@/components/phone-mock";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={null}>
+      <LangScope>
+        <AuthShell>{children}</AuthShell>
+      </LangScope>
+    </Suspense>
+  );
+}
+
+function AuthShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="grid min-h-dvh lg:grid-cols-2">
       <aside className="m-3 hidden flex-col items-center justify-center gap-10 overflow-hidden rounded-[36px] bg-primary-soft p-10 lg:flex">
@@ -14,6 +27,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="flex flex-col items-center justify-center px-4 py-10 sm:px-6">
         <Logo className="mb-8 lg:hidden" />
         <div className="w-full max-w-sm">{children}</div>
+        <LanguageSwitch className="mt-6" />
       </div>
     </div>
   );

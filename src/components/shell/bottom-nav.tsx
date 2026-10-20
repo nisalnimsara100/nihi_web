@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { ArrowsLeftRight, ChartBar, House, Plus, UserCircle, Wallet } from "@/components/icons";
 import { cn } from "@/lib/cn";
 import { isActive, MORE_ITEMS } from "./nav-items";
+import { useT } from "@/lib/i18n/client";
 
 const TABS = [
   { href: "/dashboard", label: "Home", icon: House },
@@ -25,6 +26,7 @@ export function BottomNav({ readOnly = false }: { readOnly?: boolean }) {
 
 /** Static markup, also used as the Suspense fallback before the path is known. */
 export function BottomNavLinks({ pathname, readOnly = false }: { pathname: string; readOnly?: boolean }) {
+  const t = useT();
   const tabs = readOnly ? READ_ONLY_TABS : TABS;
   const activeHref =
     tabs.find((t) => t.href !== "/more" && isActive(pathname, t.href))?.href ??
@@ -32,7 +34,7 @@ export function BottomNavLinks({ pathname, readOnly = false }: { pathname: strin
 
   return (
     <nav
-      aria-label="Main"
+      aria-label={t("Main")}
       className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg lg:hidden"
     >
       <div className="mx-auto grid h-16 max-w-md grid-cols-5">
@@ -56,7 +58,7 @@ export function BottomNavLinks({ pathname, readOnly = false }: { pathname: strin
               ) : (
                 <Icon className="size-6" strokeWidth={active ? 2.25 : 1.75} aria-hidden />
               )}
-              {isAdd ? <span className="sr-only">{label}</span> : label}
+              {isAdd ? <span className="sr-only">{t(label)}</span> : t(label)}
             </Link>
           );
         })}

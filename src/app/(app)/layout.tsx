@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { LangScope } from "@/components/i18n-scope";
 import { OfflineSync } from "@/components/pwa";
 import { Logo } from "@/components/logo";
 import { BottomNavLinks } from "@/components/shell/bottom-nav";
@@ -7,6 +8,16 @@ import { SidebarUser } from "@/components/shell/user-menu";
 import { AppBottomNav, NewTransactionButton, ProfileSwitcher } from "@/components/shell/viewer-shell";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={null}>
+      <LangScope>
+        <AppShell>{children}</AppShell>
+      </LangScope>
+    </Suspense>
+  );
+}
+
+function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-dvh">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-line bg-surface lg:flex">

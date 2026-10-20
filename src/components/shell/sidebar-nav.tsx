@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { isActive, NAV_ITEMS } from "./nav-items";
+import { useT } from "@/lib/i18n/client";
 
 export function SidebarNav() {
   return <SidebarNavLinks pathname={usePathname()} />;
@@ -11,8 +12,9 @@ export function SidebarNav() {
 
 /** Static markup, also used as the Suspense fallback before the path is known. */
 export function SidebarNavLinks({ pathname }: { pathname: string }) {
+  const t = useT();
   return (
-    <nav aria-label="Main" className="flex flex-col gap-1">
+    <nav aria-label={t("Main")} className="flex flex-col gap-1">
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
         const active = isActive(pathname, href);
         return (
@@ -26,7 +28,7 @@ export function SidebarNavLinks({ pathname }: { pathname: string }) {
             )}
           >
             <Icon className="size-5" aria-hidden />
-            {label}
+            {t(label)}
           </Link>
         );
       })}

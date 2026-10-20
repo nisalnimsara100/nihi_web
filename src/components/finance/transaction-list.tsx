@@ -1,5 +1,7 @@
 import { ArrowsLeftRight, CreditCard } from "@/components/icons";
 import { cardLabel } from "@/lib/card-networks";
+import { getT } from "@/lib/i18n/server";
+import type { TFunction } from "@/lib/i18n/translate";
 import type { TransactionRow } from "@/lib/data";
 import { dateToDay, formatDay, relativeDay } from "@/lib/dates";
 import { Amount, MaybeLink } from "@/components/ui";
@@ -28,13 +30,13 @@ function TransactionIcon({ tx }: { tx: TransactionRow }) {
   );
 }
 
-function TransactionItem({ tx, showDate, readOnly, selectable }: { tx: TransactionRow; showDate: boolean; readOnly: boolean; selectable: boolean }) {
+function TransactionItem({ tx, showDate, readOnly, selectable, t }: { tx: TransactionRow; showDate: boolean; readOnly: boolean; selectable: boolean; t: TFunction }) {
   const isTransfer = tx.type === "TRANSFER";
-  const title = isTransfer ? "Transfer" : (tx.category?.name ?? "Uncategorized");
+  const title = isTransfer ? t("Transfer") : (tx.category?.name ?? t("Uncategorized"));
   const where = isTransfer ? `${tx.account.name} → ${tx.toAccount?.name ?? "?"}` : tx.account.name;
   // Left line: the date in flat lists, otherwise the note or account. Right line: account or "Transfer".
-  const left = showDate ? relativeDay(tx.date) : tx.note || where;
-  const right = isTransfer ? "Transfer" : showDate || tx.note ? tx.account.name : "";
+  const left = showDate ? t(relativeDay(tx.date)) : tx.note || where;
+  const right = isTransfer ? t("Transfer") : showDate || tx.note ? tx.account.name : "";
 
   const content = (
     <>
@@ -77,7 +79,7 @@ function TransactionItem({ tx, showDate, readOnly, selectable }: { tx: Transacti
     return (
       <li>
         <label className="-mx-2 flex cursor-pointer items-center gap-3 rounded-2xl px-2 py-2 transition-colors has-[:checked]:bg-primary-soft/70">
-          <input type="checkbox" name="ids" value={tx.id} className="size-5 shrink-0 accent-primary" aria-label={`Select ${title}`} />
+          <input type="checkbox" name="ids" value={tx.id} className="size-5 shrink-0 accent-primary" aria-label={t("Select {name}", { name: title })} />
           {content}
         </label>
       </li>
@@ -97,7 +99,7 @@ function TransactionItem({ tx, showDate, readOnly, selectable }: { tx: Transacti
 }
 
 /** Transactions as rounded tiles, optionally grouped under a heading per day. */
-export function TransactionList({
+export async function TransactionList({
   transactions,
   groupByDay = true,
   readOnly = false,
@@ -110,11 +112,12 @@ export function TransactionList({
   /** Rows become checkboxes named "ids" (for bulk actions) instead of links. */
   selectable?: boolean;
 }) {
+  const t = await getT();
   if (!groupByDay) {
     return (
       <ul className="space-y-1">
         {transactions.map((tx) => (
-          <TransactionItem key={tx.id} tx={tx} showDate readOnly={readOnly} selectable={selectable} />
+          <TransactionItem key={tx.id} tx={tx} showDate readOnly={readOnly} selectable={selectable} t={t} />
         ))}
       </ul>
     );
@@ -131,12 +134,12 @@ export function TransactionList({
       {[...groups].map(([day, items]) => (
         <section key={day}>
           <h3 className="mb-1 text-sm font-semibold text-ink-soft">
-            {relativeDay(items[0].date)}
+            {t(relativeDay(items[0].date))}
             <span className="font-normal"> · {formatDay(items[0].date, "full")}</span>
           </h3>
           <ul className="space-y-1">
             {items.map((tx) => (
-              <TransactionItem key={tx.id} tx={tx} showDate={false} readOnly={readOnly} selectable={selectable} />
+              <TransactionItem key={tx.id} tx={tx} showDate={false} readOnly={readOnly} selectable={selectable} t={t} />
             ))}
           </ul>
         </section>

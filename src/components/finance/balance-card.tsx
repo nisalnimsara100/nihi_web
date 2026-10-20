@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore, type ReactNode } from "react";
 import { Eye, EyeSlash } from "@/components/icons";
+import { useT } from "@/lib/i18n/client";
 
 const STORAGE_KEY = "nihi:hide-balance";
 const CHANGE_EVENT = "nihi:hide-balance-change";
@@ -26,6 +27,7 @@ function readHidden() {
 
 /** Balance block for the blue hero; the eye button masks amounts on shared screens. */
 export function BalanceCard({ label, amount, footer }: { label: string; amount: string; footer: ReactNode }) {
+  const t = useT();
   const hidden = useSyncExternalStore(subscribe, readHidden, () => false);
 
   function toggle() {
@@ -42,7 +44,7 @@ export function BalanceCard({ label, amount, footer }: { label: string; amount: 
         <button
           type="button"
           onClick={toggle}
-          aria-label={hidden ? "Show balance" : "Hide balance"}
+          aria-label={hidden ? t("Show balance") : t("Hide balance")}
           aria-pressed={hidden}
           className="rounded-full bg-white/15 p-1 hover:bg-white/25"
         >

@@ -3,6 +3,7 @@
  * cards near their limit, and a month that is running well above the usual. Pure, so it can be tested.
  */
 import { budgetLevel, WARN_AT } from "./budgets";
+import { interpolate, type TFunction } from "./i18n/translate";
 
 export type AlertTone = "bad" | "warn" | "info";
 export type Alert = { id: string; tone: AlertTone; title: string; detail?: string; href: string };
@@ -18,27 +19,30 @@ export type AlertInput = {
   monthProgress: number;
   /** Formats minor units for a message. */
   money: (minor: number) => string;
+  /** Translator for the messages; English text is used when it is left out. */
+  t?: TFunction;
 };
 
 const ORDER: Record<AlertTone, number> = { bad: 0, warn: 1, info: 2 };
 
 export function buildAlerts(input: AlertInput, max = 5): Alert[] {
   const alerts: Alert[] = [];
+  const t: TFunction = input.t ?? ((text, vars) => interpolate(text, vars));
 
   for (const b of input.budgets) {
     const level = budgetLevel(b.spent, b.limit);
     if (level === "over") {
-      alerts.push({ id: `budget-${b.id}`, tone: "bad", title: `Over budget: ${b.name}`, detail: `${input.money(b.spent - b.limit)} over the ${input.money(b.limit)} limit`, href: "/budgets" });
+      alerts.push({ id: `budget-${b.id}`, tone: "bad", title: t("Over budget: {name}", { name: b.name }), detail: t("{over} over the {limit} limit", { over: input.money(b.spent - b.limit), limit: input.money(b.limit) }), href: "/budgets" });
     } else if (level === "warn") {
-      alerts.push({ id: `budget-${b.id}`, tone: "warn", title: `${b.name} budget is ${Math.round((b.spent / b.limit) * 100)}% used`, detail: `${input.money(b.limit - b.spent)} left`, href: "/budgets" });
+      alerts.push({ id: `budget-${b.id}`, tone: "warn", title: t("{name} budget is {percent}% used", { name: b.name, percent: Math.round((b.spent / b.limit) * 100) }), detail: t("{amount} left", { amount: input.money(b.limit - b.spent) }), href: "/budgets" });
     }
   }
 
   for (const c of input.cards) {
     if (c.utilization >= 1) {
-      alerts.push({ id: `card-${c.id}`, tone: "bad", title: `${c.name} is over its limit`, href: "/accounts" });
+      alerts.push({ id: `card-${c.id}`, tone: "bad", title: t("{name} is over its limit", { name: c.name }), href: "/accounts" });
     } else if (c.utilization >= WARN_AT) {
-      alerts.push({ id: `card-${c.id}`, tone: "warn", title: `${c.name} is ${Math.round(c.utilization * 100)}% of its limit`, href: "/accounts" });
+      alerts.push({ id: `card-${c.id}`, tone: "warn", title: t("{name} is {percent}% of its limit", { name: c.name, percent: Math.round(c.utilization * 100) }), href: "/accounts" });
     }
   }
 
@@ -46,7 +50,7 @@ export function buildAlerts(input: AlertInput, max = 5): Alert[] {
     alerts.push({
       id: `due-${u.id}`,
       tone: "info",
-      title: `${u.title} ${u.daysAway === 0 ? "is due today" : u.daysAway === 1 ? "is due tomorrow" : `is due in ${u.daysAway} days`}`,
+      title: u.daysAway === 0 ? t("{title} is due today", { title: u.title }) : u.daysAway === 1 ? t("{title} is due tomorrow", { title: u.title }) : t("{title} is due in {days} days", { title: u.title, days: u.daysAway }),
       detail: u.money,
       href: "/recurring",
     });
@@ -59,8 +63,8 @@ export function buildAlerts(input: AlertInput, max = 5): Alert[] {
       alerts.push({
         id: "pace",
         tone: "warn",
-        title: `Spending is running ${Math.round((projected / input.spendAverage - 1) * 100)}% above your usual month`,
-        detail: `${input.money(input.spendNow)} so far, against about ${input.money(input.spendAverage)} in a usual month`,
+        title: t("Spending is running {percent}% above your usual month", { percent: Math.round((projected / input.spendAverage - 1) * 100) }),
+        detail: t("{spent} so far, against about {usual} in a usual month", { spent: input.money(input.spendNow), usual: input.money(input.spendAverage) }),
         href: "/statistics",
       });
     }

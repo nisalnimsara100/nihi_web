@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { db, run } from "@/lib/db";
 import { mailConfigured } from "@/lib/mail";
 import { daysUntil } from "@/lib/time";
+import { LanguageSwitch } from "@/components/language-switch";
 import { InstallApp } from "@/components/pwa";
 import { PartnerSharing } from "./partner-sharing";
 import { PasswordForm, ProfileForm } from "./settings-forms";
@@ -25,6 +26,12 @@ export default function SettingsPage() {
         <Suspense fallback={<Skeleton className="h-64" />}>
           <Partners />
         </Suspense>
+        <Card>
+          <CardHeader title="Language" />
+          <div className="p-4 sm:p-5">
+            <LanguageSwitch />
+          </div>
+        </Card>
         <Card>
           <CardHeader title="Install on your phone" />
           <div className="space-y-2 p-4 sm:p-5">

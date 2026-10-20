@@ -8,6 +8,7 @@ import { Button, buttonClass, inputClass } from "@/components/ui";
 import { Camera, CircleNotch, ImageSquare, X } from "@/components/icons";
 import { networkLabel } from "@/lib/card-networks";
 import { cn } from "@/lib/cn";
+import { useT } from "@/lib/i18n/client";
 import { todayDay } from "@/lib/dates";
 import { formatMoney, parseAmount, toInputAmount } from "@/lib/money";
 import { suggestCategory, type CategoryRef, type HistoryRow } from "@/lib/scan/categorize";
@@ -76,22 +77,24 @@ function matchAccount(parsed: ParsedScan, accounts: ScanAccount[], cards: ScanCa
 }
 
 function Badge({ level, edited }: { level: Confidence; edited?: boolean }) {
+  const t = useT();
   const style = edited
     ? "bg-primary text-on-primary"
     : { high: "bg-primary-soft text-on-primary-soft", low: "bg-warning-soft text-ink", missing: "bg-danger/10 text-danger" }[level];
   const label = edited ? "Confirmed" : { high: "Looks right", low: "Check this", missing: "Not found" }[level];
-  return <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold", style)}>{label}</span>;
+  return <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold", style)}>{t(label)}</span>;
 }
 
 function FieldRow({ label, htmlFor, level, edited, error, children }: { label: string; htmlFor: string; level: Confidence; edited?: boolean; error?: string; children: React.ReactNode }) {
+  const t = useT();
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between gap-2">
-        <label htmlFor={htmlFor} className="text-sm font-semibold text-ink">{label}</label>
+        <label htmlFor={htmlFor} className="text-sm font-semibold text-ink">{t(label)}</label>
         <Badge level={level} edited={edited} />
       </div>
       {children}
-      {error ? <p className="text-sm text-danger">{error}</p> : null}
+      {error ? <p className="text-sm text-danger">{t(error)}</p> : null}
     </div>
   );
 }
@@ -113,6 +116,7 @@ export function ScanSheet({
   onApply: (result: ScanResult) => void;
   onClose: () => void;
 }) {
+  const t = useT();
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState<"idle" | "prepare" | "read">("idle");
   const [progress, setProgress] = useState(0);
@@ -271,7 +275,7 @@ export function ScanSheet({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Scan a screenshot or bill"
+        aria-label={t("Scan screenshot or bill")}
         onClick={(e) => e.stopPropagation()}
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
@@ -287,8 +291,8 @@ export function ScanSheet({
         )}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-ink">Scan screenshot or bill</h2>
-          <button type="button" aria-label="Close" onClick={onClose} className="inline-flex size-9 items-center justify-center rounded-full hover:bg-muted">
+          <h2 className="text-lg font-bold text-ink">{t("Scan screenshot or bill")}</h2>
+          <button type="button" aria-label={t("Close")} onClick={onClose} className="inline-flex size-9 items-center justify-center rounded-full hover:bg-muted">
             <X className="size-5" />
           </button>
         </div>
@@ -296,16 +300,15 @@ export function ScanSheet({
         {busy === "idle" && !review ? (
           <div className="space-y-4">
             <p className="text-sm text-ink-soft">
-              Pick a bank SMS, email or ride receipt screenshot, paste one (Ctrl/Cmd+V), drop it here, or photograph a printed
-              bill. It is read on this device and never uploaded. You review everything before it goes in the form.
+              {t("Pick a bank SMS, email or ride receipt screenshot, paste one (Ctrl/Cmd+V), drop it here, or photograph a printed bill. It is read on this device and never uploaded. You review everything before it goes in the form.")}
             </p>
             <div className="grid grid-cols-2 gap-3">
               <label className={cn(buttonClass("primary", "lg"), "cursor-pointer")}>
-                <ImageSquare className="size-5" /> Gallery
+                <ImageSquare className="size-5" /> {t("Gallery")}
                 <input type="file" accept="image/*" className="sr-only" onChange={choose} />
               </label>
               <label className={cn(buttonClass("soft", "lg"), "cursor-pointer")}>
-                <Camera className="size-5" /> Camera
+                <Camera className="size-5" /> {t("Camera")}
                 <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={choose} />
               </label>
             </div>
@@ -316,12 +319,12 @@ export function ScanSheet({
           <button
             type="button"
             onClick={() => { setZoomed(false); setViewing(true); }}
-            aria-label="View the full image"
+            aria-label={t("View the full image")}
             className="group relative mx-auto mb-4 block overflow-hidden rounded-2xl"
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- local blob preview, nothing to optimise */}
-            <img src={preview} alt="Selected screenshot" className="max-h-40 max-w-full object-contain" />
-            <span className="absolute inset-x-0 bottom-0 bg-black/55 py-1 text-center text-xs font-semibold text-white">Tap to view</span>
+            <img src={preview} alt={t("Selected screenshot")} className="max-h-40 max-w-full object-contain" />
+            <span className="absolute inset-x-0 bottom-0 bg-black/55 py-1 text-center text-xs font-semibold text-white">{t("Tap to view")}</span>
           </button>
         ) : null}
 
@@ -329,7 +332,7 @@ export function ScanSheet({
           <div className="space-y-2" role="status">
             <p className="flex items-center gap-2 text-sm font-semibold text-ink">
               <CircleNotch className="size-4 animate-spin" />
-              {busy === "prepare" ? "Preparing image…" : progress > 0 ? `Reading text… ${Math.round(progress * 100)}%` : "Loading reader (first time only)…"}
+              {busy === "prepare" ? t("Preparing image…") : progress > 0 ? t("Reading text… {percent}%", { percent: Math.round(progress * 100) }) : t("Loading reader (first time only)…")}
             </p>
             <div className="h-2 overflow-hidden rounded-full bg-muted">
               <div className="h-full bg-primary transition-all" style={{ width: `${Math.max(5, progress * 100)}%` }} />
@@ -341,7 +344,7 @@ export function ScanSheet({
           <div className="space-y-4">
             {review.candidates.length > 1 ? (
               <div>
-                <p className="mb-2 text-sm font-semibold text-ink">{review.candidates.length} transactions found. Pick one to add.</p>
+                <p className="mb-2 text-sm font-semibold text-ink">{t("{count} transactions found. Pick one to add.", { count: review.candidates.length })}</p>
                 <div className="flex flex-col gap-2">
                   {review.candidates.map((c, i) => (
                     <button
@@ -354,7 +357,7 @@ export function ScanSheet({
                         i === pick ? "bg-primary-soft text-on-primary-soft ring-2 ring-primary" : "bg-muted text-ink hover:bg-line",
                       )}
                     >
-                      <span className="truncate">{c.draft.note || TYPE_LABEL[c.draft.type]}</span>
+                      <span className="truncate">{c.draft.note || t(TYPE_LABEL[c.draft.type])}</span>
                       <span className="shrink-0 pl-3 tabular-nums">
                         {formatMoney(parseAmount(c.draft.amount) ?? 0, c.parsed.amount.currency ?? "LKR")} · {c.draft.date}
                       </span>
@@ -364,7 +367,7 @@ export function ScanSheet({
               </div>
             ) : null}
 
-            <p className="text-sm text-ink-soft">Here is what I found. Fix anything that is wrong, then confirm.</p>
+            <p className="text-sm text-ink-soft">{t("Here is what I found. Fix anything that is wrong, then confirm.")}</p>
 
             <FieldRow label="Amount" htmlFor="scan-amount" level={currencyMismatch ? "low" : current.parsed.amount.confidence} edited={current.edited.amount} error={amountError}>
               <input
@@ -378,7 +381,7 @@ export function ScanSheet({
             </FieldRow>
 
             <FieldRow label="Type" htmlFor="scan-type-expense" level={current.parsed.type.confidence} edited={current.edited.type}>
-              <div role="radiogroup" aria-label="Type" className="grid grid-cols-3 gap-1 rounded-2xl bg-muted p-1">
+              <div role="radiogroup" aria-label={t("Type")} className="grid grid-cols-3 gap-1 rounded-2xl bg-muted p-1">
                 {TYPES.map((t) => (
                   <button
                     key={t.value}
@@ -411,19 +414,18 @@ export function ScanSheet({
               </select>
               {current.matchedCard && draft.accountId === current.matchedCard.accountId ? (
                 <p className="text-sm text-ink-soft">
-                  {networkLabel(current.matchedCard.network)} card •••• {current.matchedCard.last4}
-                  {current.matchedCard.name ? ` (${current.matchedCard.name})` : ""} is linked to this account, so the amount will come out of it.
+                  {t("{card} is linked to this account, so the amount will come out of it.", { card: `${networkLabel(current.matchedCard.network)} •••• ${current.matchedCard.last4}${current.matchedCard.name ? ` (${current.matchedCard.name})` : ""}` })}
                 </p>
               ) : null}
               {currencyMismatch ? (
-                <p className="text-sm text-danger">The image shows {current.parsed.amount.currency} but {account?.name} uses {account?.currency}.</p>
+                <p className="text-sm text-danger">{t("The image shows {from} but {account} uses {to}.", { from: current.parsed.amount.currency ?? "", account: account?.name ?? "", to: account?.currency ?? "" })}</p>
               ) : null}
             </FieldRow>
 
             {draft.type !== "TRANSFER" ? (
               <FieldRow label="Category" htmlFor="scan-category" level={current.categoryConfidence} edited={current.edited.categoryId}>
                 <select id="scan-category" value={draft.categoryId} onChange={(e) => edit({ categoryId: e.target.value })} className={inputClass}>
-                  <option value="">None</option>
+                  <option value="">{t("None")}</option>
                   {categoryChoices.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
@@ -434,15 +436,15 @@ export function ScanSheet({
             <SimilarWarning type={draft.type} amount={amountMinor} accountId={draft.accountId} day={draft.date} />
 
             <details className="rounded-2xl bg-muted px-4 py-2 text-sm">
-              <summary className="cursor-pointer font-semibold text-ink">What I read</summary>
-              <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap text-xs text-ink-soft">{review.raw || "(nothing)"}</pre>
+              <summary className="cursor-pointer font-semibold text-ink">{t("What I read")}</summary>
+              <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap text-xs text-ink-soft">{review.raw || t("(nothing)")}</pre>
             </details>
 
             <div className="flex gap-2">
-              <Button variant="ghost" className="flex-1" onClick={reset}>Scan again</Button>
-              <Button className="flex-1" onClick={confirm} disabled={!!amountError}>Confirm details</Button>
+              <Button variant="ghost" className="flex-1" onClick={reset}>{t("Scan again")}</Button>
+              <Button className="flex-1" onClick={confirm} disabled={!!amountError}>{t("Confirm details")}</Button>
             </div>
-            <p className="text-center text-xs text-ink-soft">Nothing is saved yet. You can still change things in the form.</p>
+            <p className="text-center text-xs text-ink-soft">{t("Nothing is saved yet. You can still change things in the form.")}</p>
           </div>
         ) : null}
       </div>
@@ -451,7 +453,7 @@ export function ScanSheet({
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Full image"
+          aria-label={t("Full image")}
           onClick={(e) => { e.stopPropagation(); setViewing(false); }}
           className="fixed inset-0 z-[60] flex flex-col bg-black/90"
         >
@@ -461,9 +463,9 @@ export function ScanSheet({
               onClick={(e) => { e.stopPropagation(); setZoomed((z) => !z); }}
               className="h-9 rounded-full bg-white/15 px-4 text-sm font-semibold"
             >
-              {zoomed ? "Fit to screen" : "Zoom in"}
+              {zoomed ? t("Fit to screen") : t("Zoom in")}
             </button>
-            <button type="button" aria-label="Close image" onClick={() => setViewing(false)} className="inline-flex size-9 items-center justify-center rounded-full bg-white/15">
+            <button type="button" aria-label={t("Close image")} onClick={() => setViewing(false)} className="inline-flex size-9 items-center justify-center rounded-full bg-white/15">
               <X className="size-5" />
             </button>
           </div>
@@ -471,7 +473,7 @@ export function ScanSheet({
             {/* eslint-disable-next-line @next/next/no-img-element -- local blob preview, nothing to optimise */}
             <img
               src={preview}
-              alt="Selected screenshot, full size"
+              alt={t("Selected screenshot, full size")}
               onClick={(e) => { e.stopPropagation(); setZoomed((z) => !z); }}
               className={zoomed ? "m-auto max-w-none cursor-zoom-out" : "m-auto max-h-full max-w-full cursor-zoom-in object-contain"}
               style={zoomed ? { width: "220%" } : undefined}

@@ -27,6 +27,7 @@ import { ButtonLink, Card, CardHeader, ColorDot, EmptyState, MaybeLink, PageSkel
 import { getViewer } from "@/lib/auth";
 import { accountTypeLabel } from "@/lib/constants";
 import { DueRecurring } from "@/components/finance/due-recurring";
+import { getT } from "@/lib/i18n/server";
 import { buildAlerts } from "@/lib/alerts";
 import { goalProgress } from "@/lib/goals";
 import { budgetStatus, monthProgress } from "@/lib/budgets";
@@ -62,6 +63,7 @@ const heroButton =
 
 async function Dashboard() {
   const { owner: user, readOnly } = await getViewer();
+  const t = await getT();
   const month = currentMonthKey();
   const { start, end } = monthRange(month);
   const currency = user.defaultCurrency;
@@ -87,7 +89,7 @@ async function Dashboard() {
         budgets: budgetRows.filter((r) => r.limit !== null).map((r) => ({ id: r.category.id, name: r.category.name, spent: r.spent, limit: r.limit! })),
         upcoming: upcoming.map((r) => ({
           id: r.id,
-          title: r.note || r.category?.name || "Repeating transaction",
+          title: r.note || r.category?.name || t("Repeating transaction"),
           daysAway: daysBetween(today, r.nextDate),
           money: formatMoney(r.amount, r.account.currency),
         })),
@@ -98,6 +100,7 @@ async function Dashboard() {
         spendAverage: previous.length ? previous.reduce((sum, m) => sum + m.expense, 0) / previous.length : 0,
         monthProgress: monthProgress(today),
         money: (minor) => formatMoney(minor, currency),
+        t,
       });
 
   // The total balance is money you have. Credit cards are debt to a bank, so they stay out of it
@@ -136,7 +139,7 @@ async function Dashboard() {
           </div>
           <Link
             href="/settings"
-            aria-label="Settings"
+            aria-label={t("Settings")}
             className="flex size-11 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/20 hover:bg-white/25"
           >
             <GearSix className="size-5" aria-hidden />
@@ -145,24 +148,24 @@ async function Dashboard() {
 
         <div className="mt-7">
           <BalanceCard
-            label="Total Balance"
+            label={t("Total Balance")}
             amount={formatMoney(netWorth.get(currency) ?? 0, currency)}
             footer={
               <>
-                {ownAccounts.length} account{ownAccounts.length === 1 ? "" : "s"}
+                {ownAccounts.length === 1 ? t("1 account") : t("{count} accounts", { count: ownAccounts.length })}
                 {otherNetWorth.length > 0 ? ` · ${otherNetWorth.map(([c, v]) => formatMoney(v, c)).join(" · ")}` : ""}
                 {cardsOwed.size > 0 || savings.size > 0 ? (
                   <span className="mt-2 flex flex-wrap gap-2">
                     {savings.size > 0 ? (
                       <span className="flex w-fit items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
                         <PiggyBank className="size-3.5" aria-hidden />
-                        Savings {[...savings].map(([c, v]) => formatMoney(v, c)).join(" · ")}
+                        {t("Savings")} {[...savings].map(([c, v]) => formatMoney(v, c)).join(" · ")}
                       </span>
                     ) : null}
                     {cardsOwed.size > 0 ? (
                       <span className="flex w-fit items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
                         <CreditCard className="size-3.5" aria-hidden />
-                        Cards owe {[...cardsOwed].map(([c, v]) => formatMoney(v, c)).join(" · ")}
+                        {t("Cards owe")} {[...cardsOwed].map(([c, v]) => formatMoney(v, c)).join(" · ")}
                       </span>
                     ) : null}
                   </span>
@@ -176,11 +179,11 @@ async function Dashboard() {
           <div className="mt-6 grid grid-cols-2 gap-3">
             <Link href="/transactions/new?type=INCOME" className={heroButton}>
               <ArrowDownLeft className="size-5" aria-hidden />
-              Add Income
+              {t("Add Income")}
             </Link>
             <Link href="/transactions/new?type=EXPENSE" className={heroButton}>
               <ArrowUpRight className="size-5" aria-hidden />
-              Add Expense
+              {t("Add Expense")}
             </Link>
           </div>
         )}
@@ -202,11 +205,14 @@ async function Dashboard() {
             </span>
             <span className="min-w-0 flex-1">
               <span className="block font-semibold">
-                {saved ? `You saved ${formatMoney(net, currency)}` : `Overspent by ${formatMoney(-net, currency)}`}
+                {saved ? t("You saved {amount}", { amount: formatMoney(net, currency) }) : t("Overspent by {amount}", { amount: formatMoney(-net, currency) })}
               </span>
               <span className="block truncate text-sm text-ink-soft">
-                {formatMonth(month)} · in {formatMoney(monthTotals.income, currency)} · out{" "}
-                {formatMoney(monthTotals.expense, currency)}
+                {t("{month} · in {income} · out {expense}", {
+                  month: formatMonth(month),
+                  income: formatMoney(monthTotals.income, currency),
+                  expense: formatMoney(monthTotals.expense, currency),
+                })}
               </span>
             </span>
             <CaretRight className="size-5 shrink-0 text-ink-faint" aria-hidden />
@@ -214,7 +220,7 @@ async function Dashboard() {
 
           {readOnly ? null : (
           <section>
-            <h2 className="mb-3 text-base font-semibold">Quick Actions</h2>
+            <h2 className="mb-3 text-base font-semibold">{t("Quick Actions")}</h2>
             <div className="grid grid-cols-4 gap-3">
               {QUICK_ACTIONS.map(({ href, label, icon: Icon }) => (
                 <Link
@@ -223,7 +229,7 @@ async function Dashboard() {
                   className="flex aspect-square flex-col items-center justify-center gap-2 rounded-3xl bg-primary-soft text-on-primary-soft transition-colors hover:bg-primary-soft-strong sm:aspect-auto sm:py-5"
                 >
                   <Icon className="size-6" aria-hidden />
-                  <span className="text-xs font-semibold sm:text-sm">{label}</span>
+                  <span className="text-xs font-semibold sm:text-sm">{t(label)}</span>
                 </Link>
               ))}
             </div>
@@ -232,10 +238,10 @@ async function Dashboard() {
 
           <section className="rounded-3xl bg-muted p-4 sm:p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-base font-semibold">Recent Transactions</h2>
+              <h2 className="text-base font-semibold">{t("Recent Transactions")}</h2>
               <Link
                 href="/transactions"
-                aria-label="All transactions"
+                aria-label={t("All transactions")}
                 className="flex size-10 items-center justify-center rounded-xl bg-surface text-ink shadow-sm hover:bg-line/50"
               >
                 <SlidersHorizontal className="size-5" aria-hidden />
@@ -248,7 +254,7 @@ async function Dashboard() {
                 icon={<Receipt className="size-6" />}
                 title="No transactions yet"
                 description={readOnly ? "Nothing has been added yet." : "Add your first expense or income to see it here."}
-                action={readOnly ? undefined : <ButtonLink href="/transactions/new">Add transaction</ButtonLink>}
+                action={readOnly ? undefined : <ButtonLink href="/transactions/new">{t("Add transaction")}</ButtonLink>}
               />
             )}
           </section>
@@ -288,7 +294,7 @@ async function Dashboard() {
               <DueRecurring
                 items={dueRules.map((r) => ({
                   id: r.id,
-                  title: r.note || r.category?.name || (r.type === "TRANSFER" ? "Transfer" : "Repeating transaction"),
+                  title: r.note || r.category?.name || (r.type === "TRANSFER" ? t("Transfer") : t("Repeating transaction")),
                   amount: formatMoney(r.amount, r.account.currency),
                   when: dueLabel(r.nextDate, today),
                   accountName: r.account.name,
@@ -312,7 +318,7 @@ async function Dashboard() {
                         <div className="flex items-center justify-between gap-3 text-sm">
                           <span className="min-w-0 truncate font-medium">{r.category.name}</span>
                           <span className={cn("shrink-0 text-xs font-semibold tabular-nums", status.level === "over" ? "text-danger" : "text-ink-soft")}>
-                            {status.level === "over" ? `Over by ${formatMoney(-status.left, currency)}` : `${formatMoney(status.left, currency)} left`}
+                            {status.level === "over" ? t("Over by {amount}", { amount: formatMoney(-status.left, currency) }) : t("{amount} left", { amount: formatMoney(status.left, currency) })}
                           </span>
                         </div>
                         <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-muted" aria-hidden>
