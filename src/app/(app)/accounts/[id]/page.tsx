@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { PageHeader, Skeleton } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { db, run } from "@/lib/db";
 import { toInputAmount } from "@/lib/money";
 import { AccountForm } from "../account-form";
 
@@ -23,7 +23,7 @@ export default function EditAccountPage({ params }: { params: Promise<{ id: stri
 async function EditAccount({ params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
   const { id } = await params;
-  const account = await db.account.findFirst({ where: { id, userId: user.id } });
+  const account = await run(db().from("Account").select("*").eq("id", id).eq("userId", user.id).maybeSingle());
   if (!account) {
     notFound();
   }

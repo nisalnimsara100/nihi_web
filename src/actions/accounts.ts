@@ -5,15 +5,15 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireUserId } from "@/lib/auth";
 import { CURRENCIES } from "@/lib/constants";
-import { db } from "@/lib/db";
+import { db, isId, run } from "@/lib/db";
 import { parseAmount } from "@/lib/money";
-import { AccountType } from "@/generated/prisma/enums";
+import { Constants } from "@/lib/database.types";
 import { fromZodError, type ActionState } from "./state";
 
 const accountSchema = z.object({
   id: z.string().optional(),
   name: z.string().trim().min(1, "Enter a name").max(60),
-  type: z.enum(AccountType),
+  type: z.enum(Constants.public.Enums.AccountType),
   currency: z.enum(CURRENCIES),
   initialBalance: z
     .string()
@@ -39,13 +39,14 @@ export async function saveAccount(_prev: ActionState, formData: FormData): Promi
   const { id, archived, ...data } = parsed.data;
 
   if (id) {
-    const existing = await db.account.findFirst({ where: { id, userId }, select: { id: true } });
-    if (!existing) {
+    const updated = await run(
+      db().from("Account").update({ ...data, archived: archived === "on" }).eq("id", id).eq("userId", userId).select("id"),
+    );
+    if (updated.length === 0) {
       return { error: "Account not found." };
     }
-    await db.account.update({ where: { id }, data: { ...data, archived: archived === "on" } });
   } else {
-    await db.account.create({ data: { ...data, userId } });
+    await run(db().from("Account").insert({ ...data, userId }));
   }
 
   revalidatePath("/", "layout");
@@ -54,18 +55,25 @@ export async function saveAccount(_prev: ActionState, formData: FormData): Promi
 
 export async function deleteAccount(id: string): Promise<ActionState> {
   const userId = await requireUserId();
-  const account = await db.account.findFirst({
-    where: { id, userId },
-    include: { _count: { select: { transactions: true, incomingTransfers: true } } },
-  });
-  if (!account) {
+  if (!isId(id)) {
     return { error: "Account not found." };
   }
-  if (account._count.transactions + account._count.incomingTransfers > 0) {
+  const { count, error } = await db()
+    .from("Transaction")
+    .select("id", { count: "exact", head: true })
+    .eq("userId", userId)
+    .or(`accountId.eq.${id},toAccountId.eq.${id}`);
+  if (error) {
+    throw new Error(error.message);
+  }
+  if (count) {
     return { error: "This account has transactions. Archive it instead, or delete its transactions first." };
   }
 
-  await db.account.delete({ where: { id } });
+  const deleted = await run(db().from("Account").delete().eq("id", id).eq("userId", userId).select("id"));
+  if (deleted.length === 0) {
+    return { error: "Account not found." };
+  }
   revalidatePath("/", "layout");
   redirect("/accounts");
 }

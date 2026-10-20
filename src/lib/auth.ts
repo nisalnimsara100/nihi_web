@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import { db } from "./db";
+import { db, run } from "./db";
 import { getSessionUserId } from "./session";
 
 export type CurrentUser = {
@@ -17,10 +17,9 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser> => {
   if (!userId) {
     redirect("/login");
   }
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: { id: true, name: true, email: true, defaultCurrency: true },
-  });
+  const user = await run(
+    db().from("User").select("id, name, email, defaultCurrency").eq("id", userId).maybeSingle(),
+  );
   if (!user) {
     redirect("/login");
   }

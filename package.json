@@ -4,20 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma migrate deploy && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "postinstall": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx scripts/seed.ts",
+    "db:types": "npx supabase gen types typescript --linked --schema public > src/lib/database.types.ts"
   },
   "dependencies": {
-    "@prisma/adapter-better-sqlite3": "^7.10.1",
-    "@prisma/client": "^7.10.1",
+    "@supabase/supabase-js": "^2.118.0",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^12.11.1",
     "clsx": "^2.1.1",
     "jose": "^6.2.12",
     "lucide-react": "^1.59.0",
@@ -38,16 +34,12 @@
     "dotenv": "^18.0.8",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
-    "prisma": "^7.10.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5"
   },
   "allowScripts": {
-    "@prisma/engines@7.10.1": true,
-    "better-sqlite3@12.11.1": true,
     "esbuild@0.28.2": true,
-    "prisma@7.10.1": true,
     "unrs-resolver@1.12.2": true
   },
   "description": "NiHi - personal finance tracker built with Next.js and Tailwind CSS"

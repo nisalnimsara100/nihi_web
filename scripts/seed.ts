@@ -4,13 +4,22 @@
  */
 import "dotenv/config";
 import bcrypt from "bcryptjs";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-import { PrismaClient } from "../src/generated/prisma/client";
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "../src/lib/database.types";
 import { DEFAULT_CATEGORIES } from "../src/lib/constants";
 
-const db = new PrismaClient({
-  adapter: new PrismaBetterSqlite3({ url: process.env.DATABASE_URL ?? "file:./dev.db" }),
+const supabase = createClient<Database>(process.env.SUPABASE_URL!, process.env.SUPABASE_SECRET_KEY!, {
+  auth: { persistSession: false, autoRefreshToken: false },
 });
+
+/** Returns a query's data, or throws its error. Same as `run` in src/lib/db.ts, which is server-only. */
+async function run<R extends { data: unknown; error: { message: string } | null }>(
+  query: PromiseLike<R>,
+): Promise<Extract<R, { error: null }>["data"]> {
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return data as Extract<R, { error: null }>["data"];
+}
 
 const EMAIL = "demo@nihi.app";
 
@@ -23,21 +32,31 @@ function random() {
 const between = (min: number, max: number) => Math.round(min + random() * (max - min));
 
 async function main() {
-  await db.user.deleteMany({ where: { email: EMAIL } });
+  // Deleting the user cascades to all of its accounts, categories, tags and transactions.
+  await run(supabase.from("User").delete().eq("email", EMAIL));
 
-  const user = await db.user.create({
-    data: {
-      email: EMAIL,
-      name: "Demo User",
-      passwordHash: await bcrypt.hash("demo1234", 10),
-      defaultCurrency: "LKR",
-      categories: { create: DEFAULT_CATEGORIES },
-    },
-    include: { categories: true },
-  });
+  const user = await run(
+    supabase
+      .from("User")
+      .insert({ email: EMAIL, name: "Demo User", passwordHash: await bcrypt.hash("demo1234", 10), defaultCurrency: "LKR" })
+      .select("id")
+      .single(),
+  );
+  const categories = await run(
+    supabase
+      .from("Category")
+      .insert(DEFAULT_CATEGORIES.map((c) => ({ ...c, userId: user.id })))
+      .select("id, name, type"),
+  );
 
   const account = (name: string, type: "CASH" | "BANK" | "SAVINGS" | "CREDIT_CARD", color: string, initialBalance: number) =>
-    db.account.create({ data: { userId: user.id, name, type, currency: "LKR", color, initialBalance } });
+    run(
+      supabase
+        .from("Account")
+        .insert({ userId: user.id, name, type, currency: "LKR", color, initialBalance })
+        .select("id")
+        .single(),
+    );
 
   const [cash, bank, savings, card] = await Promise.all([
     account("Wallet", "CASH", "#1baf7a", 800000),
@@ -47,12 +66,12 @@ async function main() {
   ]);
 
   const [trip, work] = await Promise.all([
-    db.tag.create({ data: { userId: user.id, name: "Trip", color: "#e87ba4" } }),
-    db.tag.create({ data: { userId: user.id, name: "Work", color: "#2a78d6" } }),
+    run(supabase.from("Tag").insert({ userId: user.id, name: "Trip", color: "#e87ba4" }).select("id").single()),
+    run(supabase.from("Tag").insert({ userId: user.id, name: "Work", color: "#2a78d6" }).select("id").single()),
   ]);
 
   const cat = (name: string, type: "INCOME" | "EXPENSE") =>
-    user.categories.find((c) => c.name === name && c.type === type)!.id;
+    categories.find((c) => c.name === name && c.type === type)!.id;
 
   type Row = {
     type: "INCOME" | "EXPENSE" | "TRANSFER";
@@ -99,23 +118,35 @@ async function main() {
     rows.push({ type: "TRANSFER", amount: between(2000000, 4000000), accountId: bank.id, toAccountId: card.id, date: day(Math.min(25, lastDay)), note: "Card payment" });
   }
 
-  for (const { tagIds, ...row } of rows) {
-    await db.transaction.create({
-      data: {
-        ...row,
-        userId: user.id,
-        toAmount: row.type === "TRANSFER" ? row.amount : null,
-        ...(tagIds ? { tags: { connect: tagIds.map((id) => ({ id })) } } : {}),
-      },
-    });
+  // One bulk insert. PostgREST returns the new rows in the order they were sent.
+  const inserted = await run(
+    supabase
+      .from("Transaction")
+      .insert(
+        // Every row lists every column: a bulk insert sends one shared column list.
+        rows.map((row) => ({
+          userId: user.id,
+          type: row.type,
+          amount: row.amount,
+          accountId: row.accountId,
+          toAccountId: row.toAccountId ?? null,
+          toAmount: row.type === "TRANSFER" ? row.amount : null,
+          categoryId: row.categoryId ?? null,
+          date: row.date.toISOString(),
+          note: row.note ?? "",
+        })),
+      )
+      .select("id"),
+  );
+  const links = rows.flatMap((row, i) => (row.tagIds ?? []).map((tagId) => ({ transactionId: inserted[i].id, tagId })));
+  if (links.length > 0) {
+    await run(supabase.from("TransactionTag").insert(links));
   }
 
   console.log(`Seeded ${rows.length} transactions for ${EMAIL} (password: demo1234)`);
 }
 
-main()
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  })
-  .finally(() => db.$disconnect());
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

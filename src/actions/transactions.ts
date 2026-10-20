@@ -4,10 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireUserId } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { Constants, type Database } from "@/lib/database.types";
+import { db, run } from "@/lib/db";
 import { dayToDate } from "@/lib/dates";
 import { parseAmount } from "@/lib/money";
-import { TransactionType } from "@/generated/prisma/enums";
 import { fromZodError, type ActionState } from "./state";
 
 const amountField = (label: string) =>
@@ -24,7 +24,7 @@ const amountField = (label: string) =>
 const transactionSchema = z
   .object({
     id: z.string().optional(),
-    type: z.enum(TransactionType),
+    type: z.enum(Constants.public.Enums.TransactionType),
     amount: amountField("amount"),
     toAmount: amountField("amount").optional(),
     accountId: z.string().min(1, "Choose an account"),
@@ -59,11 +59,19 @@ export async function saveTransaction(_prev: ActionState, formData: FormData): P
   // Every referenced record must belong to this user.
   const accountIds = [data.accountId, ...(isTransfer && data.toAccountId ? [data.toAccountId] : [])];
   const [accounts, category, tags] = await Promise.all([
-    db.account.findMany({ where: { id: { in: accountIds }, userId }, select: { id: true, currency: true } }),
+    run(db().from("Account").select("id").in("id", accountIds).eq("userId", userId)),
     !isTransfer && data.categoryId
-      ? db.category.findFirst({ where: { id: data.categoryId, userId, type: data.type as "INCOME" | "EXPENSE" } })
+      ? run(
+          db()
+            .from("Category")
+            .select("id")
+            .eq("id", data.categoryId)
+            .eq("userId", userId)
+            .eq("type", data.type as "INCOME" | "EXPENSE")
+            .maybeSingle(),
+        )
       : null,
-    db.tag.findMany({ where: { id: { in: tagIds }, userId }, select: { id: true } }),
+    tagIds.length > 0 ? run(db().from("Tag").select("id").in("id", tagIds).eq("userId", userId)) : [],
   ]);
   if (accounts.length !== accountIds.length) {
     return { error: "Account not found." };
@@ -73,30 +81,27 @@ export async function saveTransaction(_prev: ActionState, formData: FormData): P
   }
 
   const amount = data.amount!;
-  const fields = {
-    type: data.type,
-    amount,
-    accountId: data.accountId,
-    toAccountId: isTransfer ? data.toAccountId! : null,
-    toAmount: isTransfer ? (data.toAmount ?? amount) : null,
-    categoryId: isTransfer ? null : (category?.id ?? null),
-    date: dayToDate(data.date),
-    note: data.note,
+  const args = {
+    p_user_id: userId,
+    p_id: data.id ?? null,
+    p_type: data.type,
+    p_amount: amount,
+    p_account_id: data.accountId,
+    p_to_account_id: isTransfer ? data.toAccountId! : null,
+    p_to_amount: isTransfer ? (data.toAmount ?? amount) : null,
+    p_category_id: isTransfer ? null : (category?.id ?? null),
+    p_date: dayToDate(data.date).toISOString(),
+    p_note: data.note,
+    p_tag_ids: tags.map((t) => t.id),
   };
 
-  if (data.id) {
-    const existing = await db.transaction.findFirst({ where: { id: data.id, userId }, select: { id: true } });
-    if (!existing) {
-      return { error: "Transaction not found." };
-    }
-    await db.transaction.update({
-      where: { id: data.id },
-      data: { ...fields, tags: { set: tags.map((t) => ({ id: t.id })) } },
-    });
-  } else {
-    await db.transaction.create({
-      data: { ...fields, userId, tags: { connect: tags.map((t) => ({ id: t.id })) } },
-    });
+  // Generated types mark every function argument as required and non-null,
+  // but save_transaction takes null for a new transaction and for unused fields.
+  const savedId = await run(
+    db().rpc("save_transaction", args as Database["public"]["Functions"]["save_transaction"]["Args"]),
+  );
+  if (!savedId) {
+    return { error: "Transaction not found." };
   }
 
   revalidatePath("/", "layout");
@@ -105,8 +110,8 @@ export async function saveTransaction(_prev: ActionState, formData: FormData): P
 
 export async function deleteTransaction(id: string): Promise<ActionState> {
   const userId = await requireUserId();
-  const { count } = await db.transaction.deleteMany({ where: { id, userId } });
-  if (count === 0) {
+  const deleted = await run(db().from("Transaction").delete().eq("id", id).eq("userId", userId).select("id"));
+  if (deleted.length === 0) {
     return { error: "Transaction not found." };
   }
   revalidatePath("/", "layout");

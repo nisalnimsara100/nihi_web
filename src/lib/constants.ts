@@ -1,4 +1,7 @@
-import type { AccountType, CategoryType } from "@/generated/prisma/enums";
+import type { Enums } from "./database.types";
+
+type AccountType = Enums<"AccountType">;
+type CategoryType = Enums<"CategoryType">;
 
 export const APP_NAME = "NiHi";
 

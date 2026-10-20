@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUserId } from "@/lib/auth";
 import { CURRENCIES } from "@/lib/constants";
-import { db } from "@/lib/db";
+import { db, run } from "@/lib/db";
 import { fromZodError, type ActionState } from "./state";
 
 const profileSchema = z.object({
@@ -19,7 +19,7 @@ export async function updateProfile(_prev: ActionState, formData: FormData): Pro
   if (!parsed.success) {
     return fromZodError(parsed.error);
   }
-  await db.user.update({ where: { id: userId }, data: parsed.data });
+  await run(db().from("User").update(parsed.data).eq("id", userId));
   revalidatePath("/", "layout");
   return { ok: true };
 }
@@ -38,13 +38,15 @@ export async function changePassword(_prev: ActionState, formData: FormData): Pr
   if (!parsed.success) {
     return fromZodError(parsed.error);
   }
-  const user = await db.user.findUniqueOrThrow({ where: { id: userId } });
+  const user = await run(db().from("User").select("passwordHash").eq("id", userId).single());
   if (!(await bcrypt.compare(parsed.data.current, user.passwordHash))) {
     return { fieldErrors: { current: ["Current password is incorrect"] } };
   }
-  await db.user.update({
-    where: { id: userId },
-    data: { passwordHash: await bcrypt.hash(parsed.data.next, 10) },
-  });
+  await run(
+    db()
+      .from("User")
+      .update({ passwordHash: await bcrypt.hash(parsed.data.next, 10) })
+      .eq("id", userId),
+  );
   return { ok: true };
 }

@@ -1,43 +1,24 @@
 import "server-only";
-import type { Prisma } from "@/generated/prisma/client";
-import type { TransactionType } from "@/generated/prisma/enums";
-import { db } from "./db";
-import { monthKeyOf, monthRange, shiftMonth, yearRange, type MonthKey } from "./dates";
+import type { Enums } from "./database.types";
+import { db, isId, run } from "./db";
+import { monthRange, shiftMonth, yearRange, type MonthKey } from "./dates";
+
+type TransactionType = Enums<"TransactionType">;
 
 export type AccountWithBalance = Awaited<ReturnType<typeof getAccounts>>[number];
 
 /** Accounts with their current balance (initial balance + all activity). */
 export async function getAccounts(userId: string, opts: { includeArchived?: boolean } = {}) {
-  const [accounts, outgoing, incoming] = await Promise.all([
-    db.account.findMany({
-      where: { userId, ...(opts.includeArchived ? {} : { archived: false }) },
-      orderBy: [{ archived: "asc" }, { createdAt: "asc" }],
-    }),
-    db.transaction.groupBy({
-      by: ["accountId", "type"],
-      where: { userId },
-      _sum: { amount: true },
-    }),
-    db.transaction.groupBy({
-      by: ["toAccountId"],
-      where: { userId, type: "TRANSFER" },
-      _sum: { toAmount: true },
-    }),
+  let accountsQuery = db().from("Account").select("*").eq("userId", userId);
+  if (!opts.includeArchived) {
+    accountsQuery = accountsQuery.eq("archived", false);
+  }
+  const [accounts, deltas] = await Promise.all([
+    run(accountsQuery.order("archived").order("createdAt")),
+    run(db().rpc("account_balance_deltas", { p_user_id: userId })),
   ]);
 
-  const delta = new Map<string, number>();
-  const add = (id: string, value: number) => delta.set(id, (delta.get(id) ?? 0) + value);
-
-  for (const row of outgoing) {
-    const sum = row._sum.amount ?? 0;
-    add(row.accountId, row.type === "INCOME" ? sum : -sum);
-  }
-  for (const row of incoming) {
-    if (row.toAccountId) {
-      add(row.toAccountId, row._sum.toAmount ?? 0);
-    }
-  }
-
+  const delta = new Map(deltas.map((d) => [d.accountId, d.delta]));
   return accounts.map((account) => ({
     ...account,
     balance: account.initialBalance + (delta.get(account.id) ?? 0),
@@ -48,33 +29,9 @@ export type CurrencyTotals = { currency: string; income: number; expense: number
 
 /** Income and expense per currency in a date range. Transfers are not counted. */
 export async function getTotalsByCurrency(userId: string, start: Date, end: Date): Promise<CurrencyTotals> {
-  const rows = await db.transaction.groupBy({
-    by: ["accountId", "type"],
-    where: { userId, type: { in: ["INCOME", "EXPENSE"] }, date: { gte: start, lt: end } },
-    _sum: { amount: true },
-  });
-  if (rows.length === 0) {
-    return [];
-  }
-
-  const accounts = await db.account.findMany({
-    where: { id: { in: [...new Set(rows.map((r) => r.accountId))] } },
-    select: { id: true, currency: true },
-  });
-  const currencyOf = new Map(accounts.map((a) => [a.id, a.currency]));
-
-  const totals = new Map<string, { income: number; expense: number }>();
-  for (const row of rows) {
-    const currency = currencyOf.get(row.accountId) ?? "LKR";
-    const entry = totals.get(currency) ?? { income: 0, expense: 0 };
-    if (row.type === "INCOME") {
-      entry.income += row._sum.amount ?? 0;
-    } else {
-      entry.expense += row._sum.amount ?? 0;
-    }
-    totals.set(currency, entry);
-  }
-  return [...totals].map(([currency, t]) => ({ currency, ...t }));
+  return run(
+    db().rpc("totals_by_currency", { p_user_id: userId, p_start: start.toISOString(), p_end: end.toISOString() }),
+  );
 }
 
 export type CategoryBreakdown = {
@@ -94,30 +51,26 @@ export async function getCategoryBreakdown(
   start: Date,
   end: Date,
 ): Promise<CategoryBreakdown> {
-  const rows = await db.transaction.groupBy({
-    by: ["categoryId"],
-    where: { userId, type, date: { gte: start, lt: end }, account: { currency } },
-    _sum: { amount: true },
-    _count: { _all: true },
-  });
-  const categories = await db.category.findMany({
-    where: { id: { in: rows.flatMap((r) => (r.categoryId ? [r.categoryId] : [])) } },
-    select: { id: true, name: true, color: true, icon: true },
-  });
-  const byId = new Map(categories.map((c) => [c.id, c]));
+  const rows = await run(
+    db().rpc("category_breakdown", {
+      p_user_id: userId,
+      p_type: type,
+      p_currency: currency,
+      p_start: start.toISOString(),
+      p_end: end.toISOString(),
+    }),
+  );
 
+  // Uncategorized transactions come back as one row with a null category.
   return rows
-    .map((row) => {
-      const category = row.categoryId ? byId.get(row.categoryId) : undefined;
-      return {
-        id: row.categoryId,
-        name: category?.name ?? "Uncategorized",
-        color: category?.color ?? "#8a8984",
-        icon: category?.icon ?? "other",
-        total: row._sum.amount ?? 0,
-        count: row._count._all,
-      };
-    })
+    .map((row) => ({
+      id: row.id ?? null,
+      name: row.name ?? "Uncategorized",
+      color: row.color ?? "#8a8984",
+      icon: row.icon ?? "other",
+      total: row.total,
+      count: row.count,
+    }))
     .sort((a, b) => b.total - a.total);
 }
 
@@ -130,38 +83,52 @@ export async function getMonthlyTrend(
   first: MonthKey,
   last: MonthKey,
 ): Promise<MonthlyTrend> {
-  const rows = await db.transaction.findMany({
-    where: {
-      userId,
-      type: { in: ["INCOME", "EXPENSE"] },
-      date: { gte: monthRange(first).start, lt: monthRange(last).end },
-      account: { currency },
-    },
-    select: { type: true, amount: true, date: true },
-  });
+  const rows = await run(
+    db().rpc("monthly_totals", {
+      p_user_id: userId,
+      p_currency: currency,
+      p_start: monthRange(first).start.toISOString(),
+      p_end: monthRange(last).end.toISOString(),
+    }),
+  );
+  const byMonth = new Map(rows.map((r) => [r.month, r]));
 
   const months: MonthlyTrend = [];
   for (let key = first; key <= last; key = shiftMonth(key, 1)) {
-    months.push({ month: key, income: 0, expense: 0 });
-  }
-  const index = new Map(months.map((m, i) => [m.month, i]));
-  for (const row of rows) {
-    const i = index.get(monthKeyOf(row.date));
-    if (i === undefined) continue;
-    if (row.type === "INCOME") months[i].income += row.amount;
-    else months[i].expense += row.amount;
+    const row = byMonth.get(key);
+    months.push({ month: key, income: row?.income ?? 0, expense: row?.expense ?? 0 });
   }
   return months;
 }
 
-export const transactionInclude = {
-  account: { select: { id: true, name: true, currency: true, color: true } },
-  toAccount: { select: { id: true, name: true, currency: true, color: true } },
-  category: { select: { id: true, name: true, color: true, icon: true } },
-  tags: { select: { id: true, name: true, color: true }, orderBy: { name: "asc" } },
-} satisfies Prisma.TransactionInclude;
+const transactionSelect = `*,
+  account:Account!Transaction_accountId_fkey(id, name, currency, color),
+  toAccount:Account!Transaction_toAccountId_fkey(id, name, currency, color),
+  category:Category(id, name, color, icon),
+  tags:Tag(id, name, color)`;
 
-export type TransactionRow = Prisma.TransactionGetPayload<{ include: typeof transactionInclude }>;
+function transactionQuery(userId: string) {
+  return db()
+    .from("Transaction")
+    .select(transactionSelect)
+    .eq("userId", userId)
+    .order("date", { ascending: false })
+    .order("createdAt", { ascending: false });
+}
+
+type TransactionResult = NonNullable<Awaited<ReturnType<typeof transactionQuery>>["data"]>[number];
+
+/** Supabase returns timestamps as ISO strings; the app works with Dates and sorted tags. */
+function toTransactionRow(row: TransactionResult) {
+  return {
+    ...row,
+    date: new Date(row.date),
+    createdAt: new Date(row.createdAt),
+    tags: [...row.tags].sort((a, b) => a.name.localeCompare(b.name)),
+  };
+}
+
+export type TransactionRow = ReturnType<typeof toTransactionRow>;
 
 export type TransactionFilters = {
   month: MonthKey;
@@ -172,54 +139,45 @@ export type TransactionFilters = {
   q?: string;
 };
 
-export async function getTransactions(userId: string, filters: TransactionFilters) {
-  const { start, end } = monthRange(filters.month);
-  const where: Prisma.TransactionWhereInput = {
-    userId,
-    date: { gte: start, lt: end },
-    ...(filters.type ? { type: filters.type } : {}),
-    ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
-    ...(filters.tagId ? { tags: { some: { id: filters.tagId } } } : {}),
-    ...(filters.accountId
-      ? { OR: [{ accountId: filters.accountId }, { toAccountId: filters.accountId }] }
-      : {}),
-    ...(filters.q ? { note: { contains: filters.q } } : {}),
-  };
+/** Escapes LIKE wildcards so a search for "50%" matches the text literally. */
+const escapeLike = (value: string) => value.replace(/[\\%_]/g, "\\$&");
 
-  return db.transaction.findMany({
-    where,
-    include: transactionInclude,
-    orderBy: [{ date: "desc" }, { createdAt: "desc" }],
-  });
+export async function getTransactions(userId: string, filters: TransactionFilters): Promise<TransactionRow[]> {
+  const { start, end } = monthRange(filters.month);
+  if ([filters.accountId, filters.categoryId, filters.tagId].some((id) => id !== undefined && !isId(id))) {
+    return [];
+  }
+
+  let query = transactionQuery(userId).gte("date", start.toISOString()).lt("date", end.toISOString());
+  if (filters.type) query = query.eq("type", filters.type);
+  if (filters.categoryId) query = query.eq("categoryId", filters.categoryId);
+  if (filters.accountId) query = query.or(`accountId.eq.${filters.accountId},toAccountId.eq.${filters.accountId}`);
+  if (filters.q) query = query.ilike("note", `%${escapeLike(filters.q)}%`);
+
+  const rows = (await run(query)).map(toTransactionRow);
+  // A month holds few enough rows that the tag filter can run here.
+  return filters.tagId ? rows.filter((row) => row.tags.some((t) => t.id === filters.tagId)) : rows;
 }
 
 export async function getRecentTransactions(userId: string, take = 8) {
-  return db.transaction.findMany({
-    where: { userId },
-    include: transactionInclude,
-    orderBy: [{ date: "desc" }, { createdAt: "desc" }],
-    take,
-  });
+  return (await run(transactionQuery(userId).limit(take))).map(toTransactionRow);
 }
 
 export async function getTransaction(userId: string, id: string) {
-  return db.transaction.findFirst({ where: { id, userId }, include: transactionInclude });
+  const row = await run(transactionQuery(userId).eq("id", id).maybeSingle());
+  return row ? toTransactionRow(row) : null;
 }
 
 export async function getCategories(userId: string) {
-  return db.category.findMany({
-    where: { userId },
-    orderBy: [{ type: "asc" }, { name: "asc" }],
-    include: { _count: { select: { transactions: true } } },
-  });
+  const rows = await run(
+    db().from("Category").select("*, Transaction(count)").eq("userId", userId).order("type").order("name"),
+  );
+  return rows.map(({ Transaction, ...category }) => ({ ...category, transactionCount: Transaction[0]?.count ?? 0 }));
 }
 
 export async function getTags(userId: string) {
-  return db.tag.findMany({
-    where: { userId },
-    orderBy: { name: "asc" },
-    include: { _count: { select: { transactions: true } } },
-  });
+  const rows = await run(db().from("Tag").select("*, TransactionTag(count)").eq("userId", userId).order("name"));
+  return rows.map(({ TransactionTag, ...tag }) => ({ ...tag, transactionCount: TransactionTag[0]?.count ?? 0 }));
 }
 
 export function periodRange(period: "month" | "year", key: string) {

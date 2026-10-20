@@ -6,9 +6,11 @@ import { deleteTransaction, saveTransaction } from "@/actions/transactions";
 import { DeleteButton, FormError, SubmitButton } from "@/components/form-bits";
 import { useActionForm } from "@/components/use-action-form";
 import { buttonClass, Card, Field, inputClass } from "@/components/ui";
-import type { TransactionType } from "@/generated/prisma/enums";
+import type { Enums } from "@/lib/database.types";
 import { CategoryIcon } from "@/lib/category-icons";
 import { cn } from "@/lib/cn";
+
+type TransactionType = Enums<"TransactionType">;
 
 type Option = { id: string; name: string; color: string };
 type AccountOption = Option & { currency: string };

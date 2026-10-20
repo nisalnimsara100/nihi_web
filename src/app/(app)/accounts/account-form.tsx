@@ -5,9 +5,11 @@ import { deleteAccount, saveAccount } from "@/actions/accounts";
 import { ColorPicker, DeleteButton, FormError, SubmitButton } from "@/components/form-bits";
 import { useActionForm } from "@/components/use-action-form";
 import { buttonClass, Card, Field, inputClass } from "@/components/ui";
-import type { AccountType } from "@/generated/prisma/enums";
+import type { Enums } from "@/lib/database.types";
 import { ACCOUNT_TYPES, CURRENCIES } from "@/lib/constants";
 import { cn } from "@/lib/cn";
+
+type AccountType = Enums<"AccountType">;
 
 export type AccountFormValues = {
   id?: string;

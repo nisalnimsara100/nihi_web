@@ -27,7 +27,7 @@ async function Tags() {
       <LabelManager
         title="All tags"
         noun="tag"
-        items={tags.map((t) => ({ id: t.id, name: t.name, color: t.color, count: t._count.transactions }))}
+        items={tags.map((t) => ({ id: t.id, name: t.name, color: t.color, count: t.transactionCount }))}
         save={saveTag}
         remove={deleteTag}
       />

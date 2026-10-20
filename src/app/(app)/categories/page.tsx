@@ -28,7 +28,7 @@ async function Categories() {
   const toItems = (type: "INCOME" | "EXPENSE") =>
     categories
       .filter((c) => c.type === type)
-      .map((c) => ({ id: c.id, name: c.name, color: c.color, icon: c.icon, count: c._count.transactions }));
+      .map((c) => ({ id: c.id, name: c.name, color: c.color, icon: c.icon, count: c.transactionCount }));
 
   return (
     <div className="grid items-start gap-4 *:min-w-0 lg:grid-cols-2">

@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { CURRENCIES, DEFAULT_CATEGORIES, COLORS } from "@/lib/constants";
-import { db } from "@/lib/db";
+import { db, run, UNIQUE_VIOLATION } from "@/lib/db";
 import { createSession, deleteSession } from "@/lib/session";
 import { fromZodError, type ActionState } from "./state";
 
@@ -22,20 +22,28 @@ export async function signup(_prev: ActionState, formData: FormData): Promise<Ac
   }
   const { name, email, password, currency } = parsed.data;
 
-  if (await db.user.findUnique({ where: { email }, select: { id: true } })) {
+  const { data: user, error } = await db()
+    .from("User")
+    .insert({ name, email, passwordHash: await bcrypt.hash(password, 10), defaultCurrency: currency })
+    .select("id")
+    .single();
+  if (error?.code === UNIQUE_VIOLATION) {
     return { fieldErrors: { email: ["An account with this email already exists"] } };
   }
+  if (error) {
+    throw new Error(error.message);
+  }
 
-  const user = await db.user.create({
-    data: {
-      name,
-      email,
-      passwordHash: await bcrypt.hash(password, 10),
-      defaultCurrency: currency,
-      categories: { create: DEFAULT_CATEGORIES },
-      accounts: { create: { name: "Cash", type: "CASH", currency, color: COLORS[2] } },
-    },
-  });
+  try {
+    await Promise.all([
+      run(db().from("Category").insert(DEFAULT_CATEGORIES.map((c) => ({ ...c, userId: user.id })))),
+      run(db().from("Account").insert({ userId: user.id, name: "Cash", type: "CASH", currency, color: COLORS[2] })),
+    ]);
+  } catch (setupError) {
+    // Don't leave a half-created account behind; the user can sign up again.
+    await db().from("User").delete().eq("id", user.id);
+    throw setupError;
+  }
 
   await createSession(user.id);
   redirect("/dashboard");
@@ -53,7 +61,7 @@ export async function login(_prev: ActionState, formData: FormData): Promise<Act
   }
   const { email, password } = parsed.data;
 
-  const user = await db.user.findUnique({ where: { email } });
+  const user = await run(db().from("User").select("id, passwordHash").eq("email", email).maybeSingle());
   if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
     return { error: "Email or password is incorrect." };
   }

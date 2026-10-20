@@ -6,7 +6,7 @@ import { PeriodNav } from "@/components/finance/month-nav";
 import { StatTile } from "@/components/finance/stat-tile";
 import { Card, CardHeader, PageHeader, PageSkeleton } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { db, run } from "@/lib/db";
 import { getCategoryBreakdown, getMonthlyTrend, periodRange } from "@/lib/data";
 import { currentMonthKey, formatMonth, formatMonthShort, isMonthKey, shiftMonth } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
@@ -36,9 +36,9 @@ async function Statistics({ searchParams }: { searchParams: SearchParams }) {
       ? /^\d{4}$/.test(rawKey ?? "") ? rawKey! : thisMonth.slice(0, 4)
       : isMonthKey(rawKey) ? rawKey : thisMonth;
 
-  const currencies = (
-    await db.account.findMany({ where: { userId: user.id }, select: { currency: true }, distinct: ["currency"] })
-  ).map((a) => a.currency);
+  const currencies = [
+    ...new Set((await run(db().from("Account").select("currency").eq("userId", user.id))).map((a) => a.currency)),
+  ];
   const currencyParam = param(sp, "currency");
   const currency = currencyParam && currencies.includes(currencyParam) ? currencyParam : user.defaultCurrency;
 
