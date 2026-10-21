@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { notify } from "@/components/toast";
 import { useT } from "@/lib/i18n/client";
 import { enqueue } from "@/lib/offline-queue";
 import { saveTransaction } from "@/actions/transactions";
-import { ImagePicker, type AttachedImage } from "@/components/finance/image-picker";
+import { ImagePicker, type AttachedImage, type ImagePickerHandle } from "@/components/finance/image-picker";
 import { SimilarWarning } from "@/components/finance/similar-warning";
 import { parseAmount } from "@/lib/money";
 import { DeleteTransactionButton } from "@/components/finance/delete-transaction-button";
@@ -72,7 +72,7 @@ export function TransactionForm({
   imagesEnabled?: boolean;
 }) {
   const t = useT();
-  const { state, pending, onSubmit } = useActionForm(saveTransaction);
+  const { state, pending, onSubmit, submitForm } = useActionForm(saveTransaction);
   const [type, setType] = useState<TransactionType>(initial.type);
   const [accountId, setAccountId] = useState(initial.accountId);
   const [toAccountId, setToAccountId] = useState(initial.toAccountId);
@@ -82,6 +82,7 @@ export function TransactionForm({
   const [date, setDate] = useState(initial.date);
   const [cardId, setCardId] = useState(initial.cardId);
   const [uploading, setUploading] = useState(false);
+  const pictures = useRef<ImagePickerHandle>(null);
   const [amountText, setAmountText] = useState(initial.amount);
   // The amount, date and note inputs are uncontrolled; a new key remounts them with scanned values.
   const [scanned, setScanned] = useState({ n: 0, amount: initial.amount, date: initial.date, note: initial.note });
@@ -90,7 +91,19 @@ export function TransactionForm({
   /** With no connection a new transaction is kept on the phone and added later (see OfflineSync). */
   function submit(event: FormEvent<HTMLFormElement>) {
     if (initial.id || navigator.onLine) {
-      onSubmit(event);
+      const form = event.currentTarget;
+      const picker = pictures.current;
+      if (!picker?.hasPending()) {
+        onSubmit(event);
+        return;
+      }
+      // Chosen images are only uploaded now, so one removed before saving never reaches Cloudinary.
+      event.preventDefault();
+      setUploading(true);
+      void picker.uploadAll().then((images) => {
+        setUploading(false);
+        if (images) submitForm(form, { images: JSON.stringify(images) });
+      });
       return;
     }
     event.preventDefault();
@@ -100,7 +113,8 @@ export function TransactionForm({
       notify.error("Couldn't save it on this phone", "Your browser blocked storage. Try again when you're online.");
       return;
     }
-    notify.success("Saved on this phone", "It will be added when you're back online.");
+    const skipped = pictures.current?.hasPending();
+    notify.success("Saved on this phone", skipped ? "It will be added when you're back online, without the images." : "It will be added when you're back online.");
     setAmountText("");
     setScanned((s) => ({ n: s.n + 1, amount: "", date: initial.date, note: "" }));
     setDate(initial.date);
@@ -375,7 +389,7 @@ export function TransactionForm({
           />
         </Field>
 
-        {imagesEnabled ? <ImagePicker initial={initial.images ?? []} onBusyChange={setUploading} /> : null}
+        {imagesEnabled ? <ImagePicker ref={pictures} initial={initial.images ?? []} /> : null}
 
         <div className="flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-start sm:justify-between">
           {initial.id ? (
