@@ -6,6 +6,7 @@ export type TxSnapshot = {
   type: Enums<"TransactionType">;
   amount: number;
   toAmount: number | null;
+  fee: number;
   accountId: string;
   toAccountId: string | null;
   categoryId: string | null;

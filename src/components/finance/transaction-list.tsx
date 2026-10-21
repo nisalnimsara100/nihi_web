@@ -5,6 +5,7 @@ import type { TFunction } from "@/lib/i18n/translate";
 import type { TransactionRow } from "@/lib/data";
 import { dateToDay, formatDay, relativeDay } from "@/lib/dates";
 import { Amount, MaybeLink } from "@/components/ui";
+import { formatMoney } from "@/lib/money";
 import { CategoryIcon } from "@/lib/category-icons";
 import { cn } from "@/lib/cn";
 
@@ -66,6 +67,11 @@ function TransactionItem({ tx, showDate, readOnly, selectable, t }: { tx: Transa
       </span>
       <span className="flex max-w-[45%] shrink-0 flex-col items-end">
         <Amount minor={tx.amount} currency={tx.account.currency} kind={tx.type} />
+        {tx.fee > 0 ? (
+          <span className="text-xs font-medium text-ink-soft tabular-nums">
+            {t("+ {amount} fee", { amount: formatMoney(tx.fee, tx.account.currency) })}
+          </span>
+        ) : null}
         {isTransfer && tx.toAccount && tx.toAccount.currency !== tx.account.currency && tx.toAmount ? (
           <Amount minor={tx.toAmount} currency={tx.toAccount.currency} kind="TRANSFER" className="text-xs font-medium" />
         ) : (

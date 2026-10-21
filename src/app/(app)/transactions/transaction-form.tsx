@@ -32,6 +32,7 @@ export type TransactionFormValues = {
   type: TransactionType;
   amount: string;
   toAmount: string;
+  fee: string;
   accountId: string;
   toAccountId: string;
   categoryId: string;
@@ -212,6 +213,29 @@ export function TransactionForm({
             </span>
           </div>
         </Field>
+
+        {type !== "INCOME" ? (
+          <Field
+            label={t("Fee (optional)")}
+            htmlFor="fee"
+            error={errors.fee}
+            hint={isTransfer ? t("A transfer or bank charge. It is taken from the account the money leaves, on top of the amount.") : t("A bank or card charge. It is added to the amount.")}
+          >
+            <div className="relative">
+              <input
+                id="fee"
+                name="fee"
+                inputMode="decimal"
+                autoComplete="off"
+                placeholder="0.00"
+                defaultValue={initial.fee}
+                aria-invalid={!!errors.fee}
+                className={cn(inputClass, "pr-16 tabular-nums")}
+              />
+              <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-sm text-ink-soft">{from?.currency}</span>
+            </div>
+          </Field>
+        ) : null}
 
         {!initial.id ? <SimilarWarning type={type} amount={parseAmount(amountText)} accountId={accountId} day={date} /> : null}
 

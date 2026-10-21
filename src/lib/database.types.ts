@@ -438,6 +438,7 @@ export type Database = {
           categoryId: string | null
           createdAt: string
           date: string
+          fee: number
           id: string
           note: string
           toAccountId: string | null
@@ -452,6 +453,7 @@ export type Database = {
           categoryId?: string | null
           createdAt?: string
           date: string
+          fee?: number
           id?: string
           note?: string
           toAccountId?: string | null
@@ -466,6 +468,7 @@ export type Database = {
           categoryId?: string | null
           createdAt?: string
           date?: string
+          fee?: number
           id?: string
           note?: string
           toAccountId?: string | null
@@ -662,6 +665,7 @@ export type Database = {
           p_card_id: string
           p_category_id: string
           p_date: string
+          p_fee: number
           p_id: string
           p_note: string
           p_tag_ids: string[]

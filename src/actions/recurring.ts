@@ -154,6 +154,7 @@ export async function confirmRecurring(id: string): Promise<ActionState> {
     p_note: rule.note,
     p_tag_ids: [],
     p_card_id: null,
+    p_fee: 0,
   };
   const { error } = await db().rpc("save_transaction", args as unknown as Database["public"]["Functions"]["save_transaction"]["Args"]);
   if (error) {
