@@ -8,7 +8,7 @@ import { accountTypeLabel } from "@/lib/constants";
 import { getAccounts, getCards, type AccountWithBalance } from "@/lib/data";
 import { creditFaceInfo, creditSummary } from "@/lib/credit-card";
 import { formatMoney } from "@/lib/money";
-import { AccountTile, WalletList, type WalletItem } from "./wallet-list";
+import { AccountTile, WalletList, type WalletGroup, type WalletItem } from "./wallet-list";
 import { getT } from "@/lib/i18n/server";
 import type { TFunction } from "@/lib/i18n/translate";
 
@@ -54,22 +54,54 @@ async function Accounts({ searchParams }: { searchParams: SearchParams }) {
   const [accounts, allCards] = await Promise.all([getAccounts(user.id, { includeArchived: true }), getCards(user.id)]);
   const cardsOf = (accountId: string) => allCards.filter((c) => c.accountId === accountId);
   const active = accounts.filter((a) => !a.archived);
-  // Savings are money set aside: they get their own section and are not part of the total.
-  const everyday = active.filter((a) => a.type !== "SAVINGS");
+  // Savings (money set aside) and credit cards (debt) each get their own section and are not part of the total.
+  const everyday = active.filter((a) => a.type !== "SAVINGS" && a.type !== "CREDIT_CARD");
   const savings = active.filter((a) => a.type === "SAVINGS");
+  const creditCards = active.filter((a) => a.type === "CREDIT_CARD");
   const archived = accounts.filter((a) => a.archived);
-  const canReorder = !readOnly && everyday.length > 1;
+  const canReorder = !readOnly && [everyday, creditCards, savings].some((g) => g.length > 1);
   const reordering = canReorder && param(sp, "reorder") === "1";
 
   const totals = new Map<string, number>();
   const cardsOwed = new Map<string, number>();
   const savingsTotals = new Map<string, number>();
   for (const a of savings) savingsTotals.set(a.currency, (savingsTotals.get(a.currency) ?? 0) + a.balance);
-  for (const a of everyday) {
-    // Credit cards are debt, so they are not part of the total. They are listed beside it.
-    if (a.type !== "CREDIT_CARD") totals.set(a.currency, (totals.get(a.currency) ?? 0) + a.balance);
-    else if (a.balance < 0) cardsOwed.set(a.currency, (cardsOwed.get(a.currency) ?? 0) - a.balance);
+  for (const a of everyday) totals.set(a.currency, (totals.get(a.currency) ?? 0) + a.balance);
+  for (const a of creditCards) {
+    if (a.balance < 0) cardsOwed.set(a.currency, (cardsOwed.get(a.currency) ?? 0) - a.balance);
   }
+
+  const groups: WalletGroup[] = [
+    { key: "everyday", items: everyday.map((a) => toItem(a, cardsOf(a.id), t)), stacked: true },
+    {
+      key: "cards",
+      items: creditCards.map((a) => toItem(a, cardsOf(a.id), t)),
+      stacked: true,
+      heading: (
+        <div className="mb-3 flex items-baseline justify-between gap-3">
+          <h2 className="text-base font-semibold">{t("Credit cards")}</h2>
+          {cardsOwed.size > 0 ? (
+            <span className="text-sm font-semibold tabular-nums text-ink-soft">
+              {t("Cards owe")} {[...cardsOwed].map(([c, v]) => formatMoney(v, c)).join(" · ")}
+            </span>
+          ) : null}
+        </div>
+      ),
+    },
+    {
+      key: "savings",
+      items: savings.map((a) => toItem(a, cardsOf(a.id), t)),
+      stacked: true,
+      heading: (
+        <div className="mb-3 flex items-baseline justify-between gap-3">
+          <h2 className="text-base font-semibold">{t("Savings")}</h2>
+          <span className="text-sm font-semibold tabular-nums text-ink-soft">
+            {[...savingsTotals].map(([c, v]) => formatMoney(v, c)).join(" · ")}
+          </span>
+        </div>
+      ),
+    },
+  ].filter((g) => g.items.length > 0);
 
   return (
     <>
@@ -116,25 +148,7 @@ async function Accounts({ searchParams }: { searchParams: SearchParams }) {
         </Card>
       ) : null}
 
-      {everyday.length > 0 ? (
-        <WalletList items={everyday.map((a) => toItem(a, cardsOf(a.id), t))} readOnly={readOnly} editing={reordering} />
-      ) : null}
-
-      {savings.length > 0 ? (
-        <section className={everyday.length > 0 ? "mt-10" : ""}>
-          <div className="mb-3 flex items-baseline justify-between gap-3">
-            <h2 className="text-base font-semibold">{t("Savings")}</h2>
-            <span className="text-sm font-semibold tabular-nums text-ink-soft">
-              {[...savingsTotals].map(([c, v]) => formatMoney(v, c)).join(" · ")}
-            </span>
-          </div>
-          <div className="mx-auto grid max-w-md gap-4 sm:mx-0 sm:max-w-none sm:grid-cols-2 lg:grid-cols-3">
-            {savings.map((a, i) => (
-              <AccountTile key={a.id} item={toItem(a, cardsOf(a.id), t)} index={i} stacked={false} readOnly={readOnly} />
-            ))}
-          </div>
-        </section>
-      ) : null}
+      <WalletList groups={groups} readOnly={readOnly} editing={reordering} />
 
       {archived.length > 0 ? (
         <section className="mt-10">

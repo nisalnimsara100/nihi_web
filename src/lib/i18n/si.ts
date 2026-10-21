@@ -116,6 +116,7 @@ export const si: Dictionary = {
   "Create link and email it": "සබැඳිය සාදා ඊමේල් කරන්න",
   "Create your account": "ඔබේ ගිණුම සාදන්න",
   "Credit card": "ණය කාඩ්පත",
+  "Credit cards": "ණය කාඩ්පත්",
   "Credit limit": "ණය සීමාව",
   "Currency": "මුදල් ඒකකය",
   "Current password": "වත්මන් මුරපදය",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, type ComponentProps } from "react";
+import { useState, useTransition, type ComponentProps, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Reorder } from "framer-motion";
 import { reorderAccounts } from "@/actions/accounts";
@@ -27,23 +27,39 @@ export function AccountTile({ item, index, stacked, readOnly }: { item: WalletIt
   );
 }
 
+export type WalletGroup = {
+  key: string;
+  /** Section title row (server-rendered); the first group usually has none. */
+  heading?: ReactNode;
+  items: WalletItem[];
+  /** Overlap the cards like a wallet on phones. */
+  stacked: boolean;
+};
+
 /**
- * The active accounts. In reorder mode (`editing`, switched on by the header button) they become
- * a plain list where each card can be dragged up or down, and a floating bar offers Done to save.
+ * The active accounts, in sections (accounts, credit cards, savings). In reorder mode (`editing`,
+ * switched on by the header button) each section becomes a plain list where cards can be dragged
+ * up or down within it, and a floating bar offers Done to save all sections at once.
  * Dragging is only on in that mode, so scrolling and tapping a card to open it work the rest of the time.
  */
-export function WalletList({ items, readOnly, editing }: { items: WalletItem[]; readOnly: boolean; editing: boolean }) {
+export function WalletList({ groups, readOnly, editing }: { groups: WalletGroup[]; readOnly: boolean; editing: boolean }) {
   const t = useT();
   const router = useRouter();
-  const [order, setOrder] = useState(items.map((i) => i.id));
+  const [orders, setOrders] = useState<Record<string, string[]>>(() =>
+    Object.fromEntries(groups.map((g) => [g.key, g.items.map((i) => i.id)])),
+  );
   const [saving, startSaving] = useTransition();
-  const byId = new Map(items.map((i) => [i.id, i]));
   // Accounts added or removed elsewhere while this page is open.
-  const ids = [...order.filter((id) => byId.has(id)), ...items.map((i) => i.id).filter((id) => !order.includes(id))];
+  const resolved = groups.map((g) => {
+    const byId = new Map(g.items.map((i) => [i.id, i]));
+    const saved = orders[g.key] ?? [];
+    const ids = [...saved.filter((id) => byId.has(id)), ...g.items.map((i) => i.id).filter((id) => !saved.includes(id))];
+    return { group: g, byId, ids };
+  });
 
   function done() {
     startSaving(async () => {
-      const result = await reorderAccounts(ids);
+      const result = await reorderAccounts(resolved.flatMap((r) => r.ids));
       if (result.error) {
         notify.error(result.error);
         return;
@@ -53,46 +69,65 @@ export function WalletList({ items, readOnly, editing }: { items: WalletItem[]; 
     });
   }
 
-  if (!editing) {
-    return (
-      <div className="mx-auto max-w-md sm:mx-0 sm:grid sm:max-w-none sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
-        {ids.map((id, i) => (
-          <AccountTile key={id} item={byId.get(id)!} index={i} stacked readOnly={readOnly} />
-        ))}
-      </div>
-    );
-  }
-
   return (
     <>
-      <Reorder.Group axis="y" values={ids} onReorder={setOrder} className="mx-auto flex max-w-md flex-col gap-3 pb-24 sm:mx-0">
-        {ids.map((id) => (
-          <Reorder.Item
-            key={id}
-            value={id}
-            whileDrag={{ scale: 1.03, boxShadow: "0 18px 40px rgb(20 21 28 / 0.25)", zIndex: 10 }}
-            className="wiggle relative cursor-grab touch-none rounded-3xl active:cursor-grabbing"
-          >
-            {/* pointer-events-none keeps the card from being a link while it is being moved */}
-            <div className="pointer-events-none relative select-none">
-              <AccountCardFace {...byId.get(id)!.face} className="shadow-lg shadow-primary/10" />
-              <span aria-hidden className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full bg-black/25 p-1 text-white backdrop-blur-sm">
-                <DragHandle className="size-5" />
-              </span>
+      {resolved.map(({ group, byId, ids }, n) => (
+        <section key={group.key} className={n > 0 ? "mt-10" : ""}>
+          {group.heading}
+          {editing ? (
+            <Reorder.Group
+              axis="y"
+              values={ids}
+              onReorder={(next) => setOrders((o) => ({ ...o, [group.key]: next }))}
+              className="mx-auto flex max-w-md flex-col gap-3 sm:mx-0"
+            >
+              {ids.map((id) => (
+                <Reorder.Item
+                  key={id}
+                  value={id}
+                  whileDrag={{ scale: 1.03, boxShadow: "0 18px 40px rgb(20 21 28 / 0.25)", zIndex: 10 }}
+                  className="wiggle relative cursor-grab touch-none rounded-3xl active:cursor-grabbing"
+                >
+                  {/* pointer-events-none keeps the card from being a link while it is being moved */}
+                  <div className="pointer-events-none relative select-none">
+                    <AccountCardFace {...byId.get(id)!.face} className="shadow-lg shadow-primary/10" />
+                    <span aria-hidden className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full bg-black/25 p-1 text-white backdrop-blur-sm">
+                      <DragHandle className="size-5" />
+                    </span>
+                  </div>
+                </Reorder.Item>
+              ))}
+            </Reorder.Group>
+          ) : group.stacked ? (
+            <div className="mx-auto max-w-md sm:mx-0 sm:grid sm:max-w-none sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+              {ids.map((id, i) => (
+                <AccountTile key={id} item={byId.get(id)!} index={i} stacked readOnly={readOnly} />
+              ))}
             </div>
-          </Reorder.Item>
-        ))}
-      </Reorder.Group>
+          ) : (
+            <div className="mx-auto grid max-w-md gap-4 sm:mx-0 sm:max-w-none sm:grid-cols-2 lg:grid-cols-3">
+              {ids.map((id, i) => (
+                <AccountTile key={id} item={byId.get(id)!} index={i} stacked={false} readOnly={readOnly} />
+              ))}
+            </div>
+          )}
+        </section>
+      ))}
 
-      {/* A floating bar above the bottom navigation, so Done is always in reach. */}
-      <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] z-40 flex justify-center px-4 lg:bottom-6 lg:pl-64">
-        <div className="flex items-center gap-3 rounded-full border border-line bg-surface py-1.5 pr-1.5 pl-5 text-sm font-semibold text-ink shadow-[0_8px_30px_rgb(20_21_28/0.14)]">
-          <span>{t("Drag cards to reorder")}</span>
-          <Button size="sm" onClick={done} disabled={saving} className="rounded-full">
-            <Check className="size-4" aria-hidden /> {t("Done")}
-          </Button>
-        </div>
-      </div>
+      {editing ? (
+        <>
+          <div className="h-24" />
+          {/* A floating bar above the bottom navigation, so Done is always in reach. */}
+          <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] z-40 flex justify-center px-4 lg:bottom-6 lg:pl-64">
+            <div className="flex items-center gap-3 rounded-full border border-line bg-surface py-1.5 pr-1.5 pl-5 text-sm font-semibold text-ink shadow-[0_8px_30px_rgb(20_21_28/0.14)]">
+              <span>{t("Drag cards to reorder")}</span>
+              <Button size="sm" onClick={done} disabled={saving} className="rounded-full">
+                <Check className="size-4" aria-hidden /> {t("Done")}
+              </Button>
+            </div>
+          </div>
+        </>
+      ) : null}
     </>
   );
 }
