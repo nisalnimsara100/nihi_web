@@ -6,19 +6,25 @@ import {
   CaretRight,
   ChartBar,
   Coffee,
+  CreditCard,
+  Flag,
   ForkKnife,
   GearSix,
   House,
   Lightning,
   Lock,
+  PiggyBank,
   Plus,
+  Repeat,
   Shapes,
   ShoppingCart,
   Tag,
+  Target,
   TrendUp,
   Wallet,
 } from "@/components/icons";
 import { MockAvatar } from "@/components/landing/mock-avatar";
+import { MockProfileDock } from "@/components/landing/mock-profile-dock";
 import { LogoMark } from "@/components/logo";
 import { cn } from "@/lib/cn";
 
@@ -26,7 +32,10 @@ const NAV: { label: string; icon: AppIcon }[] = [
   { label: "Home", icon: House },
   { label: "Transactions", icon: ArrowsLeftRight },
   { label: "Statistics", icon: ChartBar },
+  { label: "Budgets", icon: Target },
   { label: "Wallet", icon: Wallet },
+  { label: "Repeats", icon: Repeat },
+  { label: "Goals", icon: Flag },
   { label: "Categories", icon: Shapes },
   { label: "Tags", icon: Tag },
   { label: "Settings", icon: GearSix },
@@ -56,19 +65,25 @@ const SPENDING = [
 const ACCOUNTS = [
   { color: "#1baf7a", name: "Cash", type: "Cash", amount: "Rs. 18,450" },
   { color: "#2a78d6", name: "Commercial Bank", type: "Bank account", amount: "Rs. 1,482,300" },
-  { color: "#6250d6", name: "Fixed savings", type: "Savings", amount: "Rs. 1,250,000" },
+  { color: "#6250d6", name: "Sampath Bank", type: "Bank account", amount: "Rs. 234,052" },
+];
+
+const BUDGETS = [
+  { name: "Food & Dining", left: "Rs. 11,580 left", share: 77 },
+  { name: "Groceries", left: "Rs. 8,850 left", share: 70 },
 ];
 
 /** Static picture of the NiHi desktop dashboard inside a browser window. */
-export function DashboardMock({ className }: { className?: string }) {
+export function DashboardMock({ className, dockClassName }: { className?: string; dockClassName?: string }) {
   return (
     <div
       aria-hidden
       className={cn(
-        "overflow-hidden rounded-2xl bg-surface text-ink shadow-2xl shadow-primary/15 ring-1 ring-line select-none",
+        "relative overflow-hidden rounded-2xl bg-surface text-ink shadow-2xl shadow-primary/15 ring-1 ring-line select-none",
         className,
       )}
     >
+      <MockProfileDock open className={cn("absolute bottom-4 left-3 z-10 hidden md:flex", dockClassName)} />
       <div className="flex items-center gap-3 border-b border-line bg-muted/70 px-4 py-2.5">
         <span className="flex gap-1.5">
           <span className="size-2.5 rounded-full bg-[#ff5f57]" />
@@ -118,8 +133,16 @@ export function DashboardMock({ className }: { className?: string }) {
               </span>
             </div>
             <p className="mt-3 text-[9px] text-white/80">Total Balance</p>
-            <p className="text-2xl font-semibold tracking-tight tabular-nums">Rs. 2,734,802</p>
-            <p className="text-[9px] text-white/60">4 accounts</p>
+            <p className="text-2xl font-semibold tracking-tight tabular-nums">Rs. 1,734,802</p>
+            <p className="text-[9px] text-white/60">3 accounts</p>
+            <p className="mt-1.5 flex gap-1.5 text-[8px] font-semibold">
+              <span className="flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5">
+                <PiggyBank className="size-2.5" /> Savings Rs. 1,250,000
+              </span>
+              <span className="flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5">
+                <CreditCard className="size-2.5" /> Cards owe Rs. 15,948
+              </span>
+            </p>
             <div className="mt-3 grid grid-cols-2 gap-2 text-[10px] font-semibold">
               <span className="flex items-center justify-center gap-1 rounded-lg bg-white/15 py-2 ring-1 ring-white/20">
                 <ArrowDownLeft className="size-3" /> Add Income
@@ -175,6 +198,22 @@ export function DashboardMock({ className }: { className?: string }) {
             </div>
 
             <div className="hidden space-y-3 lg:col-span-2 lg:block">
+              <div className="rounded-xl p-3 ring-1 ring-line">
+                <p className="mb-2 text-[10px] font-semibold">Budgets</p>
+                <div className="space-y-2">
+                  {BUDGETS.map(({ name, left, share }) => (
+                    <div key={name}>
+                      <div className="flex items-center justify-between text-[9px]">
+                        <span className="font-medium">{name}</span>
+                        <span className="font-semibold text-ink-soft">{left}</span>
+                      </div>
+                      <div className="mt-1 h-1.5 rounded-full bg-muted">
+                        <div className="h-full rounded-full bg-primary" style={{ width: `${share}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
               <div className="rounded-xl p-3 ring-1 ring-line">
                 <p className="mb-2 text-[10px] font-semibold">Spending this month</p>
                 <div className="space-y-2">

@@ -253,7 +253,7 @@ async function Dashboard() {
               <EmptyState
                 icon={<Receipt className="size-6" />}
                 title={t("No transactions yet")}
-                description={readOnly ? "Nothing has been added yet." : "Add your first expense or income to see it here."}
+                description={readOnly ? t("Nothing has been added yet.") : t("Add your first expense or income to see it here.")}
                 action={readOnly ? undefined : <ButtonLink href="/transactions/new">{t("Add transaction")}</ButtonLink>}
               />
             )}

@@ -25,8 +25,7 @@ const at = (i: number) => ({ "--i": i }) as CSSProperties;
 const ACCOUNTS = [
   { icon: Money, color: "#1baf7a", name: "Cash", amount: "Rs. 18,450" },
   { icon: Bank, color: "#2a78d6", name: "Commercial Bank", amount: "Rs. 1,482,300" },
-  { icon: PiggyBank, color: "#6250d6", name: "Fixed savings", amount: "Rs. 1,250,000" },
-  { icon: CreditCard, color: "#e34948", name: "Credit card", amount: "-Rs. 15,948" },
+  { icon: Bank, color: "#6250d6", name: "Sampath Bank", amount: "Rs. 234,052" },
 ];
 
 export function AccountsVisual() {
@@ -40,7 +39,15 @@ export function AccountsVisual() {
         </span>
         <span className="text-income">Live</span>
       </p>
-      <p className="text-2xl font-semibold tracking-tight tabular-nums">Rs. 2,734,802</p>
+      <p className="text-2xl font-semibold tracking-tight tabular-nums">Rs. 1,734,802</p>
+      <p className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-semibold">
+        <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5">
+          <PiggyBank className="size-3" /> Savings Rs. 1,250,000
+        </span>
+        <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5">
+          <CreditCard className="size-3" /> Cards owe Rs. 15,948
+        </span>
+      </p>
       <div className="mt-4 space-y-2.5">
         {ACCOUNTS.map(({ icon: Icon, color, name, amount }, i) => (
           <div key={name} className="fx-slide flex items-center gap-2.5 text-sm" style={at(i + 2)}>

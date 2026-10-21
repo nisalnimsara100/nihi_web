@@ -7,11 +7,16 @@ import {
   ChartLine,
   Check,
   CreditCard,
+  Eye,
+  Flag,
   GitBranch,
   Globe,
   Money,
   PiggyBank,
+  Receipt,
+  Repeat,
   ShieldCheck,
+  Target,
   Wallet,
 } from "@/components/icons";
 import Link from "next/link";
@@ -25,6 +30,7 @@ import {
   StatsVisual,
   TransferVisual,
 } from "@/components/landing/feature-visuals";
+import { MockProfileDock } from "@/components/landing/mock-profile-dock";
 import { Logo, LogoMark } from "@/components/logo";
 import { PhoneMock } from "@/components/phone-mock";
 import { ButtonLink } from "@/components/ui";
@@ -43,6 +49,7 @@ const REPO_URL = "https://github.com/nisalnimsara100/nihi_web";
 const NAV = [
   { href: "#why", label: "Why NiHi" },
   { href: "#features", label: "Features" },
+  { href: "#partner", label: "Partners" },
   { href: "#how", label: "How it works" },
   { href: "#faq", label: "FAQ" },
 ];
@@ -78,6 +85,13 @@ const WHY = [
     figure: "100%",
     label: "your data",
   },
+];
+
+const MORE = [
+  { icon: Target, title: "Budgets", text: "A monthly limit per category, with a warning at 80% and again at 100%." },
+  { icon: Repeat, title: "Repeating bills", text: "Rent, salary and subscriptions are offered when due. Nothing is added without your tap." },
+  { icon: Flag, title: "Savings goals", text: "Set a target and a date, and watch the progress fill in." },
+  { icon: Receipt, title: "Scan a screenshot", text: "Read a bank SMS or receipt in your browser. You confirm before it saves." },
 ];
 
 const STEPS = [
@@ -284,6 +298,63 @@ export default function LandingPage() {
               <SearchVisual />
             </FeatureCard>
           </div>
+          <div className="mx-auto mt-4 grid max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {MORE.map(({ icon: Icon, title, text }) => (
+              <div key={title} className="reveal rounded-3xl bg-surface p-5 shadow-sm ring-1 ring-line/70">
+                <span className="flex size-10 items-center justify-center rounded-full bg-primary-soft text-on-primary-soft">
+                  <Icon className="size-5" aria-hidden />
+                </span>
+                <h3 className="mt-5 font-semibold">{title}</h3>
+                <p className="mt-1.5 text-sm text-pretty text-ink-soft">{text}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="partner" className="relative isolate scroll-mt-24 px-4 py-16 sm:px-6 sm:py-24">
+          <div className="reveal mx-auto grid max-w-6xl items-center gap-10 overflow-hidden rounded-[2rem] bg-surface p-8 shadow-sm ring-1 ring-line/70 sm:p-12 lg:grid-cols-2">
+            <div>
+              <Eyebrow>Partner access</Eyebrow>
+              <h2 className="mt-5 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+                Share the view, <Accent>keep the control</Accent>
+              </h2>
+              <p className="mt-4 text-pretty text-ink-soft">
+                Invite a partner with a single-use link. They see your finances in their own NiHi, switch between their
+                account and yours from one tap, and can only look. You stay in charge of every entry.
+              </p>
+              <ul className="mt-6 space-y-3">
+                {[
+                  "One link, used once, expires after 7 days",
+                  "A floating bubble switches between accounts",
+                  "Amber ring and eye badge mark read-only data",
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-3 text-sm font-medium">
+                    <span className="flex size-5 items-center justify-center rounded-full bg-primary text-on-primary">
+                      <Check className="size-3" strokeWidth={2.5} aria-hidden />
+                    </span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div aria-hidden className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-3xl bg-primary-soft/40 p-5 ring-1 ring-primary-soft">
+                <p className="text-xs font-semibold text-ink-soft">Switch in one tap</p>
+                <MockProfileDock size="md" open className="mt-4" />
+              </div>
+              <div className="rounded-3xl bg-warning-soft/40 p-5 ring-1 ring-warning/30">
+                <p className="text-xs font-semibold text-ink-soft">Viewing a partner</p>
+                <div className="mt-4 rounded-2xl bg-surface p-3 shadow-sm ring-1 ring-line/70">
+                  <p className="text-xs text-ink-soft">Dilini Perera&apos;s balance</p>
+                  <p className="text-xl font-semibold tracking-tight tabular-nums">Rs. 842,300</p>
+                  <p className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-ink-soft">
+                    <Eye className="size-3" /> Read-only, nothing to edit
+                  </p>
+                </div>
+                <MockProfileDock size="md" viewing className="mt-4" />
+              </div>
+            </div>
+          </div>
         </section>
 
         <section className="px-4 py-16 sm:px-6 sm:py-24">
@@ -299,7 +370,7 @@ export default function LandingPage() {
               <ul className="mt-6 space-y-3">
                 {[
                   "Net worth across every account",
-                  "Income, spending and savings this month",
+                  "Income, spending, budgets and goals this month",
                   "Top categories and recent activity",
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-3 text-sm font-medium">

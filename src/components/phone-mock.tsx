@@ -18,6 +18,7 @@ import {
   Wallet,
 } from "@/components/icons";
 import { MockAvatar } from "@/components/landing/mock-avatar";
+import { MockProfileDock } from "@/components/landing/mock-profile-dock";
 import { cn } from "@/lib/cn";
 
 const ACTIONS = [
@@ -83,8 +84,8 @@ export function PhoneMock({ className, insights = true }: { className?: string; 
                   </span>
                 </div>
                 <p className="mt-4 text-[9px] text-white/80">Total Balance</p>
-                <p className="mt-0.5 text-xl font-semibold tabular-nums">Rs. 1,250,800</p>
-                <p className="text-[9px] text-white/60">4 accounts</p>
+                <p className="mt-0.5 text-xl font-semibold tabular-nums">Rs. 1,734,802</p>
+                <p className="text-[9px] text-white/60">3 accounts</p>
                 <div className="mt-3 grid grid-cols-2 gap-2 text-[9px] font-semibold">
                   <span className="flex items-center justify-center gap-1 rounded-lg bg-white/15 py-2 ring-1 ring-white/20">
                     <ArrowDownLeft className="size-3" /> Add Income
@@ -131,6 +132,8 @@ export function PhoneMock({ className, insights = true }: { className?: string; 
                   </div>
                 </div>
               </div>
+
+              <MockProfileDock open className="absolute bottom-[58px] left-2 z-10" />
 
               <div className="grid grid-cols-5 border-t border-line bg-surface px-2 pt-2 pb-6">
                 {TABS.map(({ label, icon: Icon }, i) =>
