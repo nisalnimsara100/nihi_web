@@ -511,6 +511,48 @@ export type Database = {
           },
         ]
       }
+      TransactionImage: {
+        Row: {
+          createdAt: string
+          id: string
+          publicId: string
+          transactionId: string
+          url: string
+          userId: string
+        }
+        Insert: {
+          createdAt?: string
+          id?: string
+          publicId: string
+          transactionId: string
+          url: string
+          userId: string
+        }
+        Update: {
+          createdAt?: string
+          id?: string
+          publicId?: string
+          transactionId?: string
+          url?: string
+          userId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "TransactionImage_transactionId_fkey"
+            columns: ["transactionId"]
+            isOneToOne: false
+            referencedRelation: "Transaction"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "TransactionImage_userId_fkey"
+            columns: ["userId"]
+            isOneToOne: false
+            referencedRelation: "User"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       TransactionTag: {
         Row: {
           tagId: string

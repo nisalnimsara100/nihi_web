@@ -27,7 +27,7 @@ async function NewTransaction({ searchParams }: { searchParams: SearchParams }) 
   const t = await getT();
   const { user } = await requireOwnView();
   const sp = await searchParams;
-  const { accounts, categories, tags, history, cards } = await getTransactionFormOptions(user.id);
+  const { accounts, categories, tags, history, cards, imagesEnabled } = await getTransactionFormOptions(user.id);
 
   if (accounts.length === 0) {
     return (
@@ -64,6 +64,7 @@ async function NewTransaction({ searchParams }: { searchParams: SearchParams }) 
       tags={tags}
       history={history}
       cards={cards}
+      imagesEnabled={imagesEnabled}
       autoScan={param(sp, "scan") === "1"}
       initial={{
         type,

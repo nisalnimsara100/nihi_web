@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { PageHeader, Skeleton } from "@/components/ui";
 import { requireOwnView } from "@/lib/auth";
-import { getTransaction } from "@/lib/data";
+import { getTransaction, getTransactionImages } from "@/lib/data";
 import { dateToDay } from "@/lib/dates";
 import { toInputAmount } from "@/lib/money";
 import { getTransactionFormOptions } from "../form-data";
@@ -35,10 +35,10 @@ async function EditTransaction({ params }: { params: Promise<{ id: string }> }) 
     notFound();
   }
 
-  const options = await getTransactionFormOptions(
-    user.id,
-    [tx.accountId, tx.toAccountId].filter((v): v is string => !!v),
-  );
+  const [options, images] = await Promise.all([
+    getTransactionFormOptions(user.id, [tx.accountId, tx.toAccountId].filter((v): v is string => !!v)),
+    getTransactionImages(user.id, tx.id),
+  ]);
 
   const repeatParams = new URLSearchParams({ type: tx.type, amount: toInputAmount(tx.amount), account: tx.accountId, note: tx.note });
   if (tx.categoryId) repeatParams.set("category", tx.categoryId);
@@ -60,6 +60,7 @@ async function EditTransaction({ params }: { params: Promise<{ id: string }> }) 
         date: dateToDay(tx.date),
         note: tx.note,
         tagIds: tx.tags.map((t) => t.id),
+        images,
       }}
     />
     <p className="mt-4 text-center text-sm">

@@ -1,4 +1,5 @@
 import "server-only";
+import { cloudinaryEnabled } from "@/lib/cloudinary";
 import { db, isId, run } from "@/lib/db";
 
 /** Options the transaction form needs: active accounts, categories and tags. */
@@ -27,5 +28,5 @@ export async function getTransactionFormOptions(userId: string, keepAccountIds: 
     // Linked cards let a scanned receipt's card number pick the account that pays for it.
     run(db().from("Card").select("id, accountId, last4, name, network").eq("userId", userId)),
   ]);
-  return { accounts, categories, tags, history, cards };
+  return { accounts, categories, tags, history, cards, imagesEnabled: cloudinaryEnabled() };
 }

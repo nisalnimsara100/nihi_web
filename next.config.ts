@@ -10,9 +10,9 @@ const csp = [
   // Next.js inlines small scripts; the OCR engine needs WebAssembly.
   `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data: blob: https://res.cloudinary.com",
   "font-src 'self' data:",
-  "connect-src 'self'",
+  "connect-src 'self' https://api.cloudinary.com",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   "object-src 'none'",
