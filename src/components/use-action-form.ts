@@ -37,11 +37,17 @@ export function useActionForm(
     onSuccessRef.current?.();
   }, [state, resetOnSuccess]);
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+  /** Sends the form's fields to the action. `overrides` replaces fields, e.g. values only known after an async step. */
+  function submitForm(form: HTMLFormElement, overrides: Record<string, string> = {}) {
+    const formData = new FormData(form);
+    for (const [key, value] of Object.entries(overrides)) formData.set(key, value);
     startTransition(() => dispatch(formData));
   }
 
-  return { state, pending, formRef, onSubmit };
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    submitForm(event.currentTarget);
+  }
+
+  return { state, pending, formRef, onSubmit, submitForm };
 }
