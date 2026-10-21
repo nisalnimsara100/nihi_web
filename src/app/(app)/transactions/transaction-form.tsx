@@ -6,6 +6,7 @@ import { notify } from "@/components/toast";
 import { useT } from "@/lib/i18n/client";
 import { enqueue } from "@/lib/offline-queue";
 import { saveTransaction } from "@/actions/transactions";
+import { ImagePicker, type AttachedImage } from "@/components/finance/image-picker";
 import { SimilarWarning } from "@/components/finance/similar-warning";
 import { parseAmount } from "@/lib/money";
 import { DeleteTransactionButton } from "@/components/finance/delete-transaction-button";
@@ -38,6 +39,7 @@ export type TransactionFormValues = {
   date: string;
   note: string;
   tagIds: string[];
+  images?: AttachedImage[];
 };
 
 const TYPE_TABS: { value: TransactionType; label: string }[] = [
@@ -54,6 +56,7 @@ export function TransactionForm({
   history = [],
   cards = [],
   autoScan = false,
+  imagesEnabled = false,
 }: {
   initial: TransactionFormValues;
   accounts: AccountOption[];
@@ -65,6 +68,8 @@ export function TransactionForm({
   cards?: ScanCard[];
   /** Open the scan sheet straight away (the home screen's Scan shortcut). */
   autoScan?: boolean;
+  /** Cloudinary is configured, so images can be attached. */
+  imagesEnabled?: boolean;
 }) {
   const t = useT();
   const { state, pending, onSubmit } = useActionForm(saveTransaction);
@@ -76,6 +81,7 @@ export function TransactionForm({
   const [scanOpen, setScanOpen] = useState(autoScan && !initial.id);
   const [date, setDate] = useState(initial.date);
   const [cardId, setCardId] = useState(initial.cardId);
+  const [uploading, setUploading] = useState(false);
   const [amountText, setAmountText] = useState(initial.amount);
   // The amount, date and note inputs are uncontrolled; a new key remounts them with scanned values.
   const [scanned, setScanned] = useState({ n: 0, amount: initial.amount, date: initial.date, note: initial.note });
@@ -369,6 +375,8 @@ export function TransactionForm({
           />
         </Field>
 
+        {imagesEnabled ? <ImagePicker initial={initial.images ?? []} onBusyChange={setUploading} /> : null}
+
         <div className="flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-start sm:justify-between">
           {initial.id ? (
             <DeleteTransactionButton id={initial.id} />
@@ -379,7 +387,7 @@ export function TransactionForm({
             <Link href="/transactions" className={buttonClass("ghost")}>
               {t("Cancel")}
             </Link>
-            <SubmitButton pending={pending}>{initial.id ? t("Save changes") : t("Add transaction")}</SubmitButton>
+            <SubmitButton pending={pending || uploading}>{initial.id ? t("Save changes") : t("Add transaction")}</SubmitButton>
           </div>
         </div>
       </form>

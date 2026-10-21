@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireUserId } from "@/lib/auth";
 import type { TxSnapshot } from "@/lib/tx-snapshot";
 import { Constants, type Database } from "@/lib/database.types";
+import { destroyImages, isOwnImage, MAX_TRANSACTION_IMAGES } from "@/lib/cloudinary";
 import { db, isId, run } from "@/lib/db";
 import { dayToDate } from "@/lib/dates";
 import { flash } from "@/lib/flash";
@@ -48,6 +49,26 @@ const transactionSchema = z
       }
     }
   });
+
+const imagesSchema = z
+  .array(z.object({ url: z.string().max(500), publicId: z.string().max(300) }))
+  .max(MAX_TRANSACTION_IMAGES);
+
+/** Makes the transaction's images match `images`, deleting removed files from Cloudinary. */
+async function syncImages(userId: string, transactionId: string, images: { url: string; publicId: string }[]) {
+  const existing = await run(db().from("TransactionImage").select("id, publicId").eq("transactionId", transactionId).eq("userId", userId));
+  const keep = new Set(images.map((i) => i.publicId));
+  const removed = existing.filter((e) => !keep.has(e.publicId));
+  const have = new Set(existing.map((e) => e.publicId));
+  const added = images.filter((i) => !have.has(i.publicId));
+  if (removed.length > 0) {
+    await run(db().from("TransactionImage").delete().in("id", removed.map((r) => r.id)).select("id"));
+    await destroyImages(removed.map((r) => r.publicId));
+  }
+  if (added.length > 0) {
+    await run(db().from("TransactionImage").insert(added.map((i) => ({ transactionId, userId, url: i.url, publicId: i.publicId }))).select("id"));
+  }
+}
 
 type Saved = { state: ActionState } | { saved: { amount: number; currency: string; kind: string; updated: boolean } };
 
@@ -93,6 +114,23 @@ async function persist(userId: string, formData: FormData): Promise<Saved> {
     return { state: { fieldErrors: { cardId: ["Choose a card linked to this account"] } } };
   }
 
+  // Images are optional. The field is only present when the form had the picker.
+  const rawImages = formData.get("images");
+  let images: { url: string; publicId: string }[] | null = null;
+  if (typeof rawImages === "string") {
+    let json: unknown = [];
+    try {
+      json = JSON.parse(rawImages || "[]");
+    } catch {
+      // Falls through to the validation error below.
+    }
+    const parsedImages = imagesSchema.safeParse(json);
+    if (!parsedImages.success || !parsedImages.data.every((i) => isOwnImage(userId, i))) {
+      return { state: { error: `Attach at most ${MAX_TRANSACTION_IMAGES} valid images.` } };
+    }
+    images = parsedImages.data;
+  }
+
   const amount = data.amount!;
   const args = {
     p_user_id: userId,
@@ -117,6 +155,7 @@ async function persist(userId: string, formData: FormData): Promise<Saved> {
   if (!savedId) {
     return { state: { error: "Transaction not found." } };
   }
+  if (images) await syncImages(userId, savedId, images);
   const currency = accounts.find((a) => a.id === data.accountId)?.currency ?? "LKR";
   const kind = { INCOME: "Income", EXPENSE: "Expense", TRANSFER: "Transfer" }[data.type];
   return { saved: { amount, currency, kind, updated: !!data.id } };
@@ -147,8 +186,8 @@ export async function syncQueuedTransaction(entries: [string, string][]): Promis
   const userId = await requireUserId();
   const formData = new FormData();
   for (const [key, value] of entries.slice(0, 60)) {
-    // An offline entry is always a new transaction.
-    if (key !== "id") formData.append(key, String(value).slice(0, 600));
+    // An offline entry is always a new transaction, and is stored without images.
+    if (key !== "id" && key !== "images") formData.append(key, String(value).slice(0, 600));
   }
   const result = await persist(userId, formData);
   if ("state" in result) {

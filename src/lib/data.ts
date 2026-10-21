@@ -178,6 +178,12 @@ export async function getTransaction(userId: string, id: string) {
   return row ? toTransactionRow(row) : null;
 }
 
+export async function getTransactionImages(userId: string, transactionId: string) {
+  return run(
+    db().from("TransactionImage").select("url, publicId").eq("transactionId", transactionId).eq("userId", userId).order("createdAt"),
+  );
+}
+
 export async function getCategories(userId: string) {
   const rows = await run(
     db().from("Category").select("*, Transaction(count)").eq("userId", userId).order("type").order("name"),
