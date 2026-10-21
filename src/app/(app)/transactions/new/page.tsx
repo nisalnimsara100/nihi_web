@@ -70,6 +70,7 @@ async function NewTransaction({ searchParams }: { searchParams: SearchParams }) 
         type,
         amount,
         toAmount: "",
+        fee: "",
         accountId,
         toAccountId: toId || (accounts.find((a) => a.id !== accountId)?.id ?? ""),
         categoryId:

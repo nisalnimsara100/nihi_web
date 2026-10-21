@@ -53,6 +53,7 @@ async function EditTransaction({ params }: { params: Promise<{ id: string }> }) 
         type: tx.type,
         amount: toInputAmount(tx.amount),
         toAmount: tx.toAmount != null ? toInputAmount(tx.toAmount) : "",
+        fee: tx.fee > 0 ? toInputAmount(tx.fee) : "",
         accountId: tx.accountId,
         toAccountId: tx.toAccountId ?? "",
         categoryId: tx.categoryId ?? "",

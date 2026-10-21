@@ -78,6 +78,24 @@ describe("saveTransaction", () => {
     assert.equal(h.fake.rpcCalls[1].args.p_to_amount, 400);
   });
 
+  it("sends an optional fee on an expense or a transfer, and none on income", async () => {
+    await redirectOf(() => actions.saveTransaction({}, form(base)));
+    assert.equal(h.fake.rpcCalls[0].args.p_fee, 0);
+    await redirectOf(() => actions.saveTransaction({}, form({ ...base, fee: "0" })));
+    assert.equal(h.fake.rpcCalls[1].args.p_fee, 0);
+    await redirectOf(() => actions.saveTransaction({}, form({ ...base, fee: "25.50" })));
+    assert.equal(h.fake.rpcCalls.at(-1)!.args.p_fee, 2550);
+    await redirectOf(() => actions.saveTransaction({}, form({ ...base, type: "TRANSFER", toAccountId: "a2", fee: "10" })));
+    assert.equal(h.fake.rpcCalls.at(-1)!.args.p_fee, 1000);
+    await redirectOf(() => actions.saveTransaction({}, form({ ...base, type: "INCOME", categoryId: "c2", fee: "10" })));
+    assert.equal(h.fake.rpcCalls.at(-1)!.args.p_fee, 0);
+  });
+
+  it("rejects a fee that is not a number", async () => {
+    const result = await actions.saveTransaction({}, form({ ...base, fee: "abc" }));
+    assert.ok(result.fieldErrors?.fee);
+  });
+
   it("does nothing when nobody is signed in", async () => {
     h.state.userId = null;
     const to = await redirectOf(() => actions.saveTransaction({}, form(base)));
@@ -101,7 +119,7 @@ describe("syncQueuedTransaction (offline queue)", () => {
 });
 
 describe("delete, undo and bulk changes", () => {
-  const tx = (id: string, extra = {}) => ({ id, userId: "u1", type: "EXPENSE", amount: 1000, toAmount: null, accountId: "a1", toAccountId: null, categoryId: "c1", cardId: null, date: "2026-10-19T12:00:00.000Z", note: id, createdAt: "2026-10-19T12:00:00.000Z", ...extra });
+  const tx = (id: string, extra = {}) => ({ id, userId: "u1", type: "EXPENSE", amount: 1000, toAmount: null, fee: 0, accountId: "a1", toAccountId: null, categoryId: "c1", cardId: null, date: "2026-10-19T12:00:00.000Z", note: id, createdAt: "2026-10-19T12:00:00.000Z", ...extra });
 
   it("returns what it deleted so the delete can be undone, and only deletes the user's own", async () => {
     h.fake.seed("Transaction", [tx("t1"), tx("t2", { userId: "other" })]).seed("TransactionTag", [{ transactionId: "t1", tagId: "g1" }]);

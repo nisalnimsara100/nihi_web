@@ -24,12 +24,27 @@ const amountField = (label: string) =>
     return amount;
   });
 
+/** The optional fee: empty or 0 means none. */
+const feeField = z
+  .string()
+  .transform((v, ctx) => {
+    if (!v.trim()) return 0;
+    const fee = parseAmount(v);
+    if (fee === null || fee < 0) {
+      ctx.addIssue({ code: "custom", message: "Enter a valid fee, or leave it empty" });
+      return z.NEVER;
+    }
+    return fee;
+  })
+  .optional();
+
 const transactionSchema = z
   .object({
     id: z.string().optional(),
     type: z.enum(Constants.public.Enums.TransactionType),
     amount: amountField("amount"),
     toAmount: amountField("amount").optional(),
+    fee: feeField,
     accountId: z.string().min(1, "Choose an account"),
     toAccountId: z.string().optional(),
     categoryId: z.string().optional(),
@@ -145,6 +160,8 @@ async function persist(userId: string, formData: FormData): Promise<Saved> {
     p_note: data.note,
     p_tag_ids: tags.map((t) => t.id),
     p_card_id: card?.id ?? null,
+    // Income has no fee.
+    p_fee: data.type === "INCOME" ? 0 : (data.fee ?? 0),
   };
 
   // Generated types mark every function argument as required and non-null,
@@ -209,6 +226,7 @@ async function snapshotOf(userId: string, ids: string[]): Promise<TxSnapshot[]> 
     type: r.type,
     amount: r.amount,
     toAmount: r.toAmount,
+    fee: r.fee,
     accountId: r.accountId,
     toAccountId: r.toAccountId,
     categoryId: r.categoryId,
@@ -276,6 +294,7 @@ export async function restoreTransactions(snapshots: TxSnapshot[]): Promise<Acti
       type: s.type,
       amount: s.amount,
       toAmount: s.toAmount,
+      fee: s.fee ?? 0,
       accountId: s.accountId,
       toAccountId: s.toAccountId,
       // A category or card deleted in the meantime just comes back without it.
